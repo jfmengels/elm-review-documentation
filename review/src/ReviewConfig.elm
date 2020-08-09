@@ -15,14 +15,19 @@ import Documentation.ReadmeLinksPointToCurrentVersion
 import NoDebug.Log
 import NoDebug.TodoOrToString
 import NoExposingEverything
+import NoForbiddenWords
 import NoImportingEverything
 import NoMissingTypeAnnotation
+import NoMissingTypeAnnotationInLetIn
+import NoMissingTypeExpose
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
 import NoUnused.Exports
 import NoUnused.Modules
+import NoUnused.Parameters
+import NoUnused.Patterns
 import NoUnused.Variables
-import Review.Rule exposing (Rule)
+import Review.Rule as Rule exposing (Rule)
 
 
 config : List Rule
@@ -30,13 +35,18 @@ config =
     [ Documentation.ReadmeLinksPointToCurrentVersion.rule
     , NoDebug.Log.rule
     , NoDebug.TodoOrToString.rule
-        |> Review.Rule.ignoreErrorsForDirectories [ "tests/" ]
+        |> Rule.ignoreErrorsForDirectories [ "tests/" ]
     , NoExposingEverything.rule
+    , NoForbiddenWords.rule [ "REPLACEME" ]
     , NoImportingEverything.rule []
     , NoMissingTypeAnnotation.rule
+    , NoMissingTypeAnnotationInLetIn.rule
+    , NoMissingTypeExpose.rule
     , NoUnused.CustomTypeConstructors.rule []
     , NoUnused.Dependencies.rule
     , NoUnused.Exports.rule
     , NoUnused.Modules.rule
+    , NoUnused.Parameters.rule
+    , NoUnused.Patterns.rule
     , NoUnused.Variables.rule
     ]
