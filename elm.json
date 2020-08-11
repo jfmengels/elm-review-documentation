@@ -1,6 +1,6 @@
 {
     "type": "package",
-    "name": "jfmengels/review-documentation",
+    "name": "jfmengels/elm-review-documentation",
     "summary": "Provides elm-review rules to help with the quality of the documentation",
     "license": "BSD-3-Clause",
     "version": "1.0.0",
