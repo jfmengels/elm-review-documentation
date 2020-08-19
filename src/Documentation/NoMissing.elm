@@ -7,8 +7,9 @@ module Documentation.NoMissing exposing (rule)
 -}
 
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
+import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.Node as Node exposing (Node)
-import Elm.Syntax.Range exposing (Range)
+import Elm.Syntax.Range as Range exposing (Range)
 import Review.Rule as Rule exposing (Error, Rule)
 
 
@@ -54,9 +55,47 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Documen
 -}
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "Documentation.NoMissing" ()
+    Rule.newModuleRuleSchema "Documentation.NoMissing" Range.emptyRange
+        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
+        |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withSimpleDeclarationVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
+
+
+type alias Context =
+    Range
+
+
+moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
+moduleDefinitionVisitor node _ =
+    let
+        range : Range
+        range =
+            case Node.value node of
+                Module.NormalModule x ->
+                    Node.range x.moduleName
+
+                Module.PortModule x ->
+                    Node.range x.moduleName
+
+                Module.EffectModule x ->
+                    Node.range x.moduleName
+    in
+    ( [], range )
+
+
+commentsVisitor : List (Node String) -> Context -> ( List (Error {}), Context )
+commentsVisitor comments range =
+    let
+        documentation : Maybe (Node String)
+        documentation =
+            comments
+                |> List.filter (Node.value >> String.startsWith "{-|")
+                |> List.head
+    in
+    ( checkDocumentation documentation range
+    , range
+    )
 
 
 declarationVisitor : Node Declaration -> List (Error {})
