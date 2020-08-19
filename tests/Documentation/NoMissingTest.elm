@@ -5,14 +5,14 @@ import Review.Test
 import Test exposing (Test, describe, test)
 
 
-message : String
-message =
-    "REPLACEME"
+missingMessage : String
+missingMessage =
+    "Missing documentation"
 
 
-details : List String
-details =
-    [ "REPLACEME" ]
+missingDetails : List String
+missingDetails =
+    [ "Documentation can help developers use this API." ]
 
 
 all : Test
@@ -26,8 +26,8 @@ function = 1
                     |> Review.Test.run rule
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = message
-                            , details = details
+                            { message = missingMessage
+                            , details = missingDetails
                             , under = "function"
                             }
                         ]

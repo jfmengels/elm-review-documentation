@@ -86,8 +86,8 @@ declarationVisitor node =
 
                 Nothing ->
                     [ Rule.error
-                        { message = "REPLACEME"
-                        , details = [ "REPLACEME" ]
+                        { message = "Missing documentation"
+                        , details = [ "Documentation can help developers use this API." ]
                         }
                         (declaration |> Node.value |> .name |> Node.range)
                     ]
