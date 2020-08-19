@@ -62,11 +62,22 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Documen
 -}
 rule : Configuration -> Rule
 rule configuration =
-    Rule.newModuleRuleSchema "Documentation.NoMissing" Range.emptyRange
+    Rule.newModuleRuleSchema "Documentation.NoMissing" initialContext
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withSimpleDeclarationVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
+
+
+type alias Context =
+    { moduleName : Range
+    }
+
+
+initialContext : Context
+initialContext =
+    { moduleName = Range.emptyRange
+    }
 
 
 type Configuration
@@ -84,12 +95,8 @@ onlyExposed =
     OnlyExposed
 
 
-type alias Context =
-    Range
-
-
 moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
-moduleDefinitionVisitor node _ =
+moduleDefinitionVisitor node context =
     let
         range : Range
         range =
@@ -103,11 +110,11 @@ moduleDefinitionVisitor node _ =
                 Module.EffectModule x ->
                     Node.range x.moduleName
     in
-    ( [], range )
+    ( [], { context | moduleName = range } )
 
 
 commentsVisitor : List (Node String) -> Context -> ( List (Error {}), Context )
-commentsVisitor comments range =
+commentsVisitor comments context =
     let
         documentation : Maybe (Node String)
         documentation =
@@ -115,8 +122,8 @@ commentsVisitor comments range =
                 |> List.filter (Node.value >> String.startsWith "{-|")
                 |> List.head
     in
-    ( checkDocumentation documentation range
-    , range
+    ( checkDocumentation documentation context.moduleName
+    , context
     )
 
 
