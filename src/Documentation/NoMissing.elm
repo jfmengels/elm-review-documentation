@@ -63,8 +63,26 @@ declarationVisitor node =
     case Node.value node of
         Declaration.FunctionDeclaration { declaration, documentation } ->
             case documentation of
-                Just _ ->
-                    []
+                Just doc ->
+                    let
+                        trimmedDocumentation : String
+                        trimmedDocumentation =
+                            doc
+                                |> Node.value
+                                |> String.dropLeft 3
+                                |> String.dropRight 2
+                                |> String.trim
+                    in
+                    if trimmedDocumentation == "" then
+                        [ Rule.error
+                            { message = "The documentation is empty"
+                            , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
+                            }
+                            (declaration |> Node.value |> .name |> Node.range)
+                        ]
+
+                    else
+                        []
 
                 Nothing ->
                     [ Rule.error
