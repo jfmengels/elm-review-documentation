@@ -18,7 +18,7 @@ details =
 all : Test
 all =
     describe "Documentation.NoMissing"
-        [ test "should report an error when REPLACEME" <|
+        [ test "should report an error when a function does not have documentation" <|
             \() ->
                 """module A exposing (..)
 function = 1
@@ -31,4 +31,12 @@ function = 1
                             , under = "function"
                             }
                         ]
+        , test "should not report an error when a function does have documentation" <|
+            \() ->
+                """module A exposing (..)
+{-| documentation -}
+function = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
