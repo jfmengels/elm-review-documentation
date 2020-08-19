@@ -5,6 +5,7 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 
 ## Provided rules
 
+- [`Documentation.NoMissing`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.1/Documentation-NoMissing) - Reports missing documentation for functions and types.
 - [`Documentation.ReadmeLinksPointToCurrentVersion`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.1/Documentation-ReadmeLinksPointToCurrentVersion) - Reports links in the `README.md` that do not point to the current version of the package.
 
 ## Configuration
@@ -12,12 +13,14 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ```elm
 module ReviewConfig exposing (config)
 
-import Review.Rule exposing (Rule)
+import Documentation.NoMissing
 import Documentation.ReadmeLinksPointToCurrentVersion
+import Review.Rule exposing (Rule)
 
 config : List Rule
 config =
     [ Documentation.ReadmeLinksPointToCurrentVersion.rule
+    , Documentation.NoMissing.rule
     ]
 ```
 
