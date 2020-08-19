@@ -53,4 +53,39 @@ function = 1
                             , under = "function"
                             }
                         ]
+        , test "should report an error when a custom type does not have documentation" <|
+            \() ->
+                """module A exposing (..)
+type CustomType = A
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "CustomType"
+                            }
+                        ]
+        , test "should not report an error when a custom type does have documentation" <|
+            \() ->
+                """module A exposing (..)
+{-| documentation -}
+type CustomType = A
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should report an error when a custom type's documentation is empty" <|
+            \() ->
+                """module A exposing (..)
+{-| -}
+type CustomType = A
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "The documentation is empty"
+                            , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
+                            , under = "CustomType"
+                            }
+                        ]
         ]

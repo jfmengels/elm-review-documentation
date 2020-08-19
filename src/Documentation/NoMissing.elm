@@ -92,5 +92,36 @@ declarationVisitor node =
                         (declaration |> Node.value |> .name |> Node.range)
                     ]
 
+        Declaration.CustomTypeDeclaration { name, documentation } ->
+            case documentation of
+                Just doc ->
+                    let
+                        trimmedDocumentation : String
+                        trimmedDocumentation =
+                            doc
+                                |> Node.value
+                                |> String.dropLeft 3
+                                |> String.dropRight 2
+                                |> String.trim
+                    in
+                    if trimmedDocumentation == "" then
+                        [ Rule.error
+                            { message = "The documentation is empty"
+                            , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
+                            }
+                            (Node.range name)
+                        ]
+
+                    else
+                        []
+
+                Nothing ->
+                    [ Rule.error
+                        { message = "Missing documentation"
+                        , details = [ "Documentation can help developers use this API." ]
+                        }
+                        (Node.range name)
+                    ]
+
         _ ->
             []
