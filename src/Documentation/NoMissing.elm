@@ -1,8 +1,12 @@
-module Documentation.NoMissing exposing (rule)
+module Documentation.NoMissing exposing
+    ( rule
+    , Configuration, everything, onlyExposed
+    )
 
 {-|
 
 @docs rule
+@docs Configuration, everything, onlyExposed
 
 -}
 
@@ -16,7 +20,10 @@ import Review.Rule as Rule exposing (Error, Rule)
 {-| Reports missing documentation for functions and types
 
     config =
-        [ Documentation.NoMissing.rule
+        [ Documentation.NoMissing.rule Documentation.NoMissing.onlyExposed
+
+        -- or
+        , Documentation.NoMissing.rule Documentation.NoMissing.everything
         ]
 
 
@@ -53,13 +60,28 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Documen
 ```
 
 -}
-rule : Rule
-rule =
+rule : Configuration -> Rule
+rule configuration =
     Rule.newModuleRuleSchema "Documentation.NoMissing" Range.emptyRange
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withSimpleDeclarationVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
+
+
+type Configuration
+    = Everything
+    | OnlyExposed
+
+
+everything : Configuration
+everything =
+    Everything
+
+
+onlyExposed : Configuration
+onlyExposed =
+    OnlyExposed
 
 
 type alias Context =

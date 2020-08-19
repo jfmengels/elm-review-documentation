@@ -1,6 +1,6 @@
 module Documentation.NoMissingTest exposing (all)
 
-import Documentation.NoMissing exposing (rule)
+import Documentation.NoMissing exposing (everything, rule)
 import Review.Test
 import Test exposing (Test, describe, test)
 
@@ -26,7 +26,7 @@ import Thing
 
 function = 1
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -43,7 +43,7 @@ import Thing
 {-| documentation -}
 function = 1
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectNoErrors
         , test "should report an error when a function's documentation is empty" <|
             \() ->
@@ -54,7 +54,7 @@ import Thing
 {-| -}
 function = 1
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -69,7 +69,7 @@ function = 1
 import Thing
 type CustomType = A
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -85,7 +85,7 @@ import Thing
 {-| documentation -}
 type CustomType = A
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectNoErrors
         , test "should report an error when a custom type's documentation is empty" <|
             \() ->
@@ -95,7 +95,7 @@ import Thing
 {-| -}
 type CustomType = A
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -110,7 +110,7 @@ type CustomType = A
 import Thing
 type alias Alias = A
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -126,7 +126,7 @@ import Thing
 {-| documentation -}
 type alias Alias = A
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectNoErrors
         , test "should report an error when a type alias' documentation is empty" <|
             \() ->
@@ -136,7 +136,7 @@ import Thing
 {-| -}
 type alias Alias = A
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -149,7 +149,7 @@ type alias Alias = A
                 """module A exposing (..)
 import Thing
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -163,7 +163,7 @@ import Thing
 {-| documentation -}
 import Thing
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectNoErrors
         , test "should report an error when the module's documentation is empty" <|
             \() ->
@@ -171,7 +171,7 @@ import Thing
 {-| -}
 import Thing
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.run (rule everything)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
