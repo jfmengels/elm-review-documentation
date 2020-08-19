@@ -10,11 +10,15 @@ module Documentation.NoMissing exposing
 
 -}
 
+import Elm.Module as Module
+import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Module as Module exposing (Module)
-import Elm.Syntax.Node as Node exposing (Node)
+import Elm.Syntax.ModuleName exposing (ModuleName)
+import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range as Range exposing (Range)
 import Review.Rule as Rule exposing (Error, Rule)
+import Set exposing (Set)
 
 
 {-| Reports missing documentation for functions and types
@@ -63,20 +67,25 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Documen
 rule : Configuration -> Rule
 rule configuration =
     Rule.newModuleRuleSchema "Documentation.NoMissing" initialContext
-        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
+        |> Rule.withElmJsonModuleVisitor elmJsonVisitor
+        |> Rule.withModuleDefinitionVisitor (moduleDefinitionVisitor configuration)
         |> Rule.withCommentsVisitor commentsVisitor
-        |> Rule.withSimpleDeclarationVisitor declarationVisitor
+        |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
 
 
 type alias Context =
-    { moduleName : Range
+    { moduleName : Node String
+    , exposedModules : Set String
+    , shouldBeReported : Bool
     }
 
 
 initialContext : Context
 initialContext =
-    { moduleName = Range.emptyRange
+    { moduleName = Node Range.emptyRange ""
+    , exposedModules = Set.empty
+    , shouldBeReported = True
     }
 
 
@@ -95,54 +104,109 @@ onlyExposed =
     OnlyExposed
 
 
-moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
-moduleDefinitionVisitor node context =
+elmJsonVisitor : Maybe Elm.Project.Project -> Context -> Context
+elmJsonVisitor maybeProject context =
     let
-        range : Range
-        range =
+        exposedModules : Set String
+        exposedModules =
+            case maybeProject of
+                Just (Elm.Project.Package package) ->
+                    case package.exposed of
+                        Elm.Project.ExposedList list ->
+                            list
+                                |> List.map Module.toString
+                                |> Set.fromList
+
+                        Elm.Project.ExposedDict list ->
+                            list
+                                |> List.concatMap Tuple.second
+                                |> List.map Module.toString
+                                |> Set.fromList
+
+                _ ->
+                    Set.empty
+    in
+    { context | exposedModules = exposedModules }
+
+
+moduleDefinitionVisitor : Configuration -> Node Module -> Context -> ( List nothing, Context )
+moduleDefinitionVisitor configuration node context =
+    let
+        moduleName : Node String
+        moduleName =
             case Node.value node of
                 Module.NormalModule x ->
-                    Node.range x.moduleName
+                    Node
+                        (Node.range x.moduleName)
+                        (Node.value x.moduleName |> String.join ".")
 
                 Module.PortModule x ->
-                    Node.range x.moduleName
+                    Node
+                        (Node.range x.moduleName)
+                        (Node.value x.moduleName |> String.join ".")
 
                 Module.EffectModule x ->
-                    Node.range x.moduleName
+                    Node
+                        (Node.range x.moduleName)
+                        (Node.value x.moduleName |> String.join ".")
+
+        shouldBeReported : Bool
+        shouldBeReported =
+            case configuration of
+                Everything ->
+                    True
+
+                OnlyExposed ->
+                    Set.member (Node.value moduleName) context.exposedModules
     in
-    ( [], { context | moduleName = range } )
+    ( []
+    , { context
+        | moduleName = moduleName
+        , shouldBeReported = shouldBeReported
+      }
+    )
 
 
 commentsVisitor : List (Node String) -> Context -> ( List (Error {}), Context )
 commentsVisitor comments context =
-    let
-        documentation : Maybe (Node String)
-        documentation =
-            comments
-                |> List.filter (Node.value >> String.startsWith "{-|")
-                |> List.head
-    in
-    ( checkDocumentation documentation context.moduleName
-    , context
-    )
+    if context.shouldBeReported then
+        let
+            documentation : Maybe (Node String)
+            documentation =
+                comments
+                    |> List.filter (Node.value >> String.startsWith "{-|")
+                    |> List.head
+        in
+        ( checkDocumentation documentation (Node.range context.moduleName)
+        , context
+        )
+
+    else
+        ( [], context )
 
 
-declarationVisitor : Node Declaration -> List (Error {})
-declarationVisitor node =
-    case Node.value node of
-        Declaration.FunctionDeclaration { documentation, declaration } ->
-            checkDocumentation
-                documentation
-                (Node.range (Node.value declaration).name)
+declarationVisitor : Node Declaration -> Context -> ( List (Error {}), Context )
+declarationVisitor node context =
+    if context.shouldBeReported then
+        ( case Node.value node of
+            Declaration.FunctionDeclaration { documentation, declaration } ->
+                checkDocumentation
+                    documentation
+                    (Node.range (Node.value declaration).name)
 
-        Declaration.CustomTypeDeclaration { documentation, name } ->
-            checkDocumentation documentation (Node.range name)
+            Declaration.CustomTypeDeclaration { documentation, name } ->
+                checkDocumentation documentation (Node.range name)
 
-        Declaration.AliasDeclaration { documentation, name } ->
-            checkDocumentation documentation (Node.range name)
+            Declaration.AliasDeclaration { documentation, name } ->
+                checkDocumentation documentation (Node.range name)
 
-        _ ->
-            []
+            _ ->
+                []
+        , context
+        )
+
+    else
+        ( [], context )
 
 
 checkDocumentation : Maybe (Node String) -> Range -> List (Error {})
