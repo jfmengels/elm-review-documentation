@@ -88,4 +88,39 @@ type CustomType = A
                             , under = "CustomType"
                             }
                         ]
+        , test "should report an error when a type alias does not have documentation" <|
+            \() ->
+                """module A exposing (..)
+type alias Alias = A
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "Alias"
+                            }
+                        ]
+        , test "should not report an error when a type alias does have documentation" <|
+            \() ->
+                """module A exposing (..)
+{-| documentation -}
+type alias Alias = A
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should report an error when a type alias' documentation is empty" <|
+            \() ->
+                """module A exposing (..)
+{-| -}
+type alias Alias = A
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "The documentation is empty"
+                            , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
+                            , under = "Alias"
+                            }
+                        ]
         ]
