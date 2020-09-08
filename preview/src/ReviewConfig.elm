@@ -11,11 +11,13 @@ when inside the directory containing this file.
 
 -}
 
+import Documentation.NoMissing
 import Documentation.ReadmeLinksPointToCurrentVersion
 import Review.Rule exposing (Rule)
 
 
 config : List Rule
 config =
-    [ Documentation.ReadmeLinksPointToCurrentVersion.rule
+    [ Documentation.NoMissing.rule Documentation.NoMissing.onlyExposed
+    , Documentation.ReadmeLinksPointToCurrentVersion.rule
     ]
