@@ -13,11 +13,13 @@ when inside the directory containing this file.
 
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
+import Documentation.NoMissing
 import Review.Rule exposing (Rule)
 
 
 config : List Rule
 config =
-    [ Docs.UpToDateReadmeLinks.rule
+    [ Documentation.NoMissing.rule
+    , Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
     ]
