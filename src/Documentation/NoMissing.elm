@@ -173,9 +173,7 @@ commentsVisitor comments context =
         let
             documentation : Maybe (Node String)
             documentation =
-                comments
-                    |> List.filter (Node.value >> String.startsWith "{-|")
-                    |> List.head
+                findFirst (Node.value >> String.startsWith "{-|") comments
         in
         ( checkDocumentation documentation (Node.range context.moduleName)
         , context
@@ -183,6 +181,20 @@ commentsVisitor comments context =
 
     else
         ( [], context )
+
+
+findFirst : (a -> Bool) -> List a -> Maybe a
+findFirst predicate list =
+    case list of
+        [] ->
+            Nothing
+
+        a :: rest ->
+            if predicate a then
+                Just a
+
+            else
+                findFirst predicate rest
 
 
 declarationVisitor : Node Declaration -> Context -> ( List (Error {}), Context )
