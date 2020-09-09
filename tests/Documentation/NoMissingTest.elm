@@ -202,6 +202,23 @@ import Thing
                             , under = "Exposed"
                             }
                         ]
+        , test "should not report non-exposed elements from exposed modules for a package when using onlyExposed" <|
+            \() ->
+                """module Exposed exposing (a)
+
+{-| module
+-}
+import Thing
+
+{-| a
+-}
+a : ()
+a = ()
+
+b = ()
+"""
+                    |> Review.Test.runWithProjectData packageProject (rule onlyExposed)
+                    |> Review.Test.expectNoErrors
         ]
 
 
