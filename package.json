@@ -2,7 +2,7 @@
   "name": "",
   "version": "1.0.0",
   "scripts": {
-    "test": "npm-run-all --print-label --sequential test:make test:format test:run test:review test:package",
+    "test": "npm-run-all --print-name --silent --sequential test:make test:format test:run test:review test:package",
     "test:make": "elm make --docs=docs.json",
     "test:format": "elm-format src/ tests/ --validate",
     "test:run": "elm-test",
