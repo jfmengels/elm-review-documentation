@@ -8,7 +8,6 @@
     "test:run": "elm-test",
     "test:review": "elm-review",
     "test:package": "node elm-review-package-tests/check-previews-compile.js",
-    "review": "elm-review",
     "preview-docs": "elm-doc-preview"
   },
   "dependencies": {
