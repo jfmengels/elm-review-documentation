@@ -15,6 +15,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    - name: Configure environment
+      # Helps make sure that `elm-format` doesn't give different results on Windows and Ubuntu
+      run: git config --global core.autocrlf false
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
