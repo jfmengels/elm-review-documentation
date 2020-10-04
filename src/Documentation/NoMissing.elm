@@ -69,7 +69,7 @@ rule configuration =
         |> Rule.withElmJsonModuleVisitor elmJsonVisitor
         |> Rule.withModuleDefinitionVisitor (moduleDefinitionVisitor configuration.from)
         |> Rule.withCommentsVisitor commentsVisitor
-        |> Rule.withDeclarationEnterVisitor declarationVisitor
+        |> Rule.withDeclarationEnterVisitor (declarationVisitor configuration.document)
         |> Rule.fromModuleRuleSchema
 
 
@@ -217,8 +217,8 @@ findFirst predicate list =
                 findFirst predicate rest
 
 
-declarationVisitor : Node Declaration -> Context -> ( List (Error {}), Context )
-declarationVisitor node context =
+declarationVisitor : What -> Node Declaration -> Context -> ( List (Error {}), Context )
+declarationVisitor documentWhat node context =
     if context.shouldBeReported then
         ( case Node.value node of
             Declaration.FunctionDeclaration { documentation, declaration } ->
