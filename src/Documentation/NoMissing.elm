@@ -1,12 +1,14 @@
 module Documentation.NoMissing exposing
     ( rule
-    , Configuration, everything, onlyExposed, allModules, exposedModules
+    , What, everything, onlyExposed
+    , From, allModules, exposedModules
     )
 
 {-|
 
 @docs rule
-@docs Configuration, everything, onlyExposed, allModules, exposedModules
+@docs What, everything, onlyExposed
+@docs From, allModules, exposedModules
 
 -}
 
@@ -64,7 +66,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Documen
 ```
 
 -}
-rule : Configuration -> Rule
+rule : { document : What, from : From } -> Rule
 rule configuration =
     Rule.newModuleRuleSchema "Documentation.NoMissing" initialContext
         |> Rule.withElmJsonModuleVisitor elmJsonVisitor
@@ -94,12 +96,6 @@ initialContext =
 type Exposed
     = EverythingIsExposed
     | ExplicitList (Set String)
-
-
-type alias Configuration =
-    { document : What
-    , from : From
-    }
 
 
 type What
