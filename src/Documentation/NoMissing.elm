@@ -76,6 +76,7 @@ rule configuration =
 type alias Context =
     { moduleNameRange : Range
     , exposedModules : Set String
+    , exposedElements : Set String
     , shouldBeReported : Bool
     }
 
@@ -84,6 +85,7 @@ initialContext : Context
 initialContext =
     { moduleNameRange = Range.emptyRange
     , exposedModules = Set.empty
+    , exposedElements = Set.empty
     , shouldBeReported = True
     }
 
@@ -222,15 +224,29 @@ declarationVisitor documentWhat node context =
     if context.shouldBeReported then
         ( case Node.value node of
             Declaration.FunctionDeclaration { documentation, declaration } ->
-                checkDocumentation
-                    documentation
-                    (Node.range (Node.value declaration).name)
+                let
+                    (Node range name) =
+                        (Node.value declaration).name
+                in
+                if shouldBeDocumented documentWhat context name then
+                    checkDocumentation documentation range
+
+                else
+                    []
 
             Declaration.CustomTypeDeclaration { documentation, name } ->
-                checkDocumentation documentation (Node.range name)
+                if shouldBeDocumented documentWhat context (Node.value name) then
+                    checkDocumentation documentation (Node.range name)
+
+                else
+                    []
 
             Declaration.AliasDeclaration { documentation, name } ->
-                checkDocumentation documentation (Node.range name)
+                if shouldBeDocumented documentWhat context (Node.value name) then
+                    checkDocumentation documentation (Node.range name)
+
+                else
+                    []
 
             _ ->
                 []
@@ -239,6 +255,16 @@ declarationVisitor documentWhat node context =
 
     else
         ( [], context )
+
+
+shouldBeDocumented : What -> Context -> String -> Bool
+shouldBeDocumented documentWhat context name =
+    case documentWhat of
+        Everything ->
+            True
+
+        OnlyExposed ->
+            Set.member name context.exposedElements
 
 
 checkDocumentation : Maybe (Node String) -> Range -> List (Error {})
