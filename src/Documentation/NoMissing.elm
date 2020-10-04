@@ -10,9 +10,10 @@ module Documentation.NoMissing exposing
 
 -}
 
-import Elm.Module as Module
+import Elm.Module
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
+import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range as Range exposing (Range)
@@ -76,7 +77,7 @@ rule configuration =
 type alias Context =
     { moduleNameRange : Range
     , exposedModules : Set String
-    , exposedElements : Set String
+    , exposedElements : Exposed
     , shouldBeReported : Bool
     }
 
@@ -85,9 +86,14 @@ initialContext : Context
 initialContext =
     { moduleNameRange = Range.emptyRange
     , exposedModules = Set.empty
-    , exposedElements = Set.empty
+    , exposedElements = EverythingIsExposed
     , shouldBeReported = True
     }
+
+
+type Exposed
+    = EverythingIsExposed
+    | ExplicitList (Set String)
 
 
 type alias Configuration =
@@ -136,13 +142,13 @@ elmJsonVisitor maybeProject context =
                     case package.exposed of
                         Elm.Project.ExposedList list ->
                             list
-                                |> List.map Module.toString
+                                |> List.map Elm.Module.toString
                                 |> Set.fromList
 
                         Elm.Project.ExposedDict list ->
                             list
                                 |> List.concatMap Tuple.second
-                                |> List.map Module.toString
+                                |> List.map Elm.Module.toString
                                 |> Set.fromList
 
                 _ ->
@@ -180,13 +186,39 @@ moduleDefinitionVisitor fromConfig node context =
 
                 ExposedModules ->
                     Set.member (Node.value moduleName) context.exposedModules
+
+        exposed : Exposed
+        exposed =
+            case Node.value node |> Module.exposingList of
+                Exposing.All _ ->
+                    EverythingIsExposed
+
+                Exposing.Explicit list ->
+                    ExplicitList (List.map collectExposing list |> Set.fromList)
     in
     ( []
     , { context
         | moduleNameRange = Node.range moduleName
         , shouldBeReported = shouldBeReported
+        , exposedElements = exposed
       }
     )
+
+
+collectExposing : Node Exposing.TopLevelExpose -> String
+collectExposing node =
+    case Node.value node of
+        Exposing.InfixExpose name ->
+            name
+
+        Exposing.FunctionExpose name ->
+            name
+
+        Exposing.TypeOrAliasExpose name ->
+            name
+
+        Exposing.TypeExpose exposedType ->
+            exposedType.name
 
 
 commentsVisitor : List (Node String) -> Context -> ( List (Error {}), Context )
@@ -264,7 +296,12 @@ shouldBeDocumented documentWhat context name =
             True
 
         OnlyExposed ->
-            Set.member name context.exposedElements
+            case context.exposedElements of
+                EverythingIsExposed ->
+                    True
+
+                ExplicitList exposedElements ->
+                    Set.member name exposedElements
 
 
 checkDocumentation : Maybe (Node String) -> Range -> List (Error {})
