@@ -11,13 +11,16 @@ when inside the directory containing this file.
 
 -}
 
-import Documentation.NoMissing
+import Documentation.NoMissing exposing (exposedModules, onlyExposed)
 import Documentation.ReadmeLinksPointToCurrentVersion
 import Review.Rule exposing (Rule)
 
 
 config : List Rule
 config =
-    [ Documentation.NoMissing.rule Documentation.NoMissing.onlyExposed
+    [ Documentation.NoMissing.rule
+        { document = onlyExposed
+        , from = exposedModules
+        }
     , Documentation.ReadmeLinksPointToCurrentVersion.rule
     ]
