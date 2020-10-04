@@ -1,12 +1,12 @@
 module Documentation.NoMissing exposing
     ( rule
-    , Configuration, everything, onlyExposed
+    , Configuration, everything, onlyExposed, allModules, exposedModules
     )
 
 {-|
 
 @docs rule
-@docs Configuration, everything, onlyExposed
+@docs Configuration, everything, onlyExposed, allModules, exposedModules
 
 -}
 
@@ -14,7 +14,6 @@ import Elm.Module as Module
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Module as Module exposing (Module)
-import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range as Range exposing (Range)
 import Review.Rule as Rule exposing (Error, Rule)
@@ -68,7 +67,7 @@ rule : Configuration -> Rule
 rule configuration =
     Rule.newModuleRuleSchema "Documentation.NoMissing" initialContext
         |> Rule.withElmJsonModuleVisitor elmJsonVisitor
-        |> Rule.withModuleDefinitionVisitor (moduleDefinitionVisitor configuration)
+        |> Rule.withModuleDefinitionVisitor (moduleDefinitionVisitor configuration.from)
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
@@ -89,26 +88,47 @@ initialContext =
     }
 
 
-type Configuration
+type alias Configuration =
+    { document : What
+    , from : From
+    }
+
+
+type What
     = Everything
     | OnlyExposed
 
 
-everything : Configuration
+type From
+    = AllModules
+    | ExposedModules
+
+
+everything : What
 everything =
     Everything
 
 
-onlyExposed : Configuration
+onlyExposed : What
 onlyExposed =
     OnlyExposed
+
+
+allModules : From
+allModules =
+    AllModules
+
+
+exposedModules : From
+exposedModules =
+    ExposedModules
 
 
 elmJsonVisitor : Maybe Elm.Project.Project -> Context -> Context
 elmJsonVisitor maybeProject context =
     let
-        exposedModules : Set String
-        exposedModules =
+        exposedModules_ : Set String
+        exposedModules_ =
             case maybeProject of
                 Just (Elm.Project.Package package) ->
                     case package.exposed of
@@ -126,11 +146,11 @@ elmJsonVisitor maybeProject context =
                 _ ->
                     Set.empty
     in
-    { context | exposedModules = exposedModules }
+    { context | exposedModules = exposedModules_ }
 
 
-moduleDefinitionVisitor : Configuration -> Node Module -> Context -> ( List nothing, Context )
-moduleDefinitionVisitor configuration node context =
+moduleDefinitionVisitor : From -> Node Module -> Context -> ( List nothing, Context )
+moduleDefinitionVisitor fromConfig node context =
     let
         moduleName : Node String
         moduleName =
@@ -152,11 +172,11 @@ moduleDefinitionVisitor configuration node context =
 
         shouldBeReported : Bool
         shouldBeReported =
-            case configuration of
-                Everything ->
+            case fromConfig of
+                AllModules ->
                     True
 
-                OnlyExposed ->
+                ExposedModules ->
                     Set.member (Node.value moduleName) context.exposedModules
     in
     ( []
