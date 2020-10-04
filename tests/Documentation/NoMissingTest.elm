@@ -261,10 +261,13 @@ b = ()
 """
                     |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectNoErrors
-        , test "should report exposed elements from exposed modules" <|
+        , test "should report exposed elements from exposed modules, using exposing everything" <|
             \() ->
                 """module Exposed exposing (..)
 import Thing
+function = 1
+type CustomType = Variant
+type alias Alias = A
 """
                     |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectErrors
@@ -273,6 +276,55 @@ import Thing
                             , details = missingDetails
                             , under = "Exposed"
                             }
+                        , Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "function"
+                            }
+                        , Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "CustomType"
+                            }
+                        , Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "Alias"
+                            }
+                        ]
+        , test "should report exposed elements from exposed modules, using explicit exposing" <|
+            \() ->
+                """module Exposed exposing (function, CustomType, Alias)
+import Thing
+function = 1
+type CustomType = Variant
+type alias Alias = A
+"""
+                    |> Review.Test.runWithProjectData packageProject (rule config)
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "Exposed"
+                            }
+                        , Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "function"
+                            }
+                            |> Review.Test.atExactly { start = { row = 3, column = 1 }, end = { row = 3, column = 9 } }
+                        , Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "CustomType"
+                            }
+                            |> Review.Test.atExactly { start = { row = 4, column = 6 }, end = { row = 4, column = 16 } }
+                        , Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "Alias"
+                            }
+                            |> Review.Test.atExactly { start = { row = 5, column = 12 }, end = { row = 5, column = 17 } }
                         ]
         ]
 
