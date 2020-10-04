@@ -74,7 +74,7 @@ rule configuration =
 
 
 type alias Context =
-    { moduleName : Node String
+    { moduleNameRange : Range
     , exposedModules : Set String
     , shouldBeReported : Bool
     }
@@ -82,7 +82,7 @@ type alias Context =
 
 initialContext : Context
 initialContext =
-    { moduleName = Node Range.emptyRange ""
+    { moduleNameRange = Range.emptyRange
     , exposedModules = Set.empty
     , shouldBeReported = True
     }
@@ -181,7 +181,7 @@ moduleDefinitionVisitor fromConfig node context =
     in
     ( []
     , { context
-        | moduleName = moduleName
+        | moduleNameRange = Node.range moduleName
         , shouldBeReported = shouldBeReported
       }
     )
@@ -195,7 +195,7 @@ commentsVisitor comments context =
             documentation =
                 findFirst (Node.value >> String.startsWith "{-|") comments
         in
-        ( checkDocumentation documentation (Node.range context.moduleName)
+        ( checkDocumentation documentation context.moduleNameRange
         , context
         )
 
