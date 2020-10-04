@@ -30,7 +30,7 @@ all =
 everythingEverywhereTests : Test
 everythingEverywhereTests =
     let
-        config : Documentation.NoMissing.Configuration
+        config : { document : Documentation.NoMissing.What, from : Documentation.NoMissing.From }
         config =
             { document = Documentation.NoMissing.everything
             , from = Documentation.NoMissing.allModules
@@ -204,7 +204,7 @@ import Thing
 everythingFromExposedModulesTests : Test
 everythingFromExposedModulesTests =
     let
-        config : Documentation.NoMissing.Configuration
+        config : { document : Documentation.NoMissing.What, from : Documentation.NoMissing.From }
         config =
             { document = Documentation.NoMissing.everything
             , from = Documentation.NoMissing.exposedModules
@@ -237,7 +237,7 @@ import Thing
 onlyExposedFromExposedModulesTests : Test
 onlyExposedFromExposedModulesTests =
     let
-        config : Documentation.NoMissing.Configuration
+        config : { document : Documentation.NoMissing.What, from : Documentation.NoMissing.From }
         config =
             { document = Documentation.NoMissing.onlyExposed
             , from = Documentation.NoMissing.exposedModules
