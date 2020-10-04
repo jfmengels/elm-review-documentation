@@ -1,6 +1,6 @@
 module Documentation.NoMissingTest exposing (all)
 
-import Documentation.NoMissing exposing (everything, onlyExposed, rule)
+import Documentation.NoMissing exposing (rule)
 import Elm.Project
 import Json.Decode as Decode
 import Review.Project as Project exposing (Project)
@@ -21,6 +21,22 @@ missingDetails =
 all : Test
 all =
     describe "Documentation.NoMissing"
+        [ everythingEverywhereTests
+        , everythingFromExposedModulesTests
+        , onlyExposedFromExposedModulesTests
+        ]
+
+
+everythingEverywhereTests : Test
+everythingEverywhereTests =
+    let
+        config : Documentation.NoMissing.Configuration
+        config =
+            { document = Documentation.NoMissing.everything
+            , from = Documentation.NoMissing.allModules
+            }
+    in
+    describe "document everything - from everywhere"
         [ test "should report an error when a function does not have documentation" <|
             \() ->
                 """module A exposing (..)
@@ -29,7 +45,7 @@ import Thing
 
 function = 1
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -46,7 +62,7 @@ import Thing
 {-| documentation -}
 function = 1
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectNoErrors
         , test "should report an error when a function's documentation is empty" <|
             \() ->
@@ -57,7 +73,7 @@ import Thing
 {-| -}
 function = 1
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -72,7 +88,7 @@ function = 1
 import Thing
 type CustomType = A
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -88,7 +104,7 @@ import Thing
 {-| documentation -}
 type CustomType = A
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectNoErrors
         , test "should report an error when a custom type's documentation is empty" <|
             \() ->
@@ -98,7 +114,7 @@ import Thing
 {-| -}
 type CustomType = A
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -113,7 +129,7 @@ type CustomType = A
 import Thing
 type alias Alias = A
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -129,7 +145,7 @@ import Thing
 {-| documentation -}
 type alias Alias = A
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectNoErrors
         , test "should report an error when a type alias' documentation is empty" <|
             \() ->
@@ -139,7 +155,7 @@ import Thing
 {-| -}
 type alias Alias = A
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -152,7 +168,7 @@ type alias Alias = A
                 """module A exposing (..)
 import Thing
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -166,7 +182,7 @@ import Thing
 {-| documentation -}
 import Thing
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectNoErrors
         , test "should report an error when the module's documentation is empty" <|
             \() ->
@@ -174,7 +190,7 @@ import Thing
 {-| -}
 import Thing
 """
-                    |> Review.Test.run (rule everything)
+                    |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "The documentation is empty"
@@ -182,19 +198,32 @@ import Thing
                             , under = "A"
                             }
                         ]
-        , test "should not report things from non-exposed modules for a package when using onlyExposed" <|
+        ]
+
+
+everythingFromExposedModulesTests : Test
+everythingFromExposedModulesTests =
+    let
+        config : Documentation.NoMissing.Configuration
+        config =
+            { document = Documentation.NoMissing.everything
+            , from = Documentation.NoMissing.exposedModules
+            }
+    in
+    describe "document everything - from exposed modules"
+        [ test "should not report things from non-exposed modules for a package" <|
             \() ->
                 """module NotExposed exposing (..)
 import Thing
 """
-                    |> Review.Test.runWithProjectData packageProject (rule onlyExposed)
+                    |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectNoErrors
-        , test "should report things from exposed modules for a package when using onlyExposed" <|
+        , test "should report things from exposed modules for a package" <|
             \() ->
                 """module Exposed exposing (..)
 import Thing
 """
-                    |> Review.Test.runWithProjectData packageProject (rule onlyExposed)
+                    |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = missingMessage
@@ -202,7 +231,20 @@ import Thing
                             , under = "Exposed"
                             }
                         ]
-        , test "should not report non-exposed elements from exposed modules for a package when using onlyExposed" <|
+        ]
+
+
+onlyExposedFromExposedModulesTests : Test
+onlyExposedFromExposedModulesTests =
+    let
+        config : Documentation.NoMissing.Configuration
+        config =
+            { document = Documentation.NoMissing.onlyExposed
+            , from = Documentation.NoMissing.exposedModules
+            }
+    in
+    describe "document only exposed - from exposed modules"
+        [ test "should not report non-exposed elements from exposed modules" <|
             \() ->
                 """module Exposed exposing (a)
 
@@ -217,8 +259,21 @@ a = ()
 
 b = ()
 """
-                    |> Review.Test.runWithProjectData packageProject (rule onlyExposed)
+                    |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectNoErrors
+        , test "should report exposed elements from exposed modules" <|
+            \() ->
+                """module Exposed exposing (..)
+import Thing
+"""
+                    |> Review.Test.runWithProjectData packageProject (rule config)
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = missingMessage
+                            , details = missingDetails
+                            , under = "Exposed"
+                            }
+                        ]
         ]
 
 
