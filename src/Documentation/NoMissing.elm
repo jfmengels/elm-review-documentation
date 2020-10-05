@@ -40,10 +40,12 @@ import Set exposing (Set)
 
 {-| Reports missing documentation for functions and types
 
+    import Documentation.NoMissing exposing (exposedModules, onlyExposed)
+
     config =
         [ Documentation.NoMissing.rule
-            { document = Documentation.NoMissing.everything
-            , from = Documentation.NoMissing.exposedModules
+            { document = onlyExposed
+            , from = exposedModules
             }
         ]
 
