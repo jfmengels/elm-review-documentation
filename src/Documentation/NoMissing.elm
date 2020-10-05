@@ -79,7 +79,7 @@ rule configuration =
 
 
 type alias Context =
-    { moduleNameRange : Range
+    { moduleNameNode : Node String
     , exposedModules : Set String
     , exposedElements : Exposed
     , shouldBeReported : Bool
@@ -88,7 +88,7 @@ type alias Context =
 
 initialContext : Context
 initialContext =
-    { moduleNameRange = Range.emptyRange
+    { moduleNameNode = Node Range.emptyRange ""
     , exposedModules = Set.empty
     , exposedElements = EverythingIsExposed
     , shouldBeReported = True
@@ -186,8 +186,8 @@ elmJsonVisitor maybeProject context =
 moduleDefinitionVisitor : From -> Node Module -> Context -> ( List nothing, Context )
 moduleDefinitionVisitor fromConfig node context =
     let
-        moduleName : Node String
-        moduleName =
+        moduleNameNode : Node String
+        moduleNameNode =
             case Node.value node of
                 Module.NormalModule x ->
                     Node
@@ -211,7 +211,7 @@ moduleDefinitionVisitor fromConfig node context =
                     True
 
                 ExposedModules ->
-                    Set.member (Node.value moduleName) context.exposedModules
+                    Set.member (Node.value moduleNameNode) context.exposedModules
 
         exposed : Exposed
         exposed =
@@ -224,7 +224,7 @@ moduleDefinitionVisitor fromConfig node context =
     in
     ( []
     , { context
-        | moduleNameRange = Node.range moduleName
+        | moduleNameNode = moduleNameNode
         , shouldBeReported = shouldBeReported
         , exposedElements = exposed
       }
@@ -259,7 +259,7 @@ commentsVisitor comments context =
             documentation =
                 findFirst (Node.value >> String.startsWith "{-|") comments
         in
-        ( checkDocumentation documentation context.moduleNameRange
+        ( checkDocumentation documentation context.moduleNameNode
         , context
         )
 
@@ -291,25 +291,26 @@ declarationVisitor documentWhat node context =
         ( case Node.value node of
             Declaration.FunctionDeclaration { documentation, declaration } ->
                 let
-                    (Node range name) =
+                    nameNode : Node String
+                    nameNode =
                         (Node.value declaration).name
                 in
-                if shouldBeDocumented documentWhat context name then
-                    checkDocumentation documentation range
+                if shouldBeDocumented documentWhat context (Node.value nameNode) then
+                    checkDocumentation documentation nameNode
 
                 else
                     []
 
             Declaration.CustomTypeDeclaration { documentation, name } ->
                 if shouldBeDocumented documentWhat context (Node.value name) then
-                    checkDocumentation documentation (Node.range name)
+                    checkDocumentation documentation name
 
                 else
                     []
 
             Declaration.AliasDeclaration { documentation, name } ->
                 if shouldBeDocumented documentWhat context (Node.value name) then
-                    checkDocumentation documentation (Node.range name)
+                    checkDocumentation documentation name
 
                 else
                     []
@@ -338,8 +339,8 @@ shouldBeDocumented documentWhat context name =
                     Set.member name exposedElements
 
 
-checkDocumentation : Maybe (Node String) -> Range -> List (Error {})
-checkDocumentation documentation range =
+checkDocumentation : Maybe (Node String) -> Node String -> List (Error {})
+checkDocumentation documentation nameNode =
     case documentation of
         Just doc ->
             let
@@ -353,7 +354,7 @@ checkDocumentation documentation range =
             in
             if String.isEmpty trimmedDocumentation then
                 [ Rule.error
-                    { message = "The documentation is empty"
+                    { message = "The documentation for module `" ++ Node.value nameNode ++ "` is empty"
                     , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
                     }
                     (Node.range doc)
@@ -367,5 +368,5 @@ checkDocumentation documentation range =
                 { message = "Missing documentation"
                 , details = [ "Documentation can help developers use this API." ]
                 }
-                range
+                (Node.range nameNode)
             ]
