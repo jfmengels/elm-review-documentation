@@ -45,9 +45,6 @@ import Set exposing (Set)
             { document = Documentation.NoMissing.everything
             , from = Documentation.NoMissing.exposedModules
             }
-
-        -- or
-        , Documentation.NoMissing.rule Documentation.NoMissing.everything
         ]
 
 
