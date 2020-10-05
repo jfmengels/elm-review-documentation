@@ -259,7 +259,7 @@ commentsVisitor comments context =
             documentation =
                 findFirst (Node.value >> String.startsWith "{-|") comments
         in
-        ( checkDocumentation documentation context.moduleNameNode
+        ( checkModuleDocumentation documentation context.moduleNameNode
         , context
         )
 
@@ -339,6 +339,39 @@ shouldBeDocumented documentWhat context name =
                     Set.member name exposedElements
 
 
+checkModuleDocumentation : Maybe (Node String) -> Node String -> List (Error {})
+checkModuleDocumentation documentation nameNode =
+    case documentation of
+        Just doc ->
+            let
+                trimmedDocumentation : String
+                trimmedDocumentation =
+                    doc
+                        |> Node.value
+                        |> String.dropLeft 3
+                        |> String.dropRight 2
+                        |> String.trim
+            in
+            if String.isEmpty trimmedDocumentation then
+                [ Rule.error
+                    { message = "The documentation for module `" ++ Node.value nameNode ++ "` is empty"
+                    , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
+                    }
+                    (Node.range doc)
+                ]
+
+            else
+                []
+
+        Nothing ->
+            [ Rule.error
+                { message = "Missing documentation"
+                , details = [ "Documentation can help developers use this API." ]
+                }
+                (Node.range nameNode)
+            ]
+
+
 checkDocumentation : Maybe (Node String) -> Node String -> List (Error {})
 checkDocumentation documentation nameNode =
     case documentation of
@@ -354,7 +387,7 @@ checkDocumentation documentation nameNode =
             in
             if String.isEmpty trimmedDocumentation then
                 [ Rule.error
-                    { message = "The documentation for module `" ++ Node.value nameNode ++ "` is empty"
+                    { message = "The documentation for `" ++ Node.value nameNode ++ "` is empty"
                     , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
                     }
                     (Node.range doc)

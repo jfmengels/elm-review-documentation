@@ -76,7 +76,7 @@ function = 1
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "The documentation is empty"
+                            { message = "The documentation for `function` is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
                             , under = "{-| -}"
                             }
@@ -117,7 +117,7 @@ type CustomType = A
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "The documentation for AAA is empty"
+                            { message = "The documentation for `CustomType` is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
                             , under = "{-| -}"
                             }
@@ -158,7 +158,7 @@ type alias Alias = A
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "The documentation for AAA is empty"
+                            { message = "The documentation for `Alias` is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
                             , under = "{-| -}"
                             }
