@@ -78,7 +78,7 @@ function = 1
                         [ Review.Test.error
                             { message = "The documentation is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
-                            , under = "function"
+                            , under = "{-| -}"
                             }
                         ]
         , test "should report an error when a custom type does not have documentation" <|
@@ -119,7 +119,7 @@ type CustomType = A
                         [ Review.Test.error
                             { message = "The documentation is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
-                            , under = "CustomType"
+                            , under = "{-| -}"
                             }
                         ]
         , test "should report an error when a type alias does not have documentation" <|
@@ -160,7 +160,7 @@ type alias Alias = A
                         [ Review.Test.error
                             { message = "The documentation is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
-                            , under = "Alias"
+                            , under = "{-| -}"
                             }
                         ]
         , test "should report an error when a module does not have documentation" <|
@@ -195,7 +195,7 @@ import Thing
                         [ Review.Test.error
                             { message = "The documentation is empty"
                             , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
-                            , under = "A"
+                            , under = "{-| -}"
                             }
                         ]
         ]
