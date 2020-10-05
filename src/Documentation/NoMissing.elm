@@ -343,16 +343,7 @@ checkModuleDocumentation : Maybe (Node String) -> Node String -> List (Error {})
 checkModuleDocumentation documentation nameNode =
     case documentation of
         Just doc ->
-            let
-                trimmedDocumentation : String
-                trimmedDocumentation =
-                    doc
-                        |> Node.value
-                        |> String.dropLeft 3
-                        |> String.dropRight 2
-                        |> String.trim
-            in
-            if String.isEmpty trimmedDocumentation then
+            if isDocumentationEmpty doc then
                 [ Rule.error
                     { message = "The documentation for module `" ++ Node.value nameNode ++ "` is empty"
                     , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
@@ -376,16 +367,7 @@ checkDocumentation : Maybe (Node String) -> Node String -> List (Error {})
 checkDocumentation documentation nameNode =
     case documentation of
         Just doc ->
-            let
-                trimmedDocumentation : String
-                trimmedDocumentation =
-                    doc
-                        |> Node.value
-                        |> String.dropLeft 3
-                        |> String.dropRight 2
-                        |> String.trim
-            in
-            if String.isEmpty trimmedDocumentation then
+            if isDocumentationEmpty doc then
                 [ Rule.error
                     { message = "The documentation for `" ++ Node.value nameNode ++ "` is empty"
                     , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
@@ -403,3 +385,13 @@ checkDocumentation documentation nameNode =
                 }
                 (Node.range nameNode)
             ]
+
+
+isDocumentationEmpty : Node String -> Bool
+isDocumentationEmpty doc =
+    doc
+        |> Node.value
+        |> String.dropLeft 3
+        |> String.dropRight 2
+        |> String.trim
+        |> String.isEmpty
