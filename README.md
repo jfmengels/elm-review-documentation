@@ -11,16 +11,18 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ## Configuration
 
 ```elm
-module ReviewConfig exposing (config)
-
-import Documentation.NoMissing
+import Documentation.NoMissing exposing (exposedModules, onlyExposed)
 import Documentation.ReadmeLinksPointToCurrentVersion
 import Review.Rule exposing (Rule)
 
+
 config : List Rule
 config =
-    [ Documentation.ReadmeLinksPointToCurrentVersion.rule
-    , Documentation.NoMissing.rule
+    [ Documentation.NoMissing.rule
+        { document = onlyExposed
+        , from = exposedModules
+        }
+    , Documentation.ReadmeLinksPointToCurrentVersion.rule
     ]
 ```
 
