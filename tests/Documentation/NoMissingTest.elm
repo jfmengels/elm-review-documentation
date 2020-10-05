@@ -43,7 +43,7 @@ function = 1
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `function`"
                             , details = missingDetails
                             , under = "function"
                             }
@@ -86,7 +86,7 @@ type CustomType = A
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `CustomType`"
                             , details = missingDetails
                             , under = "CustomType"
                             }
@@ -127,7 +127,7 @@ type alias Alias = A
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `Alias`"
                             , details = missingDetails
                             , under = "Alias"
                             }
@@ -166,7 +166,7 @@ import Thing
                     |> Review.Test.run (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for module `A`"
                             , details = missingDetails
                             , under = "A"
                             }
@@ -221,7 +221,7 @@ import Thing
                     |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for module `Exposed`"
                             , details = missingDetails
                             , under = "Exposed"
                             }
@@ -267,22 +267,22 @@ type alias Alias = A
                     |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for module `Exposed`"
                             , details = missingDetails
                             , under = "Exposed"
                             }
                         , Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `function`"
                             , details = missingDetails
                             , under = "function"
                             }
                         , Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `CustomType`"
                             , details = missingDetails
                             , under = "CustomType"
                             }
                         , Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `Alias`"
                             , details = missingDetails
                             , under = "Alias"
                             }
@@ -298,24 +298,24 @@ type alias Alias = A
                     |> Review.Test.runWithProjectData packageProject (rule config)
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for module `Exposed`"
                             , details = missingDetails
                             , under = "Exposed"
                             }
                         , Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `function`"
                             , details = missingDetails
                             , under = "function"
                             }
                             |> Review.Test.atExactly { start = { row = 3, column = 1 }, end = { row = 3, column = 9 } }
                         , Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `CustomType`"
                             , details = missingDetails
                             , under = "CustomType"
                             }
                             |> Review.Test.atExactly { start = { row = 4, column = 6 }, end = { row = 4, column = 16 } }
                         , Review.Test.error
-                            { message = "Missing documentation"
+                            { message = "Missing documentation for `Alias`"
                             , details = missingDetails
                             , under = "Alias"
                             }
