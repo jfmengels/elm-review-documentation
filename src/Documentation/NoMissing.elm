@@ -351,7 +351,7 @@ checkDocumentation documentation range =
                         |> String.dropRight 2
                         |> String.trim
             in
-            if trimmedDocumentation == "" then
+            if String.isEmpty trimmedDocumentation then
                 [ Rule.error
                     { message = "The documentation is empty"
                     , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
