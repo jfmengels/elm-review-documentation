@@ -356,7 +356,7 @@ checkModuleDocumentation documentation nameNode =
 
         Nothing ->
             [ Rule.error
-                { message = "Missing documentation"
+                { message = "Missing documentation for module `" ++ Node.value nameNode ++ "`"
                 , details = [ "Documentation can help developers use this API." ]
                 }
                 (Node.range nameNode)
@@ -380,7 +380,7 @@ checkDocumentation documentation nameNode =
 
         Nothing ->
             [ Rule.error
-                { message = "Missing documentation"
+                { message = "Missing documentation for `" ++ Node.value nameNode ++ "`"
                 , details = [ "Documentation can help developers use this API." ]
                 }
                 (Node.range nameNode)
