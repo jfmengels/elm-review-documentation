@@ -14,14 +14,18 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ```elm
 module ReviewConfig exposing (config)
 
-import Documentation.NoMissing
+import Documentation.NoMissing exposing (exposedModules, onlyExposed)
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
 import Review.Rule exposing (Rule)
 
+
 config : List Rule
 config =
     [ Documentation.NoMissing.rule
+        { document = onlyExposed
+        , from = exposedModules
+        }
     , Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
     ]

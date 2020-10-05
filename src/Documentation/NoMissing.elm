@@ -10,6 +10,21 @@ module Documentation.NoMissing exposing
 @docs What, everything, onlyExposed
 @docs From, allModules, exposedModules
 
+
+## When (not) to enable this rule
+
+This rule is useful when you care about having a thoroughly documented project.
+It is also useful when you write Elm packages, in order to know about missing documentation before you publish.
+
+
+## Try it out
+
+You can try this rule out by running the following command:
+
+```bash
+elm-review --template jfmengels/elm-review-documentation/example --rules Documentation.NoMissing
+```
+
 -}
 
 import Elm.Module
@@ -26,7 +41,10 @@ import Set exposing (Set)
 {-| Reports missing documentation for functions and types
 
     config =
-        [ Documentation.NoMissing.rule Documentation.NoMissing.onlyExposed
+        [ Documentation.NoMissing.rule
+            { document = Documentation.NoMissing.everything
+            , from = Documentation.NoMissing.exposedModules
+            }
 
         -- or
         , Documentation.NoMissing.rule Documentation.NoMissing.everything
@@ -49,21 +67,6 @@ import Set exposing (Set)
     -}
     someFunction =
         great Things
-
-
-## When (not) to enable this rule
-
-This rule is useful when you care about having a thoroughly documented project.
-It is also useful when you write Elm packages, in order to know about missing documentation before you publish.
-
-
-## Try it out
-
-You can try this rule out by running the following command:
-
-```bash
-elm-review --template jfmengels/elm-review-documentation/example --rules Documentation.NoMissing
-```
 
 -}
 rule : { document : What, from : From } -> Rule
@@ -98,34 +101,58 @@ type Exposed
     | ExplicitList (Set String)
 
 
+{-| Which elements from a module should be documented.
+-}
 type What
     = Everything
     | OnlyExposed
 
 
-type From
-    = AllModules
-    | ExposedModules
-
-
+{-| Everything function and type from a module should be documented. The module definition should also be documented.
+-}
 everything : What
 everything =
     Everything
 
 
+{-| Only exposed functions and types from a module should be documented. The module definition should also be documented.
+-}
 onlyExposed : What
 onlyExposed =
     OnlyExposed
 
 
+{-| Which modules should be documented.
+-}
+type From
+    = AllModules
+    | ExposedModules
+
+
+{-| All modules from the project should be documented.
+
+You might want to use [`ignoreErrorsForDirectories`](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/Review-Rule#ignoreErrorsForDirectories) to ignore the source directories.
+
+-}
 allModules : From
 allModules =
     AllModules
 
 
+{-| Only exposed modules from the project should be documented.
+
+If your project is an application, you should not use this option. An application does not expose modules which would mean there are not modules to report.
+
+You might want to use [`ignoreErrorsForDirectories`](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/Review-Rule#ignoreErrorsForDirectories) to ignore the source directories.
+
+-}
 exposedModules : From
 exposedModules =
     ExposedModules
+
+
+
+-- ELM.JSON VISITOR
 
 
 elmJsonVisitor : Maybe Elm.Project.Project -> Context -> Context
@@ -151,6 +178,10 @@ elmJsonVisitor maybeProject context =
                     Set.empty
     in
     { context | exposedModules = exposedModules_ }
+
+
+
+-- MODULE DEFINITION VISITOR
 
 
 moduleDefinitionVisitor : From -> Node Module -> Context -> ( List nothing, Context )
@@ -217,6 +248,10 @@ collectExposing node =
             exposedType.name
 
 
+
+-- COMMENTS VISITOR
+
+
 commentsVisitor : List (Node String) -> Context -> ( List (Error {}), Context )
 commentsVisitor comments context =
     if context.shouldBeReported then
@@ -245,6 +280,10 @@ findFirst predicate list =
 
             else
                 findFirst predicate rest
+
+
+
+-- DECLARATION VISITOR
 
 
 declarationVisitor : What -> Node Declaration -> Context -> ( List (Error {}), Context )
