@@ -13,6 +13,12 @@ missingDetails =
     [ "Documentation can help developers use this API." ]
 
 
+missingModuleDetails : List String
+missingModuleDetails =
+    [ "A module documentation summarizes what a module is for, the responsibilities it has and how to use it. Providing a good module documentation will be useful for your users or colleagues."
+    ]
+
+
 all : Test
 all =
     describe "Documentation.NoMissing"
