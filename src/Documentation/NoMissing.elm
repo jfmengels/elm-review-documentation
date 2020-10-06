@@ -346,7 +346,7 @@ checkModuleDocumentation documentation nameNode =
             if isDocumentationEmpty doc then
                 [ Rule.error
                     { message = "The documentation for module `" ++ Node.value nameNode ++ "` is empty"
-                    , details = [ "Empty documentation is not useful for the users. Please give explanations or examples." ]
+                    , details = [ "A module documentation summarizes what a module is for, the responsibilities it has and how to use it. Providing a good module documentation will be useful for your users or colleagues." ]
                     }
                     (Node.range doc)
                 ]
@@ -357,10 +357,16 @@ checkModuleDocumentation documentation nameNode =
         Nothing ->
             [ Rule.error
                 { message = "Missing documentation for module `" ++ Node.value nameNode ++ "`"
-                , details = [ "Documentation can help developers use this API." ]
+                , details = documentationErrorDetails
                 }
                 (Node.range nameNode)
             ]
+
+
+documentationErrorDetails : List String
+documentationErrorDetails =
+    [ "A module documentation summarizes what a module is for, the responsibilities it has and how to use it. Providing a good module documentation will be useful for your users or colleagues."
+    ]
 
 
 checkDocumentation : Maybe (Node String) -> Node String -> List (Error {})
