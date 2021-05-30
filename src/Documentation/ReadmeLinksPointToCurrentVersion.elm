@@ -18,6 +18,8 @@ import Review.Rule as Rule exposing (Error, Rule)
 {-| Reports links in the `README.md` that point to this project's package documentation on <https://package.elm-lang.org/>,
 where the version is set to `latest` or a different version than the current version of the package.
 
+🔧 Running with `--fix` will automatically remove all the reported errors.
+
 The problem with linking to `latest` is that if you release a new version later,
 the users who read the README for the older version will be directed to a version
 where the module/function/section you pointed to may not exist anymore.
