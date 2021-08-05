@@ -47,7 +47,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules NoUsele
 -}
 rule : Rule
 rule =
-    Rule.newProjectRuleSchema "ReadmeLinksPointToCurrentVersion" initialProjectContext
+    Rule.newProjectRuleSchema "Documentation.ReadmeLinksPointToCurrentVersion" initialProjectContext
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.fromProjectRuleSchema

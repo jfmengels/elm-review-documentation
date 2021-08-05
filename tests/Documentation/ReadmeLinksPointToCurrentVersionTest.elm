@@ -76,7 +76,7 @@ Don't report:
 
 all : Test
 all =
-    describe "ReadmeLinksPointToCurrentVersion"
+    describe "Documentation.ReadmeLinksPointToCurrentVersion"
         [ test "should not report an error if there is no elm.json file" <|
             \() ->
                 Project.new
