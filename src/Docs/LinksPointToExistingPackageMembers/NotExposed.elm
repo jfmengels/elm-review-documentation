@@ -290,53 +290,6 @@ check { linksInReadme, exposed, linksInModules } =
                                 exposedDefs
                     )
                 |> Set.fromList
-
-        checkLink error match =
-            let
-                { moduleName, kind } =
-                    match.parsed
-            in
-            case kind of
-                ModuleLink ->
-                    if
-                        exposed
-                            |> Set.toList
-                            |> List.any
-                                (.moduleName
-                                    >> (==) moduleName
-                                )
-                    then
-                        []
-
-                    else
-                        [ error
-                            { message = moduleInLinkNotExposed
-                            , details = details exposedMembers moduleName
-                            }
-                            match.range
-                        ]
-
-                DefinitionLink definition ->
-                    if
-                        exposed
-                            |> Set.toList
-                            |> List.any
-                                (\m ->
-                                    (m.moduleName == moduleName)
-                                        && (m.exposedDefinitions
-                                                |> isExposed definition
-                                           )
-                                )
-                    then
-                        []
-
-                    else
-                        [ error
-                            { message = definitionInLinkNotExposedMessage
-                            , details = details exposedMembers moduleName
-                            }
-                            match.range
-                        ]
     in
     [ linksInReadme
         |> Maybe.map
@@ -357,7 +310,7 @@ check { linksInReadme, exposed, linksInModules } =
                                     ]
 
                                 _ ->
-                                    checkLink (Rule.errorForReadme key) match
+                                    checkLink exposed exposedMembers (Rule.errorForReadme key) match
                         )
             )
         |> Maybe.withDefault []
@@ -367,10 +320,58 @@ check { linksInReadme, exposed, linksInModules } =
                 links
                     |> Set.toList
                     |> List.concatMap
-                        (checkLink (Rule.errorForModule key))
+                        (checkLink exposed exposedMembers (Rule.errorForModule key))
             )
     ]
         |> List.concat
+
+
+checkLink exposed exposedMembers error match =
+    let
+        { moduleName, kind } =
+            match.parsed
+    in
+    case kind of
+        ModuleLink ->
+            if
+                exposed
+                    |> Set.toList
+                    |> List.any
+                        (.moduleName
+                            >> (==) moduleName
+                        )
+            then
+                []
+
+            else
+                [ error
+                    { message = moduleInLinkNotExposed
+                    , details = details exposedMembers moduleName
+                    }
+                    match.range
+                ]
+
+        DefinitionLink definition ->
+            if
+                exposed
+                    |> Set.toList
+                    |> List.any
+                        (\m ->
+                            (m.moduleName == moduleName)
+                                && (m.exposedDefinitions
+                                        |> isExposed definition
+                                   )
+                        )
+            then
+                []
+
+            else
+                [ error
+                    { message = definitionInLinkNotExposedMessage
+                    , details = details exposedMembers moduleName
+                    }
+                    match.range
+                ]
 
 
 details : EverySet String -> ModuleName -> List String
