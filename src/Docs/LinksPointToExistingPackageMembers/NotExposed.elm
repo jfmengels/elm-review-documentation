@@ -160,9 +160,7 @@ elmJsonVisitor maybeElmJson context =
     )
 
 
-exposedModulesInElmJson :
-    { key_ | project : Project }
-    -> Set ModuleInfo
+exposedModulesInElmJson : { key_ | project : Project } -> Set ModuleInfo
 exposedModulesInElmJson { project } =
     case project of
         Project.Package { exposed } ->
