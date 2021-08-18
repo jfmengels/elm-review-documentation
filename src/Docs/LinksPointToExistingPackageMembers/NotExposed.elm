@@ -132,6 +132,29 @@ rule =
         |> Rule.fromProjectRuleSchema
 
 
+type alias ProjectContext =
+    { inReadme :
+        Maybe
+            { key : Rule.ReadmeKey
+            , links :
+                Set { parsed : Link, range : Range }
+            }
+    , inModules :
+        Set
+            { key : Rule.ModuleKey
+            , links :
+                Set { parsed : Link, range : Range }
+            }
+    , exposed : Set ModuleInfo
+    }
+
+
+type alias ModuleContext =
+    { docs : Set (Node String)
+    , exposed : Set ModuleInfo
+    }
+
+
 
 -- README VISITOR
 
@@ -185,29 +208,6 @@ exposedModulesInElmJson { project } =
 
         Project.Application _ ->
             Set.empty
-
-
-type alias ProjectContext =
-    { inReadme :
-        Maybe
-            { key : Rule.ReadmeKey
-            , links :
-                Set { parsed : Link, range : Range }
-            }
-    , inModules :
-        Set
-            { key : Rule.ModuleKey
-            , links :
-                Set { parsed : Link, range : Range }
-            }
-    , exposed : Set ModuleInfo
-    }
-
-
-type alias ModuleContext =
-    { docs : Set (Node String)
-    , exposed : Set ModuleInfo
-    }
 
 
 linksIn :
