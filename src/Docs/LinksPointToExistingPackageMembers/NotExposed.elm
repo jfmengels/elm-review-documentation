@@ -30,38 +30,7 @@ rule =
         }
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
-        |> Rule.withModuleVisitor
-            (let
-                insertDoc context doc =
-                    { context
-                        | docs =
-                            context.docs
-                                |> Set.insert doc
-                    }
-             in
-             Rule.withModuleDefinitionVisitor
-                exposedInModule
-                >> Rule.withDeclarationEnterVisitor
-                    (\(Node _ declaration) context ->
-                        ( []
-                        , declaration
-                            |> docOfDeclaration
-                            |> Maybe.map (insertDoc context)
-                            |> Maybe.withDefault context
-                        )
-                    )
-                >> Rule.withCommentsVisitor
-                    (\comments context ->
-                        ( []
-                        , comments
-                            |> List.filter
-                                (isFileComment << Node.value)
-                            |> List.head
-                            |> Maybe.map (insertDoc context)
-                            |> Maybe.withDefault context
-                        )
-                    )
-            )
+        |> Rule.withModuleVisitor moduleVisitor
         |> (let
                 toModule : ProjectContext -> ModuleContext
                 toModule context =
@@ -208,6 +177,40 @@ exposedModulesInElmJson { project } =
 
         Project.Application _ ->
             Set.empty
+
+
+moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
+moduleVisitor =
+    let
+        insertDoc context doc =
+            { context
+                | docs =
+                    context.docs
+                        |> Set.insert doc
+            }
+    in
+    Rule.withModuleDefinitionVisitor
+        exposedInModule
+        >> Rule.withDeclarationEnterVisitor
+            (\(Node _ declaration) context ->
+                ( []
+                , declaration
+                    |> docOfDeclaration
+                    |> Maybe.map (insertDoc context)
+                    |> Maybe.withDefault context
+                )
+            )
+        >> Rule.withCommentsVisitor
+            (\comments context ->
+                ( []
+                , comments
+                    |> List.filter
+                        (isFileComment << Node.value)
+                    |> List.head
+                    |> Maybe.map (insertDoc context)
+                    |> Maybe.withDefault context
+                )
+            )
 
 
 linksIn :
