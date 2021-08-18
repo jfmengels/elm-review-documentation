@@ -320,14 +320,14 @@ check { linksInReadme, exposed, linksInModules } =
                         )
             )
         |> Maybe.withDefault []
-    , linksInModules
-        |> List.concatMap
-            (\{ key, links } ->
-                links
-                    |> Set.toList
-                    |> List.concatMap
-                        (checkLink exposed exposedMembers (Rule.errorForModule key))
-            )
+    , List.concatMap
+        (\{ key, links } ->
+            links
+                |> Set.toList
+                |> List.concatMap
+                    (checkLink exposed exposedMembers (Rule.errorForModule key))
+        )
+        linksInModules
     ]
         |> List.concat
 
