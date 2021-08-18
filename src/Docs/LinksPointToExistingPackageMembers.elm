@@ -215,9 +215,7 @@ linksIn { doc, start } =
             )
 
 
-findLinksInReadme :
-    { readmeKey : Rule.ReadmeKey, content : String }
-    -> { key : Rule.ReadmeKey, links : EverySet LinkWithRange }
+findLinksInReadme : { readmeKey : Rule.ReadmeKey, content : String } -> SourceAndLinks Rule.ReadmeKey
 findLinksInReadme readme =
     let
         { readmeKey, content } =
@@ -299,7 +297,7 @@ check { linksInReadme, exposed, linksInModules } =
     List.append errorsForLinksInReadme errorsForLinksInModules
 
 
-errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> { a | key : Rule.ReadmeKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
+errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
 errorForLinkInReadme exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -321,7 +319,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
             )
 
 
-errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> { a | key : Rule.ModuleKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
+errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
 errorForLinkInModule exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
