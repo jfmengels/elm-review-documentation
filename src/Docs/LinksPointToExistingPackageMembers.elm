@@ -60,7 +60,7 @@ type alias LinkWithRange =
 
 
 type alias ModuleContext =
-    { docs : EverySet (Node String)
+    { docs : List (Node String)
     , exposedModules : Set ModuleName
     , exposedFromModule : EverySet SyntaxHelp.ModuleInfo
     }
@@ -79,7 +79,7 @@ fromProjectToModule : ProjectContext -> ModuleContext
 fromProjectToModule projectContext =
     { exposedFromModule = EverySet.empty
     , exposedModules = projectContext.exposedModules
-    , docs = EverySet.empty
+    , docs = []
     }
 
 
@@ -92,7 +92,6 @@ fromModuleToProject moduleKey (Node _ moduleName) { exposedFromModule, docs } =
         [ { key = moduleKey
           , links =
                 docs
-                    |> EverySet.toList
                     |> List.concatMap
                         (\(Node { start } doc) ->
                             linksIn { doc = doc, start = start }
@@ -200,7 +199,7 @@ commentsVisitor comments context =
 
 insertDoc : ModuleContext -> Node String -> ModuleContext
 insertDoc context doc =
-    { context | docs = EverySet.insert doc context.docs }
+    { context | docs = doc :: context.docs }
 
 
 linksIn :
