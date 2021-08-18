@@ -192,15 +192,17 @@ moduleVisitor schema =
                     |> Maybe.withDefault context
                 )
             )
-        |> Rule.withCommentsVisitor
-            (\comments context ->
-                ( []
-                , comments
-                    |> find (Node.value >> isFileComment)
-                    |> Maybe.map (insertDoc context)
-                    |> Maybe.withDefault context
-                )
-            )
+        |> Rule.withCommentsVisitor commentsVisitor
+
+
+commentsVisitor : List (Node String) -> ModuleContext -> ( List nothing, ModuleContext )
+commentsVisitor comments context =
+    ( []
+    , comments
+        |> find (Node.value >> isFileComment)
+        |> Maybe.map (insertDoc context)
+        |> Maybe.withDefault context
+    )
 
 
 insertDoc : ModuleContext -> Node String -> ModuleContext
