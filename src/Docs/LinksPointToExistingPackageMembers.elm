@@ -299,18 +299,19 @@ errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> Set String -> SourceAnd
 errorForLinkInReadme exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
-        |> List.concatMap
+        |> List.filterMap
             (\link ->
                 case ( link.parsed.moduleName, link.parsed.kind ) of
                     ( [], SyntaxHelp.DefinitionLink definition ) ->
-                        [ Rule.errorForReadme key
-                            (noModuleSpecifiedForDefinitionInLinkInReadme
-                                { badLink = definition
-                                , exposed = Set.toList exposedMembers
-                                }
+                        Just
+                            (Rule.errorForReadme key
+                                (noModuleSpecifiedForDefinitionInLinkInReadme
+                                    { badLink = definition
+                                    , exposed = Set.toList exposedMembers
+                                    }
+                                )
+                                link.range
                             )
-                            link.range
-                        ]
 
                     _ ->
                         checkLink exposed exposedMembers (Rule.errorForReadme key) link
@@ -321,7 +322,7 @@ errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> Set String -> SourceAnd
 errorForLinkInModule exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
-        |> List.concatMap (checkLink exposed exposedMembers (Rule.errorForModule key))
+        |> List.filterMap (checkLink exposed exposedMembers (Rule.errorForModule key))
 
 
 checkLink :
@@ -329,7 +330,7 @@ checkLink :
     -> Set String
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange
-    -> List (Rule.Error scope)
+    -> Maybe (Rule.Error scope)
 checkLink exposed exposedMembers error link =
     case link.parsed.kind of
         SyntaxHelp.ModuleLink ->
@@ -338,15 +339,16 @@ checkLink exposed exposedMembers error link =
                     |> EverySet.toList
                     |> List.any (\exposedElement -> exposedElement.moduleName == link.parsed.moduleName)
             then
-                []
+                Nothing
 
             else
-                [ error
-                    { message = moduleInLinkNotExposed
-                    , details = details exposedMembers link.parsed.moduleName
-                    }
-                    link.range
-                ]
+                Just
+                    (error
+                        { message = moduleInLinkNotExposed
+                        , details = details exposedMembers link.parsed.moduleName
+                        }
+                        link.range
+                    )
 
         SyntaxHelp.DefinitionLink definition ->
             if
@@ -360,15 +362,16 @@ checkLink exposed exposedMembers error link =
                                    )
                         )
             then
-                []
+                Nothing
 
             else
-                [ error
-                    { message = definitionInLinkNotExposedMessage
-                    , details = details exposedMembers link.parsed.moduleName
-                    }
-                    link.range
-                ]
+                Just
+                    (error
+                        { message = definitionInLinkNotExposedMessage
+                        , details = details exposedMembers link.parsed.moduleName
+                        }
+                        link.range
+                    )
 
 
 details : Set String -> ModuleName -> List String
