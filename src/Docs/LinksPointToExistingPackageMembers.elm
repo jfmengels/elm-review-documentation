@@ -61,6 +61,7 @@ type alias LinkWithRange =
 
 type alias ModuleContext =
     { docs : EverySet (Node String)
+    , exposedModules : Set ModuleName
     , exposedFromModule : EverySet SyntaxHelp.ModuleInfo
     }
 
@@ -77,6 +78,7 @@ initialProjectContext =
 fromProjectToModule : ProjectContext -> ModuleContext
 fromProjectToModule projectContext =
     { exposedFromModule = projectContext.exposed
+    , exposedModules = projectContext.exposedModules
     , docs = EverySet.empty
     }
 
