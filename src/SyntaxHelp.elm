@@ -1,4 +1,16 @@
-module SyntaxHelp exposing (ExposingKind(..), Link, LinkKind(..), ModuleInfo, addLocation, docOfDeclaration, exposedModules, isExposed, isFileComment, linkParser, moduleInfo)
+module SyntaxHelp exposing
+    ( ExposingKind(..)
+    , Link
+    , LinkKind(..)
+    , ModuleInfo
+    , addLocation
+    , docOfDeclaration
+    , exposedModules
+    , isExposed
+    , isFileComment
+    , linkParser
+    , moduleInfo
+    )
 
 import Elm.Module as Module
 import Elm.Project as Project
