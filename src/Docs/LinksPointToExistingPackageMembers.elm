@@ -186,7 +186,7 @@ declarationVisitor (Node _ declaration) context =
     ( []
     , case SyntaxHelp.docOfDeclaration declaration of
         Just doc ->
-            insertDoc context doc
+            { context | docs = doc :: context.docs }
 
         Nothing ->
             context
@@ -196,16 +196,13 @@ declarationVisitor (Node _ declaration) context =
 commentsVisitor : List (Node String) -> ModuleContext -> ( List nothing, ModuleContext )
 commentsVisitor comments context =
     ( []
-    , comments
-        |> find (Node.value >> SyntaxHelp.isFileComment)
-        |> Maybe.map (insertDoc context)
-        |> Maybe.withDefault context
+    , case find (Node.value >> SyntaxHelp.isFileComment) comments of
+        Just doc ->
+            { context | docs = doc :: context.docs }
+
+        Nothing ->
+            context
     )
-
-
-insertDoc : ModuleContext -> Node String -> ModuleContext
-insertDoc context doc =
-    { context | docs = doc :: context.docs }
 
 
 linksIn : { doc : String, start : Location } -> List LinkWithRange
