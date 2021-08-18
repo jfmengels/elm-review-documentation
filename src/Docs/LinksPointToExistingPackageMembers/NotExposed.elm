@@ -24,11 +24,7 @@ type alias Set a =
 
 rule : Rule
 rule =
-    Rule.newProjectRuleSchema "LinksPointToExistingPackageMembers"
-        { exposed = Set.empty
-        , inModules = Set.empty
-        , inReadme = Nothing
-        }
+    Rule.newProjectRuleSchema "LinksPointToExistingPackageMembers" initialProjectContext
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withModuleVisitor moduleVisitor
@@ -118,6 +114,14 @@ type alias SourceAndLinks key =
 type alias ModuleContext =
     { docs : Set (Node String)
     , exposed : Set ModuleInfo
+    }
+
+
+initialProjectContext : ProjectContext
+initialProjectContext =
+    { exposed = Set.empty
+    , inModules = Set.empty
+    , inReadme = Nothing
     }
 
 
