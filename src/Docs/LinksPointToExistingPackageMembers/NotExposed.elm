@@ -427,9 +427,5 @@ linkPointsToNonExistentMemberDetails { exposed, badLink } =
                 |> String.join ", "
     in
     [ "Links are only useful when they point to exposed package members."
-    , [ "Maybe you meant one of those: "
-      , suggestions
-      , "."
-      ]
-        |> String.concat
+    , "Maybe you meant one of those: " ++ suggestions ++ "."
     ]
