@@ -153,33 +153,27 @@ elmJsonVisitor : Maybe { key_ | project : Project } -> ProjectContext -> ( List 
 elmJsonVisitor maybeElmJson context =
     ( []
     , { context
-        | exposed =
+        | exposedModules =
             case maybeElmJson of
                 Just elmJson ->
                     exposedModulesInElmJson elmJson
 
                 Nothing ->
-                    EverySet.empty
+                    Set.empty
       }
     )
 
 
-exposedModulesInElmJson : { key_ | project : Project } -> EverySet SyntaxHelp.ModuleInfo
+exposedModulesInElmJson : { key_ | project : Project } -> Set ModuleName
 exposedModulesInElmJson { project } =
     case project of
         Project.Package { exposed } ->
             SyntaxHelp.exposedModules exposed
-                |> EverySet.fromList
-                |> EverySet.map
-                    (\name ->
-                        { moduleName =
-                            name |> Elm.Module.toString |> String.split "."
-                        , exposedDefinitions = ( SyntaxHelp.Explicit, [] )
-                        }
-                    )
+                |> List.map (\name -> name |> Elm.Module.toString |> String.split ".")
+                |> Set.fromList
 
         Project.Application _ ->
-            EverySet.empty
+            Set.empty
 
 
 declarationVisitor : Node Declaration -> ModuleContext -> ( List nothing, ModuleContext )
