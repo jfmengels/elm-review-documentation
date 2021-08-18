@@ -181,14 +181,6 @@ exposedModulesInElmJson { project } =
 
 moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
 moduleVisitor schema =
-    let
-        insertDoc context doc =
-            { context
-                | docs =
-                    context.docs
-                        |> Set.insert doc
-            }
-    in
     schema
         |> Rule.withModuleDefinitionVisitor exposedInModule
         |> Rule.withDeclarationEnterVisitor
@@ -211,6 +203,15 @@ moduleVisitor schema =
                     |> Maybe.withDefault context
                 )
             )
+
+
+insertDoc : ModuleContext -> Node String -> ModuleContext
+insertDoc context doc =
+    { context
+        | docs =
+            context.docs
+                |> Set.insert doc
+    }
 
 
 linksIn :
