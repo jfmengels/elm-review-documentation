@@ -11,7 +11,7 @@ import Elm.Syntax.Node as Node exposing (Node)
 import Elm.Syntax.Range exposing (Location)
 import Parser exposing ((|.), (|=), Parser)
 import Parser.Extras as Parser
-import ParserExtra as Parser
+import ParserExtra
 
 
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
@@ -164,7 +164,7 @@ linkParser =
         )
         |. Parser.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
-        |= Parser.manySeparated
+        |= ParserExtra.manySeparated
             { by = "-"
             , item = nameParser { first = Char.isUpper }
             }
