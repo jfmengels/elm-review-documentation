@@ -14,10 +14,6 @@ import Review.Rule as Rule exposing (Rule)
 import SyntaxHelp
 
 
-
---
-
-
 rule : Rule
 rule =
     Rule.newProjectRuleSchema "LinksPointToExistingPackageMembers" initialProjectContext
