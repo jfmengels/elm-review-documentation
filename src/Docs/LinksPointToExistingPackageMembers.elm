@@ -248,10 +248,7 @@ exposedInModule (Node _ module_) context =
             if
                 context.exposed
                     |> EverySet.toList
-                    |> List.any
-                        (.moduleName
-                            >> (==) info.moduleName
-                        )
+                    |> List.any (\exposedElement -> exposedElement.moduleName == info.moduleName)
             then
                 EverySet.insert info context.exposed
 
