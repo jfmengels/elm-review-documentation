@@ -76,16 +76,6 @@ rule =
                           }
                         ]
                     }
-
-                foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
-                foldProjectContexts a b =
-                    { exposed = Set.union a.exposed b.exposed
-                    , inModules = List.append a.inModules b.inModules
-                    , inReadme =
-                        a.inReadme
-                            |> Maybe.map Just
-                            |> Maybe.withDefault b.inReadme
-                    }
             in
             Rule.withModuleContext
                 { fromProjectToModule = \_ _ -> fromProjectToModule
@@ -113,6 +103,17 @@ type alias SourceAndLinks key =
 type alias ModuleContext =
     { docs : Set (Node String)
     , exposed : Set ModuleInfo
+    }
+
+
+foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
+foldProjectContexts a b =
+    { exposed = Set.union a.exposed b.exposed
+    , inModules = List.append a.inModules b.inModules
+    , inReadme =
+        a.inReadme
+            |> Maybe.map Just
+            |> Maybe.withDefault b.inReadme
     }
 
 
