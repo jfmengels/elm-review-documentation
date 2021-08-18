@@ -1,5 +1,5 @@
 module SyntaxHelp exposing
-    ( ExposedDefinitions(..)
+    ( ExposedDefinitions
     , Link
     , LinkKind(..)
     , ModuleInfo
