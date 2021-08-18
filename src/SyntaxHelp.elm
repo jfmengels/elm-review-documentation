@@ -5,7 +5,7 @@ import Elm.Project as Project
 import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose(..))
-import Elm.Syntax.Module exposing (Module(..))
+import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node)
 import Elm.Syntax.Range exposing (Location)
@@ -50,13 +50,13 @@ type alias ModuleInfo =
 moduleInfo : Module -> ModuleInfo
 moduleInfo module_ =
     case module_ of
-        NormalModule data ->
+        Module.NormalModule data ->
             extract data
 
-        PortModule data ->
+        Module.PortModule data ->
             extract data
 
-        EffectModule data ->
+        Module.EffectModule data ->
             extract data
 
 
