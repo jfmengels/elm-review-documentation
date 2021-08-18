@@ -7,7 +7,7 @@ import Elm.Syntax.Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
-import EverySet as Set exposing (EverySet)
+import EverySet exposing (EverySet)
 import JaroWinkler
 import ParserExtra as Parser
 import Review.Rule as Rule exposing (Rule)
@@ -64,7 +64,7 @@ type alias ModuleContext =
 
 initialProjectContext : ProjectContext
 initialProjectContext =
-    { exposed = Set.empty
+    { exposed = EverySet.empty
     , linksInModules = []
     , linksInReadme = Nothing
     }
@@ -73,7 +73,7 @@ initialProjectContext =
 fromProjectToModule : ProjectContext -> ModuleContext
 fromProjectToModule projectContext =
     { exposed = projectContext.exposed
-    , docs = Set.empty
+    , docs = EverySet.empty
     }
 
 
@@ -85,13 +85,13 @@ fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
         [ { key = moduleKey
           , links =
                 docs
-                    |> Set.toList
+                    |> EverySet.toList
                     |> List.concatMap
                         (\(Node { start } doc) ->
                             linksIn { doc = doc, start = start }
                         )
                     |> List.map (useIfNoModuleSpecified moduleName)
-                    |> Set.fromList
+                    |> EverySet.fromList
           }
         ]
     }
@@ -115,7 +115,7 @@ useIfNoModuleSpecified moduleName ({ parsed } as match) =
 
 foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
-    { exposed = Set.union newContext.exposed previousContext.exposed
+    { exposed = EverySet.union newContext.exposed previousContext.exposed
     , linksInModules = List.append newContext.linksInModules previousContext.linksInModules
     , linksInReadme = previousContext.linksInReadme
     }
@@ -148,7 +148,7 @@ elmJsonVisitor maybeElmJson context =
         | exposed =
             maybeElmJson
                 |> Maybe.map exposedModulesInElmJson
-                |> Maybe.withDefault Set.empty
+                |> Maybe.withDefault EverySet.empty
       }
     )
 
@@ -158,8 +158,8 @@ exposedModulesInElmJson { project } =
     case project of
         Project.Package { exposed } ->
             SyntaxHelp.exposedModules exposed
-                |> Set.fromList
-                |> Set.map
+                |> EverySet.fromList
+                |> EverySet.map
                     (\name ->
                         { moduleName =
                             name |> Module.toString |> String.split "."
@@ -168,7 +168,7 @@ exposedModulesInElmJson { project } =
                     )
 
         Project.Application _ ->
-            Set.empty
+            EverySet.empty
 
 
 moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
@@ -203,7 +203,7 @@ commentsVisitor comments context =
 
 insertDoc : ModuleContext -> Node String -> ModuleContext
 insertDoc context doc =
-    { context | docs = Set.insert doc context.docs }
+    { context | docs = EverySet.insert doc context.docs }
 
 
 linksIn :
@@ -237,7 +237,7 @@ findLinksInReadme readme =
             { doc = content
             , start = { row = 1, column = 1 }
             }
-            |> Set.fromList
+            |> EverySet.fromList
     }
 
 
@@ -256,13 +256,13 @@ exposedInModule (Node _ module_) context =
             in
             if
                 context.exposed
-                    |> Set.toList
+                    |> EverySet.toList
                     |> List.any
                         (.moduleName
                             >> (==) info.moduleName
                         )
             then
-                Set.insert info context.exposed
+                EverySet.insert info context.exposed
 
             else
                 context.exposed
@@ -276,7 +276,7 @@ check { linksInReadme, exposed, linksInModules } =
         exposedMembers : Set String
         exposedMembers =
             exposed
-                |> Set.toList
+                |> EverySet.toList
                 |> List.concatMap
                     (\{ moduleName, exposedDefinitions } ->
                         let
@@ -292,7 +292,7 @@ check { linksInReadme, exposed, linksInModules } =
                                 (\def -> moduleNameString ++ "." ++ def)
                                 exposedDefs
                     )
-                |> Set.fromList
+                |> EverySet.fromList
 
         errorsForLinksInReadme : List (Rule.Error scope)
         errorsForLinksInReadme =
@@ -310,7 +310,7 @@ check { linksInReadme, exposed, linksInModules } =
 errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> { a | key : Rule.ReadmeKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
 errorForLinkInReadme exposed exposedMembers { key, links } =
     links
-        |> Set.toList
+        |> EverySet.toList
         |> List.concatMap
             (\match ->
                 case ( match.parsed.moduleName, match.parsed.kind ) of
@@ -318,7 +318,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
                         [ Rule.errorForReadme key
                             (noModuleSpecifiedForDefinitionInLinkInReadme
                                 { badLink = definition
-                                , exposed = exposedMembers |> Set.toList
+                                , exposed = exposedMembers |> EverySet.toList
                                 }
                             )
                             match.range
@@ -332,7 +332,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
 errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> { a | key : Rule.ModuleKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
 errorForLinkInModule exposed exposedMembers { key, links } =
     links
-        |> Set.toList
+        |> EverySet.toList
         |> List.concatMap (checkLink exposed exposedMembers (Rule.errorForModule key))
 
 
@@ -351,7 +351,7 @@ checkLink exposed exposedMembers error match =
         SyntaxHelp.ModuleLink ->
             if
                 exposed
-                    |> Set.toList
+                    |> EverySet.toList
                     |> List.any
                         (.moduleName
                             >> (==) moduleName
@@ -370,7 +370,7 @@ checkLink exposed exposedMembers error match =
         SyntaxHelp.DefinitionLink definition ->
             if
                 exposed
-                    |> Set.toList
+                    |> EverySet.toList
                     |> List.any
                         (\m ->
                             (m.moduleName == moduleName)
@@ -393,7 +393,7 @@ checkLink exposed exposedMembers error match =
 details : EverySet String -> ModuleName -> List String
 details exposedMembers moduleNameParts =
     linkPointsToNonExistentMemberDetails
-        { exposed = Set.toList exposedMembers
+        { exposed = EverySet.toList exposedMembers
         , badLink = String.join "." moduleNameParts
         }
 
