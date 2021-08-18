@@ -394,16 +394,20 @@ noModuleSpecifiedForDefinitionInLinkInReadme :
     { exposed : List String, badLink : String }
     -> { message : String, details : List String }
 noModuleSpecifiedForDefinitionInLinkInReadme { exposed, badLink } =
+    let
+        moduleSuggestions : List String
+        moduleSuggestions =
+            exposed
+                |> List.filter (String.endsWith badLink)
+                |> List.map (String.dropRight (String.length badLink))
+    in
     { message = "Using a link of the form [..](#definition) in the readme."
     , details =
         [ "There's no way to figure out in which module to look for this definition."
         , [ "I found `"
           , badLink
           , "` in the nodule(s) "
-          , exposed
-                |> List.filter (String.endsWith badLink)
-                |> List.map (String.dropRight (String.length badLink))
-                |> String.join ", "
+          , String.join ", " moduleSuggestions
           , "."
           ]
             |> String.concat
