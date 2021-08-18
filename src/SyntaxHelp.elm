@@ -6,6 +6,7 @@ import Elm.Syntax.Declaration exposing (Declaration(..))
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose(..))
 import Elm.Syntax.Module exposing (Module(..))
+import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node)
 import Elm.Syntax.Range exposing (Location)
 import Parser exposing ((|.), (|=), Parser)
@@ -48,21 +49,6 @@ type alias ModuleInfo =
 
 moduleInfo : Module -> ModuleInfo
 moduleInfo module_ =
-    let
-        extract { moduleName, exposingList } =
-            { moduleName = moduleName |> Node.value
-            , exposedDefinitions =
-                case exposingList |> Node.value of
-                    Exposing.All _ ->
-                        ( All, [] )
-
-                    Exposing.Explicit list ->
-                        ( Explicit
-                        , list
-                            |> List.map (nameOfExpose << Node.value)
-                        )
-            }
-    in
     case module_ of
         NormalModule data ->
             extract data
@@ -72,6 +58,22 @@ moduleInfo module_ =
 
         EffectModule data ->
             extract data
+
+
+extract : { a | moduleName : Node ModuleName, exposingList : Node Exposing.Exposing } -> { moduleName : ModuleName, exposedDefinitions : ( ExposingKind, List String ) }
+extract { moduleName, exposingList } =
+    { moduleName = moduleName |> Node.value
+    , exposedDefinitions =
+        case exposingList |> Node.value of
+            Exposing.All _ ->
+                ( All, [] )
+
+            Exposing.Explicit list ->
+                ( Explicit
+                , list
+                    |> List.map (nameOfExpose << Node.value)
+                )
+    }
 
 
 isExposed : String -> ( ExposingKind, List String ) -> Bool
