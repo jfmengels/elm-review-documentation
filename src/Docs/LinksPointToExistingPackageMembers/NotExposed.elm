@@ -188,7 +188,7 @@ moduleVisitor schema =
         |> Rule.withCommentsVisitor commentsVisitor
 
 
-declarationVisitor : Node Declaration -> ModuleContext -> ( List a, ModuleContext )
+declarationVisitor : Node Declaration -> ModuleContext -> ( List nothing, ModuleContext )
 declarationVisitor (Node _ declaration) context =
     ( []
     , case docOfDeclaration declaration of
