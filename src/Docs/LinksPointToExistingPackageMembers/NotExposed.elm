@@ -296,13 +296,18 @@ check { linksInReadme, exposed, linksInModules } =
                                 exposedDefs
                     )
                 |> Set.fromList
+
+        errorsForLinksInReadme : List (Rule.Error scope)
+        errorsForLinksInReadme =
+            linksInReadme
+                |> Maybe.map (errorForLinkInReadme exposed exposedMembers)
+                |> Maybe.withDefault []
+
+        errorsForLinksInModules : List (Rule.Error scope)
+        errorsForLinksInModules =
+            List.concatMap (errorForLinkInModule exposed exposedMembers) linksInModules
     in
-    List.append
-        (linksInReadme
-            |> Maybe.map (errorForLinkInReadme exposed exposedMembers)
-            |> Maybe.withDefault []
-        )
-        (List.concatMap (errorForLinkInModule exposed exposedMembers) linksInModules)
+    List.append errorsForLinksInReadme errorsForLinksInModules
 
 
 errorForLinkInReadme : EverySet ModuleInfo -> EverySet String -> { a | key : Rule.ReadmeKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
