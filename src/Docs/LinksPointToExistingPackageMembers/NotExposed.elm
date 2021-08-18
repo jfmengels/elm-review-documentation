@@ -110,10 +110,7 @@ foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
     { exposed = Set.union newContext.exposed previousContext.exposed
     , inModules = List.append newContext.inModules previousContext.inModules
-    , inReadme =
-        newContext.inReadme
-            |> Maybe.map Just
-            |> Maybe.withDefault previousContext.inReadme
+    , inReadme = previousContext.inReadme
     }
 
 
