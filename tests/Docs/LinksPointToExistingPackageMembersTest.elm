@@ -21,14 +21,6 @@ moduleInLinkNotExposed =
 all : Test
 all =
     describe "Docs.LinksPointToExistingPackageMembers"
-        [ succeeds
-        , fails
-        ]
-
-
-succeeds : Test
-succeeds =
-    describe "succeeds"
         [ test "exposed function"
             (\() ->
                 """module A.And.B exposing (a, b)
@@ -112,13 +104,7 @@ a =
                         rule
                     |> Review.Test.expectNoErrors
             )
-        ]
-
-
-fails : Test
-fails =
-    describe "fails"
-        [ describe "definition link"
+        , describe "definition link"
             [ test "because it isn't exposed"
                 (\() ->
                     """module A.And.B exposing (a)
