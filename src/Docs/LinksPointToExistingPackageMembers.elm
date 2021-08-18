@@ -26,7 +26,7 @@ rule =
             , fromModuleToProject = fromModuleToProject
             , foldProjectContexts = foldProjectContexts
             }
-        |> Rule.withFinalProjectEvaluation check
+        |> Rule.withFinalProjectEvaluation finalEvaluation
         |> Rule.fromProjectRuleSchema
 
 
@@ -261,8 +261,8 @@ exposedInModule (Node _ module_) context =
     )
 
 
-check : ProjectContext -> List (Rule.Error scope)
-check { linksInReadme, exposed, linksInModules } =
+finalEvaluation : ProjectContext -> List (Rule.Error scope)
+finalEvaluation { linksInReadme, exposed, linksInModules } =
     let
         exposedMembers : Set String
         exposedMembers =
