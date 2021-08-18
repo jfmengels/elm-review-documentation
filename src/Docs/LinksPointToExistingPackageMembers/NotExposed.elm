@@ -191,10 +191,12 @@ moduleVisitor schema =
 declarationVisitor : Node Declaration -> ModuleContext -> ( List a, ModuleContext )
 declarationVisitor (Node _ declaration) context =
     ( []
-    , declaration
-        |> docOfDeclaration
-        |> Maybe.map (insertDoc context)
-        |> Maybe.withDefault context
+    , case docOfDeclaration declaration of
+        Just doc ->
+            insertDoc context doc
+
+        Nothing ->
+            context
     )
 
 
