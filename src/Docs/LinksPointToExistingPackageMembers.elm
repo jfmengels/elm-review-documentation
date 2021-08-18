@@ -261,10 +261,14 @@ exposedInModule (Node _ module_) context =
 finalEvaluation : ProjectContext -> List (Rule.Error scope)
 finalEvaluation context =
     let
-        exposedMembers : Set String
-        exposedMembers =
+        exposed : List SyntaxHelp.ModuleInfo
+        exposed =
             context.exposed
                 |> EverySet.toList
+
+        exposedMembers : Set String
+        exposedMembers =
+            exposed
                 |> List.concatMap
                     (\{ moduleName, exposedDefinitions } ->
                         let
@@ -285,17 +289,17 @@ finalEvaluation context =
         errorsForLinksInReadme : List (Rule.Error scope)
         errorsForLinksInReadme =
             context.linksInReadme
-                |> Maybe.map (errorForLinkInReadme context.exposed exposedMembers)
+                |> Maybe.map (errorForLinkInReadme exposed exposedMembers)
                 |> Maybe.withDefault []
 
         errorsForLinksInModules : List (Rule.Error scope)
         errorsForLinksInModules =
-            List.concatMap (errorForLinkInModule context.exposed exposedMembers) context.linksInModules
+            List.concatMap (errorForLinkInModule exposed exposedMembers) context.linksInModules
     in
     List.append errorsForLinksInReadme errorsForLinksInModules
 
 
-errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
+errorForLinkInReadme : List SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
 errorForLinkInReadme exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -318,7 +322,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
             )
 
 
-errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
+errorForLinkInModule : List SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
 errorForLinkInModule exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -326,7 +330,7 @@ errorForLinkInModule exposed exposedMembers { key, links } =
 
 
 checkLink :
-    EverySet SyntaxHelp.ModuleInfo
+    List SyntaxHelp.ModuleInfo
     -> Set String
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange
@@ -334,11 +338,7 @@ checkLink :
 checkLink exposed exposedMembers error link =
     case link.parsed.kind of
         SyntaxHelp.ModuleLink ->
-            if
-                exposed
-                    |> EverySet.toList
-                    |> List.any (\exposedElement -> exposedElement.moduleName == link.parsed.moduleName)
-            then
+            if List.any (\exposedElement -> exposedElement.moduleName == link.parsed.moduleName) exposed then
                 Nothing
 
             else
@@ -352,15 +352,14 @@ checkLink exposed exposedMembers error link =
 
         SyntaxHelp.DefinitionLink definition ->
             if
-                exposed
-                    |> EverySet.toList
-                    |> List.any
-                        (\m ->
-                            (m.moduleName == link.parsed.moduleName)
-                                && (m.exposedDefinitions
-                                        |> SyntaxHelp.isExposed definition
-                                   )
-                        )
+                List.any
+                    (\m ->
+                        (m.moduleName == link.parsed.moduleName)
+                            && (m.exposedDefinitions
+                                    |> SyntaxHelp.isExposed definition
+                               )
+                    )
+                    exposed
             then
                 Nothing
 
