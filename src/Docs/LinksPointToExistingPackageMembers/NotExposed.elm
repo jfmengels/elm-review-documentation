@@ -28,20 +28,7 @@ rule =
         , inModules = Set.empty
         , inReadme = Nothing
         }
-        |> Rule.withReadmeProjectVisitor
-            (\maybeReadme context ->
-                ( []
-                , case maybeReadme of
-                    Just readme ->
-                        { context
-                            | inReadme =
-                                linksInReadme readme |> Just
-                        }
-
-                    Nothing ->
-                        context
-                )
-            )
+        |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withElmJsonProjectVisitor
             (\maybeElmJson context ->
                 ( []
@@ -153,6 +140,25 @@ rule =
            )
         |> Rule.withFinalProjectEvaluation check
         |> Rule.fromProjectRuleSchema
+
+
+
+-- README VISITOR
+
+
+readmeVisitor : Maybe { readmeKey : Rule.ReadmeKey, content : String } -> ProjectContext -> ( List nothing, ProjectContext )
+readmeVisitor maybeReadme context =
+    ( []
+    , case maybeReadme of
+        Just readme ->
+            { context
+                | inReadme =
+                    linksInReadme readme |> Just
+            }
+
+        Nothing ->
+            context
+    )
 
 
 exposedModulesInElmJson :
