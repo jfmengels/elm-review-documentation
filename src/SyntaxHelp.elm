@@ -54,7 +54,7 @@ type ExposingKind
 
 
 type alias ModuleInfo =
-    { moduleName : List String
+    { moduleName : ModuleName
     , exposedDefinitions : ( ExposingKind, List String )
     }
 
