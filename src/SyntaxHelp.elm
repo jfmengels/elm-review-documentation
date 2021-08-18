@@ -4,7 +4,7 @@ import Elm.Module as Module
 import Elm.Project as Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
-import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose(..))
+import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose)
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node)
@@ -89,16 +89,16 @@ isExposed definition exposings =
 nameOfExpose : TopLevelExpose -> String
 nameOfExpose expose =
     case expose of
-        InfixExpose name ->
+        Exposing.InfixExpose name ->
             name
 
-        FunctionExpose name ->
+        Exposing.FunctionExpose name ->
             name
 
-        TypeOrAliasExpose name ->
+        Exposing.TypeOrAliasExpose name ->
             name
 
-        TypeExpose { name } ->
+        Exposing.TypeExpose { name } ->
             name
 
 
