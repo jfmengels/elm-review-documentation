@@ -14,10 +14,6 @@ import Review.Rule as Rule exposing (Rule)
 import SyntaxHelp
 
 
-type alias Set a =
-    EverySet a
-
-
 
 --
 
@@ -40,13 +36,13 @@ rule =
 type alias ProjectContext =
     { linksInReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
     , linksInModules : List (SourceAndLinks Rule.ModuleKey)
-    , exposed : Set SyntaxHelp.ModuleInfo
+    , exposed : EverySet SyntaxHelp.ModuleInfo
     }
 
 
 type alias SourceAndLinks key =
     { key : key
-    , links : Set LinkWithRange
+    , links : EverySet LinkWithRange
     }
 
 
@@ -57,8 +53,8 @@ type alias LinkWithRange =
 
 
 type alias ModuleContext =
-    { docs : Set (Node String)
-    , exposed : Set SyntaxHelp.ModuleInfo
+    { docs : EverySet (Node String)
+    , exposed : EverySet SyntaxHelp.ModuleInfo
     }
 
 
@@ -153,7 +149,7 @@ elmJsonVisitor maybeElmJson context =
     )
 
 
-exposedModulesInElmJson : { key_ | project : Project } -> Set SyntaxHelp.ModuleInfo
+exposedModulesInElmJson : { key_ | project : Project } -> EverySet SyntaxHelp.ModuleInfo
 exposedModulesInElmJson { project } =
     case project of
         Project.Package { exposed } ->
@@ -225,7 +221,7 @@ linksIn { doc, start } =
 
 findLinksInReadme :
     { readmeKey : Rule.ReadmeKey, content : String }
-    -> { key : Rule.ReadmeKey, links : Set LinkWithRange }
+    -> { key : Rule.ReadmeKey, links : EverySet LinkWithRange }
 findLinksInReadme readme =
     let
         { readmeKey, content } =
@@ -273,7 +269,7 @@ exposedInModule (Node _ module_) context =
 check : ProjectContext -> List (Rule.Error scope)
 check { linksInReadme, exposed, linksInModules } =
     let
-        exposedMembers : Set String
+        exposedMembers : EverySet String
         exposedMembers =
             exposed
                 |> EverySet.toList
