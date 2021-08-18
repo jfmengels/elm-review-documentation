@@ -259,11 +259,11 @@ exposedInModule (Node _ module_) context =
 
 
 finalEvaluation : ProjectContext -> List (Rule.Error scope)
-finalEvaluation { linksInReadme, exposed, linksInModules } =
+finalEvaluation context =
     let
         exposedMembers : Set String
         exposedMembers =
-            exposed
+            context.exposed
                 |> EverySet.toList
                 |> List.concatMap
                     (\{ moduleName, exposedDefinitions } ->
@@ -284,13 +284,13 @@ finalEvaluation { linksInReadme, exposed, linksInModules } =
 
         errorsForLinksInReadme : List (Rule.Error scope)
         errorsForLinksInReadme =
-            linksInReadme
-                |> Maybe.map (errorForLinkInReadme exposed exposedMembers)
+            context.linksInReadme
+                |> Maybe.map (errorForLinkInReadme context.exposed exposedMembers)
                 |> Maybe.withDefault []
 
         errorsForLinksInModules : List (Rule.Error scope)
         errorsForLinksInModules =
-            List.concatMap (errorForLinkInModule exposed exposedMembers) linksInModules
+            List.concatMap (errorForLinkInModule context.exposed exposedMembers) context.linksInModules
     in
     List.append errorsForLinksInReadme errorsForLinksInModules
 
