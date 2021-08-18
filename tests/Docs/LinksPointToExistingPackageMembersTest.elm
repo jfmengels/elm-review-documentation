@@ -1,12 +1,21 @@
 module Docs.LinksPointToExistingPackageMembersTest exposing (all)
 
 import Docs.LinksPointToExistingPackageMembers exposing (rule)
-import Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, moduleInLinkNotExposed)
 import Elm.Project
 import Json.Decode
 import Review.Project as Project
 import Review.Test
 import Test exposing (Test, describe, test)
+
+
+definitionInLinkNotExposedMessage : String
+definitionInLinkNotExposedMessage =
+    "The link points to a definition that isn't exposed from any exposed module in this package."
+
+
+moduleInLinkNotExposed : String
+moduleInLinkNotExposed =
+    "The link points to a module that isn't listed in \"exposed-modules\"."
 
 
 all : Test
