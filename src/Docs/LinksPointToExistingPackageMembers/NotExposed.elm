@@ -34,48 +34,6 @@ rule =
                     { exposed = context.exposed
                     , docs = Set.empty
                     }
-
-                useIfNoModuleSpecified :
-                    List String
-                    -> { range | parsed : Link }
-                    -> { range | parsed : Link }
-                useIfNoModuleSpecified moduleName match =
-                    let
-                        link =
-                            match.parsed
-                    in
-                    { match
-                        | parsed =
-                            case link.moduleName of
-                                [] ->
-                                    { link | moduleName = moduleName }
-
-                                _ ->
-                                    match.parsed
-                    }
-
-                fromModuleToProject :
-                    Rule.ModuleKey
-                    -> Node (List String)
-                    -> ModuleContext
-                    -> ProjectContext
-                fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
-                    { inReadme = Nothing
-                    , exposed = exposed
-                    , inModules =
-                        [ { key = moduleKey
-                          , links =
-                                docs
-                                    |> Set.toList
-                                    |> List.concatMap
-                                        (\(Node { start } doc) ->
-                                            linksIn { doc = doc, start = start }
-                                        )
-                                    |> List.map (useIfNoModuleSpecified moduleName)
-                                    |> Set.fromList
-                          }
-                        ]
-                    }
             in
             Rule.withModuleContext
                 { fromProjectToModule = \_ _ -> fromProjectToModule
@@ -111,6 +69,47 @@ initialProjectContext =
     { exposed = Set.empty
     , inModules = []
     , inReadme = Nothing
+    }
+
+
+fromModuleToProject : Rule.ModuleKey -> Node (List String) -> ModuleContext -> ProjectContext
+fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
+    { inReadme = Nothing
+    , exposed = exposed
+    , inModules =
+        [ { key = moduleKey
+          , links =
+                docs
+                    |> Set.toList
+                    |> List.concatMap
+                        (\(Node { start } doc) ->
+                            linksIn { doc = doc, start = start }
+                        )
+                    |> List.map (useIfNoModuleSpecified moduleName)
+                    |> Set.fromList
+          }
+        ]
+    }
+
+
+useIfNoModuleSpecified :
+    List String
+    -> { range | parsed : Link }
+    -> { range | parsed : Link }
+useIfNoModuleSpecified moduleName match =
+    let
+        link : Link
+        link =
+            match.parsed
+    in
+    { match
+        | parsed =
+            case link.moduleName of
+                [] ->
+                    { link | moduleName = moduleName }
+
+                _ ->
+                    match.parsed
     }
 
 
