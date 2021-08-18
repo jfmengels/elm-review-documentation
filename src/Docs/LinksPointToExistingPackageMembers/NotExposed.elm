@@ -38,7 +38,7 @@ rule =
 
 
 type alias ProjectContext =
-    { inReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
+    { linksInReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
     , linksInModules : List (SourceAndLinks Rule.ModuleKey)
     , exposed : Set ModuleInfo
     }
@@ -60,7 +60,7 @@ initialProjectContext : ProjectContext
 initialProjectContext =
     { exposed = Set.empty
     , linksInModules = []
-    , inReadme = Nothing
+    , linksInReadme = Nothing
     }
 
 
@@ -73,7 +73,7 @@ fromProjectToModule projectContext =
 
 fromModuleToProject : Rule.ModuleKey -> Node (List String) -> ModuleContext -> ProjectContext
 fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
-    { inReadme = Nothing
+    { linksInReadme = Nothing
     , exposed = exposed
     , linksInModules =
         [ { key = moduleKey
@@ -111,7 +111,7 @@ foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
     { exposed = Set.union newContext.exposed previousContext.exposed
     , linksInModules = List.append newContext.linksInModules previousContext.linksInModules
-    , inReadme = previousContext.inReadme
+    , linksInReadme = previousContext.linksInReadme
     }
 
 
@@ -124,7 +124,7 @@ readmeVisitor maybeReadme context =
     ( []
     , case maybeReadme of
         Just readme ->
-            { context | inReadme = Just (linksInReadme readme) }
+            { context | linksInReadme = Just (findLinksInReadme readme) }
 
         Nothing ->
             context
@@ -221,10 +221,10 @@ linksIn { doc, start } =
             )
 
 
-linksInReadme :
+findLinksInReadme :
     { readmeKey : Rule.ReadmeKey, content : String }
     -> { key : Rule.ReadmeKey, links : Set { parsed : Link, range : Range } }
-linksInReadme readme =
+findLinksInReadme readme =
     let
         { readmeKey, content } =
             readme
@@ -268,7 +268,7 @@ exposedInModule (Node _ module_) context =
 
 
 check : ProjectContext -> List (Rule.Error scope)
-check { inReadme, exposed, linksInModules } =
+check { linksInReadme, exposed, linksInModules } =
     let
         exposedMembers : Set String
         exposedMembers =
@@ -345,7 +345,7 @@ check { inReadme, exposed, linksInModules } =
                             match.range
                         ]
     in
-    [ inReadme
+    [ linksInReadme
         |> Maybe.map
             (\{ key, links } ->
                 links
