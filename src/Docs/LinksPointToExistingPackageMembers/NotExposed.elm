@@ -28,19 +28,11 @@ rule =
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withModuleVisitor moduleVisitor
-        |> (let
-                fromProjectToModule : ProjectContext -> ModuleContext
-                fromProjectToModule context =
-                    { exposed = context.exposed
-                    , docs = Set.empty
-                    }
-            in
-            Rule.withModuleContext
-                { fromProjectToModule = \_ _ -> fromProjectToModule
-                , fromModuleToProject = fromModuleToProject
-                , foldProjectContexts = foldProjectContexts
-                }
-           )
+        |> Rule.withModuleContext
+            { fromProjectToModule = \_ _ -> fromProjectToModule
+            , fromModuleToProject = fromModuleToProject
+            , foldProjectContexts = foldProjectContexts
+            }
         |> Rule.withFinalProjectEvaluation check
         |> Rule.fromProjectRuleSchema
 
@@ -69,6 +61,13 @@ initialProjectContext =
     { exposed = Set.empty
     , inModules = []
     , inReadme = Nothing
+    }
+
+
+fromProjectToModule : ProjectContext -> ModuleContext
+fromProjectToModule projectContext =
+    { exposed = projectContext.exposed
+    , docs = Set.empty
     }
 
 
