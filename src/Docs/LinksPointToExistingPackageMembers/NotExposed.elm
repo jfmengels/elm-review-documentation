@@ -220,12 +220,8 @@ linksIn { doc, start } =
             (\match ->
                 { match
                     | range =
-                        let
-                            inComment =
-                                addLocation start
-                        in
-                        { start = inComment match.range.start
-                        , end = inComment match.range.end
+                        { start = addLocation start match.range.start
+                        , end = addLocation start match.range.end
                         }
                 }
             )
