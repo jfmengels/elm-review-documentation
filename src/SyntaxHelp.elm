@@ -10,7 +10,7 @@ import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node)
 import Elm.Syntax.Range exposing (Location)
 import Parser exposing ((|.), (|=), Parser)
-import Parser.Extras as Parser
+import Parser.Extras
 import ParserExtra
 
 
@@ -162,7 +162,7 @@ linkParser =
         (\moduleName kind ->
             { moduleName = moduleName, kind = kind }
         )
-        |. Parser.brackets (Parser.chompUntil "]")
+        |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
         |= ParserExtra.manySeparated
             { by = "-"
