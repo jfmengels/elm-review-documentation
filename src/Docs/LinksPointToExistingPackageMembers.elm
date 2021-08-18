@@ -52,7 +52,7 @@ type alias LinkWithRange =
 
 type alias ModuleContext =
     { docs : EverySet (Node String)
-    , exposed : EverySet SyntaxHelp.ModuleInfo
+    , exposedFromModule : EverySet SyntaxHelp.ModuleInfo
     }
 
 
@@ -66,15 +66,15 @@ initialProjectContext =
 
 fromProjectToModule : ProjectContext -> ModuleContext
 fromProjectToModule projectContext =
-    { exposed = projectContext.exposed
+    { exposedFromModule = projectContext.exposed
     , docs = EverySet.empty
     }
 
 
 fromModuleToProject : Rule.ModuleKey -> Node (List String) -> ModuleContext -> ProjectContext
-fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
+fromModuleToProject moduleKey (Node _ moduleName) { exposedFromModule, docs } =
     { linksInReadme = Nothing
-    , exposed = exposed
+    , exposed = exposedFromModule
     , linksInModules =
         [ { key = moduleKey
           , links =
@@ -240,21 +240,21 @@ exposedInModule :
 exposedInModule (Node _ module_) context =
     ( []
     , { context
-        | exposed =
+        | exposedFromModule =
             let
                 info : SyntaxHelp.ModuleInfo
                 info =
                     SyntaxHelp.moduleInfo module_
             in
             if
-                context.exposed
+                context.exposedFromModule
                     |> EverySet.toList
                     |> List.any (\exposedElement -> exposedElement.moduleName == info.moduleName)
             then
-                EverySet.insert info context.exposed
+                EverySet.insert info context.exposedFromModule
 
             else
-                context.exposed
+                context.exposedFromModule
       }
     )
 
