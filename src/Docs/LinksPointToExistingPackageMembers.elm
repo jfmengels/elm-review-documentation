@@ -11,7 +11,7 @@ import EverySet as Set exposing (EverySet)
 import JaroWinkler
 import ParserExtra as Parser
 import Review.Rule as Rule exposing (Rule)
-import SyntaxHelp exposing (ExposingKind(..), Link, LinkKind(..), ModuleInfo, addLocation, docOfDeclaration, exposedModules, isExposed, isFileComment, linkParser, moduleInfo)
+import SyntaxHelp
 
 
 type alias Set a =
@@ -40,7 +40,7 @@ rule =
 type alias ProjectContext =
     { linksInReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
     , linksInModules : List (SourceAndLinks Rule.ModuleKey)
-    , exposed : Set ModuleInfo
+    , exposed : Set SyntaxHelp.ModuleInfo
     }
 
 
@@ -51,14 +51,14 @@ type alias SourceAndLinks key =
 
 
 type alias LinkWithRange =
-    { parsed : Link
+    { parsed : SyntaxHelp.Link
     , range : Range
     }
 
 
 type alias ModuleContext =
     { docs : Set (Node String)
-    , exposed : Set ModuleInfo
+    , exposed : Set SyntaxHelp.ModuleInfo
     }
 
 
@@ -99,8 +99,8 @@ fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
 
 useIfNoModuleSpecified :
     List String
-    -> { range | parsed : Link }
-    -> { range | parsed : Link }
+    -> { range | parsed : SyntaxHelp.Link }
+    -> { range | parsed : SyntaxHelp.Link }
 useIfNoModuleSpecified moduleName ({ parsed } as match) =
     { match
         | parsed =
@@ -153,17 +153,17 @@ elmJsonVisitor maybeElmJson context =
     )
 
 
-exposedModulesInElmJson : { key_ | project : Project } -> Set ModuleInfo
+exposedModulesInElmJson : { key_ | project : Project } -> Set SyntaxHelp.ModuleInfo
 exposedModulesInElmJson { project } =
     case project of
         Project.Package { exposed } ->
-            exposedModules exposed
+            SyntaxHelp.exposedModules exposed
                 |> Set.fromList
                 |> Set.map
                     (\name ->
                         { moduleName =
                             name |> Module.toString |> String.split "."
-                        , exposedDefinitions = ( Explicit, [] )
+                        , exposedDefinitions = ( SyntaxHelp.Explicit, [] )
                         }
                     )
 
@@ -182,7 +182,7 @@ moduleVisitor schema =
 declarationVisitor : Node Declaration -> ModuleContext -> ( List nothing, ModuleContext )
 declarationVisitor (Node _ declaration) context =
     ( []
-    , case docOfDeclaration declaration of
+    , case SyntaxHelp.docOfDeclaration declaration of
         Just doc ->
             insertDoc context doc
 
@@ -195,7 +195,7 @@ commentsVisitor : List (Node String) -> ModuleContext -> ( List nothing, ModuleC
 commentsVisitor comments context =
     ( []
     , comments
-        |> find (Node.value >> isFileComment)
+        |> find (Node.value >> SyntaxHelp.isFileComment)
         |> Maybe.map (insertDoc context)
         |> Maybe.withDefault context
     )
@@ -211,13 +211,13 @@ linksIn :
     -> List LinkWithRange
 linksIn { doc, start } =
     doc
-        |> Parser.find linkParser
+        |> Parser.find SyntaxHelp.linkParser
         |> List.map
             (\match ->
                 { match
                     | range =
-                        { start = addLocation start match.range.start
-                        , end = addLocation start match.range.end
+                        { start = SyntaxHelp.addLocation start match.range.start
+                        , end = SyntaxHelp.addLocation start match.range.end
                         }
                 }
             )
@@ -250,9 +250,9 @@ exposedInModule (Node _ module_) context =
     , { context
         | exposed =
             let
-                info : ModuleInfo
+                info : SyntaxHelp.ModuleInfo
                 info =
-                    moduleInfo module_
+                    SyntaxHelp.moduleInfo module_
             in
             if
                 context.exposed
@@ -307,14 +307,14 @@ check { linksInReadme, exposed, linksInModules } =
     List.append errorsForLinksInReadme errorsForLinksInModules
 
 
-errorForLinkInReadme : EverySet ModuleInfo -> EverySet String -> { a | key : Rule.ReadmeKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
+errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> { a | key : Rule.ReadmeKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
 errorForLinkInReadme exposed exposedMembers { key, links } =
     links
         |> Set.toList
         |> List.concatMap
             (\match ->
                 case ( match.parsed.moduleName, match.parsed.kind ) of
-                    ( [], DefinitionLink definition ) ->
+                    ( [], SyntaxHelp.DefinitionLink definition ) ->
                         [ Rule.errorForReadme key
                             (noModuleSpecifiedForDefinitionInLinkInReadme
                                 { badLink = definition
@@ -329,7 +329,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
             )
 
 
-errorForLinkInModule : EverySet ModuleInfo -> EverySet String -> { a | key : Rule.ModuleKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
+errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> { a | key : Rule.ModuleKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
 errorForLinkInModule exposed exposedMembers { key, links } =
     links
         |> Set.toList
@@ -337,7 +337,7 @@ errorForLinkInModule exposed exposedMembers { key, links } =
 
 
 checkLink :
-    EverySet ModuleInfo
+    EverySet SyntaxHelp.ModuleInfo
     -> EverySet String
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange
@@ -348,7 +348,7 @@ checkLink exposed exposedMembers error match =
             match.parsed
     in
     case kind of
-        ModuleLink ->
+        SyntaxHelp.ModuleLink ->
             if
                 exposed
                     |> Set.toList
@@ -367,7 +367,7 @@ checkLink exposed exposedMembers error match =
                     match.range
                 ]
 
-        DefinitionLink definition ->
+        SyntaxHelp.DefinitionLink definition ->
             if
                 exposed
                     |> Set.toList
@@ -375,7 +375,7 @@ checkLink exposed exposedMembers error match =
                         (\m ->
                             (m.moduleName == moduleName)
                                 && (m.exposedDefinitions
-                                        |> isExposed definition
+                                        |> SyntaxHelp.isExposed definition
                                    )
                         )
             then
