@@ -46,7 +46,13 @@ type alias ProjectContext =
 
 type alias SourceAndLinks key =
     { key : key
-    , links : Set { parsed : Link, range : Range }
+    , links : Set LinkWithRange
+    }
+
+
+type alias LinkWithRange =
+    { parsed : Link
+    , range : Range
     }
 
 
@@ -202,7 +208,7 @@ insertDoc context doc =
 
 linksIn :
     { doc : String, start : Location }
-    -> List { parsed : Link, range : Range }
+    -> List LinkWithRange
 linksIn { doc, start } =
     doc
         |> Parser.find linkParser
@@ -223,7 +229,7 @@ linksIn { doc, start } =
 
 findLinksInReadme :
     { readmeKey : Rule.ReadmeKey, content : String }
-    -> { key : Rule.ReadmeKey, links : Set { parsed : Link, range : Range } }
+    -> { key : Rule.ReadmeKey, links : Set LinkWithRange }
 findLinksInReadme readme =
     let
         { readmeKey, content } =
