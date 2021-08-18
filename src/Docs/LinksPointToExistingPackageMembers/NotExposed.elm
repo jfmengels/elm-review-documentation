@@ -106,19 +106,19 @@ type alias ModuleContext =
     }
 
 
-foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
-foldProjectContexts newContext previousContext =
-    { exposed = Set.union newContext.exposed previousContext.exposed
-    , inModules = List.append newContext.inModules previousContext.inModules
-    , inReadme = previousContext.inReadme
-    }
-
-
 initialProjectContext : ProjectContext
 initialProjectContext =
     { exposed = Set.empty
     , inModules = []
     , inReadme = Nothing
+    }
+
+
+foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
+foldProjectContexts newContext previousContext =
+    { exposed = Set.union newContext.exposed previousContext.exposed
+    , inModules = List.append newContext.inModules previousContext.inModules
+    , inReadme = previousContext.inReadme
     }
 
 
