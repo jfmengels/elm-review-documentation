@@ -415,15 +415,20 @@ linkPointsToNonExistentMemberDetails :
     { exposed : List String, badLink : String }
     -> List String
 linkPointsToNonExistentMemberDetails { exposed, badLink } =
+    let
+        suggestions : String
+        suggestions =
+            exposed
+                |> List.sortBy
+                    (\member ->
+                        -(JaroWinkler.similarity badLink member)
+                    )
+                |> List.take 3
+                |> String.join ", "
+    in
     [ "Links are only useful when they point to exposed package members."
     , [ "Maybe you meant one of those: "
-      , exposed
-            |> List.sortBy
-                (\member ->
-                    -(JaroWinkler.similarity badLink member)
-                )
-            |> List.take 3
-            |> String.join ", "
+      , suggestions
       , "."
       ]
         |> String.concat
