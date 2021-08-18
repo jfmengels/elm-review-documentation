@@ -298,31 +298,33 @@ check { linksInReadme, exposed, linksInModules } =
                 |> Set.fromList
     in
     [ linksInReadme
-        |> Maybe.map
-            (\{ key, links } ->
-                links
-                    |> Set.toList
-                    |> List.concatMap
-                        (\match ->
-                            case ( match.parsed.moduleName, match.parsed.kind ) of
-                                ( [], DefinitionLink definition ) ->
-                                    [ Rule.errorForReadme key
-                                        (noModuleSpecifiedForDefinitionInLinkInReadme
-                                            { badLink = definition
-                                            , exposed = exposedMembers |> Set.toList
-                                            }
-                                        )
-                                        match.range
-                                    ]
-
-                                _ ->
-                                    checkLink exposed exposedMembers (Rule.errorForReadme key) match
-                        )
-            )
+        |> Maybe.map (errorsForLinkInReadme exposed exposedMembers)
         |> Maybe.withDefault []
     , List.concatMap (errorsForLinkInModule exposed exposedMembers) linksInModules
     ]
         |> List.concat
+
+
+errorsForLinkInReadme : EverySet ModuleInfo -> EverySet String -> { a | key : Rule.ReadmeKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
+errorsForLinkInReadme exposed exposedMembers { key, links } =
+    links
+        |> Set.toList
+        |> List.concatMap
+            (\match ->
+                case ( match.parsed.moduleName, match.parsed.kind ) of
+                    ( [], DefinitionLink definition ) ->
+                        [ Rule.errorForReadme key
+                            (noModuleSpecifiedForDefinitionInLinkInReadme
+                                { badLink = definition
+                                , exposed = exposedMembers |> Set.toList
+                                }
+                            )
+                            match.range
+                        ]
+
+                    _ ->
+                        checkLink exposed exposedMembers (Rule.errorForReadme key) match
+            )
 
 
 errorsForLinkInModule : EverySet ModuleInfo -> EverySet String -> { a | key : Rule.ModuleKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
