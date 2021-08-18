@@ -134,10 +134,7 @@ readmeVisitor maybeReadme context =
     ( []
     , case maybeReadme of
         Just readme ->
-            { context
-                | inReadme =
-                    linksInReadme readme |> Just
-            }
+            { context | inReadme = Just (linksInReadme readme) }
 
         Nothing ->
             context
