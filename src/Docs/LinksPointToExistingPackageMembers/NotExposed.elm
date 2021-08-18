@@ -107,13 +107,13 @@ type alias ModuleContext =
 
 
 foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
-foldProjectContexts a b =
-    { exposed = Set.union a.exposed b.exposed
-    , inModules = List.append a.inModules b.inModules
+foldProjectContexts newContext previousContext =
+    { exposed = Set.union newContext.exposed previousContext.exposed
+    , inModules = List.append newContext.inModules previousContext.inModules
     , inReadme =
-        a.inReadme
+        newContext.inReadme
             |> Maybe.map Just
-            |> Maybe.withDefault b.inReadme
+            |> Maybe.withDefault previousContext.inReadme
     }
 
 
