@@ -137,7 +137,13 @@ readmeVisitor maybeReadme context =
     ( []
     , case maybeReadme of
         Just readme ->
-            { context | linksInReadme = Just (findLinksInReadme readme) }
+            { context
+                | linksInReadme =
+                    Just
+                        { key = readme.readmeKey
+                        , links = findLinksInReadme readme.content
+                        }
+            }
 
         Nothing ->
             context
@@ -219,20 +225,13 @@ linksIn { doc, start } =
             )
 
 
-findLinksInReadme : { readmeKey : Rule.ReadmeKey, content : String } -> SourceAndLinks Rule.ReadmeKey
-findLinksInReadme readme =
-    let
-        { readmeKey, content } =
-            readme
-    in
-    { key = readmeKey
-    , links =
-        linksIn
-            { doc = content
-            , start = { row = 1, column = 1 }
-            }
-            |> EverySet.fromList
-    }
+findLinksInReadme : String -> EverySet LinkWithRange
+findLinksInReadme content =
+    linksIn
+        { doc = content
+        , start = { row = 1, column = 1 }
+        }
+        |> EverySet.fromList
 
 
 moduleDefinitionVisitor :
