@@ -34,6 +34,7 @@ rule =
 type alias ProjectContext =
     { linksInReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
     , linksInModules : List (SourceAndLinks Rule.ModuleKey)
+    , exposedModules : Set ModuleName
     , exposed : EverySet SyntaxHelp.ModuleInfo
     }
 
@@ -59,6 +60,7 @@ type alias ModuleContext =
 initialProjectContext : ProjectContext
 initialProjectContext =
     { exposed = EverySet.empty
+    , exposedModules = Set.empty
     , linksInModules = []
     , linksInReadme = Nothing
     }
@@ -75,6 +77,7 @@ fromModuleToProject : Rule.ModuleKey -> Node (List String) -> ModuleContext -> P
 fromModuleToProject moduleKey (Node _ moduleName) { exposedFromModule, docs } =
     { linksInReadme = Nothing
     , exposed = exposedFromModule
+    , exposedModules = Set.empty
     , linksInModules =
         [ { key = moduleKey
           , links =
@@ -111,6 +114,7 @@ foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
     { exposed = EverySet.union newContext.exposed previousContext.exposed
     , linksInModules = List.append newContext.linksInModules previousContext.linksInModules
+    , exposedModules = previousContext.exposedModules
     , linksInReadme = previousContext.linksInReadme
     }
 
