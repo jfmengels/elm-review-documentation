@@ -339,10 +339,7 @@ checkLink exposed exposedMembers error link =
             if
                 exposed
                     |> EverySet.toList
-                    |> List.any
-                        (.moduleName
-                            >> (==) link.parsed.moduleName
-                        )
+                    |> List.any (\exposedElement -> exposedElement.moduleName == link.parsed.moduleName)
             then
                 []
 
