@@ -24,7 +24,7 @@ config =
 ## Advice for package authors
 
 You can ask the compiler to check whether the documentation is valid (as in, in a publishable state) if you're developing a package, by running `elm make --docs=docs.json`.
-It will fail the compilation if documentation is missing, so you might not be able to enable it during if the project is
+It will fail the compilation if documentation is missing, so you might not be able to enable it if the project is
 far from ready yet. I do recommend enabling this as soon as you can, so that you can work on the documentation as you are
 working on the project, not right before releasing when it becomes a chore.
 
