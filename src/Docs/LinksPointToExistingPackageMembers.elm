@@ -208,9 +208,7 @@ insertDoc context doc =
     { context | docs = doc :: context.docs }
 
 
-linksIn :
-    { doc : String, start : Location }
-    -> List LinkWithRange
+linksIn : { doc : String, start : Location } -> List LinkWithRange
 linksIn { doc, start } =
     doc
         |> Parser.find SyntaxHelp.linkParser
