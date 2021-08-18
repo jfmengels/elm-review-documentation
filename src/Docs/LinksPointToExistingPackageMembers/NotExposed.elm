@@ -320,16 +320,16 @@ check { linksInReadme, exposed, linksInModules } =
                         )
             )
         |> Maybe.withDefault []
-    , List.concatMap
-        (\{ key, links } ->
-            links
-                |> Set.toList
-                |> List.concatMap
-                    (checkLink exposed exposedMembers (Rule.errorForModule key))
-        )
-        linksInModules
+    , List.concatMap (errorsForLinkInModule exposed exposedMembers) linksInModules
     ]
         |> List.concat
+
+
+errorsForLinkInModule : EverySet ModuleInfo -> EverySet String -> { a | key : Rule.ModuleKey, links : EverySet LinkWithRange } -> List (Rule.Error scope)
+errorsForLinkInModule exposed exposedMembers { key, links } =
+    links
+        |> Set.toList
+        |> List.concatMap (checkLink exposed exposedMembers (Rule.errorForModule key))
 
 
 checkLink :
