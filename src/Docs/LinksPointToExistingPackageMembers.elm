@@ -11,6 +11,7 @@ import EverySet exposing (EverySet)
 import JaroWinkler
 import ParserExtra as Parser
 import Review.Rule as Rule exposing (Rule)
+import Set exposing (Set)
 import SyntaxHelp
 
 
@@ -263,7 +264,7 @@ exposedInModule (Node _ module_) context =
 check : ProjectContext -> List (Rule.Error scope)
 check { linksInReadme, exposed, linksInModules } =
     let
-        exposedMembers : EverySet String
+        exposedMembers : Set String
         exposedMembers =
             exposed
                 |> EverySet.toList
@@ -282,7 +283,7 @@ check { linksInReadme, exposed, linksInModules } =
                                 (\def -> moduleNameString ++ "." ++ def)
                                 exposedDefs
                     )
-                |> EverySet.fromList
+                |> Set.fromList
 
         errorsForLinksInReadme : List (Rule.Error scope)
         errorsForLinksInReadme =
@@ -297,7 +298,7 @@ check { linksInReadme, exposed, linksInModules } =
     List.append errorsForLinksInReadme errorsForLinksInModules
 
 
-errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
+errorForLinkInReadme : EverySet SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
 errorForLinkInReadme exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -308,7 +309,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
                         [ Rule.errorForReadme key
                             (noModuleSpecifiedForDefinitionInLinkInReadme
                                 { badLink = definition
-                                , exposed = exposedMembers |> EverySet.toList
+                                , exposed = Set.toList exposedMembers
                                 }
                             )
                             match.range
@@ -319,7 +320,7 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
             )
 
 
-errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> EverySet String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
+errorForLinkInModule : EverySet SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
 errorForLinkInModule exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -328,7 +329,7 @@ errorForLinkInModule exposed exposedMembers { key, links } =
 
 checkLink :
     EverySet SyntaxHelp.ModuleInfo
-    -> EverySet String
+    -> Set String
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange
     -> List (Rule.Error scope)
@@ -380,10 +381,10 @@ checkLink exposed exposedMembers error match =
                 ]
 
 
-details : EverySet String -> ModuleName -> List String
+details : Set String -> ModuleName -> List String
 details exposedMembers moduleNameParts =
     linkPointsToNonExistentMemberDetails
-        { exposed = EverySet.toList exposedMembers
+        { exposed = Set.toList exposedMembers
         , badLink = String.join "." moduleNameParts
         }
 
