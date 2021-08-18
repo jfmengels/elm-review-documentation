@@ -154,9 +154,12 @@ elmJsonVisitor maybeElmJson context =
     ( []
     , { context
         | exposed =
-            maybeElmJson
-                |> Maybe.map exposedModulesInElmJson
-                |> Maybe.withDefault EverySet.empty
+            case maybeElmJson of
+                Just elmJson ->
+                    exposedModulesInElmJson elmJson
+
+                Nothing ->
+                    EverySet.empty
       }
     )
 
