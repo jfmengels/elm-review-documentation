@@ -31,6 +31,14 @@ rule =
         |> Rule.fromProjectRuleSchema
 
 
+moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
+moduleVisitor schema =
+    schema
+        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
+        |> Rule.withDeclarationEnterVisitor declarationVisitor
+        |> Rule.withCommentsVisitor commentsVisitor
+
+
 type alias ProjectContext =
     { linksInReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
     , linksInModules : List (SourceAndLinks Rule.ModuleKey)
@@ -167,14 +175,6 @@ exposedModulesInElmJson { project } =
 
         Project.Application _ ->
             EverySet.empty
-
-
-moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
-moduleVisitor schema =
-    schema
-        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
-        |> Rule.withDeclarationEnterVisitor declarationVisitor
-        |> Rule.withCommentsVisitor commentsVisitor
 
 
 declarationVisitor : Node Declaration -> ModuleContext -> ( List nothing, ModuleContext )
