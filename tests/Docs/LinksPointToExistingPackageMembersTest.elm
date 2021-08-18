@@ -230,7 +230,7 @@ a =
                                 [ "There's no way to figure out in which module to look for this definition."
 
                                 -- TODO REPLACEME This is improvable
-                                , "I found `a` in the nodule(s) A.."
+                                , "I found `a` in the module(s) A.."
                                 ]
                             , under = "[`a`](#a)"
                             }
