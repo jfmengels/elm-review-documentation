@@ -8,7 +8,6 @@ import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
-import EverySet exposing (EverySet)
 import JaroWinkler
 import ParserExtra as Parser
 import Review.Rule as Rule exposing (Rule)
@@ -43,7 +42,7 @@ type alias ProjectContext =
     { linksInReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
     , linksInModules : List (SourceAndLinks Rule.ModuleKey)
     , exposedModules : Set ModuleName
-    , exposed : EverySet SyntaxHelp.ModuleInfo
+    , exposed : List SyntaxHelp.ModuleInfo
     }
 
 
@@ -62,13 +61,13 @@ type alias LinkWithRange =
 type alias ModuleContext =
     { docs : List (Node String)
     , exposedModules : Set ModuleName
-    , exposedFromModule : EverySet SyntaxHelp.ModuleInfo
+    , exposedFromModule : List SyntaxHelp.ModuleInfo
     }
 
 
 initialProjectContext : ProjectContext
 initialProjectContext =
-    { exposed = EverySet.empty
+    { exposed = []
     , exposedModules = Set.empty
     , linksInModules = []
     , linksInReadme = Nothing
@@ -77,7 +76,7 @@ initialProjectContext =
 
 fromProjectToModule : ProjectContext -> ModuleContext
 fromProjectToModule projectContext =
-    { exposedFromModule = EverySet.empty
+    { exposedFromModule = []
     , exposedModules = projectContext.exposedModules
     , docs = []
     }
@@ -120,7 +119,7 @@ useIfNoModuleSpecified moduleName ({ parsed } as link) =
 
 foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
-    { exposed = EverySet.union newContext.exposed previousContext.exposed
+    { exposed = List.append newContext.exposed previousContext.exposed
     , linksInModules = List.append newContext.linksInModules previousContext.linksInModules
     , exposedModules = previousContext.exposedModules
     , linksInReadme = previousContext.linksInReadme
@@ -241,7 +240,7 @@ moduleDefinitionVisitor (Node _ module_) context =
     , { context
         | exposedFromModule =
             if Set.member (Module.moduleName module_) context.exposedModules then
-                EverySet.insert info context.exposedFromModule
+                info :: context.exposedFromModule
 
             else
                 context.exposedFromModule
@@ -252,20 +251,15 @@ moduleDefinitionVisitor (Node _ module_) context =
 finalEvaluation : ProjectContext -> List (Rule.Error scope)
 finalEvaluation context =
     let
-        exposed : List SyntaxHelp.ModuleInfo
-        exposed =
-            context.exposed
-                |> EverySet.toList
-
         exposedDict : Dict ModuleName ( ExposedDefinitions, List String )
         exposedDict =
-            exposed
+            context.exposed
                 |> List.map (\{ moduleName, exposedDefinitions } -> ( moduleName, exposedDefinitions ))
                 |> Dict.fromList
 
         exposedMembers : Set String
         exposedMembers =
-            exposed
+            context.exposed
                 |> List.concatMap
                     (\{ moduleName, exposedDefinitions } ->
                         let
