@@ -291,13 +291,6 @@ check { linksInReadme, exposed, linksInModules } =
                     )
                 |> Set.fromList
 
-        details : ModuleName -> List String
-        details moduleNameParts =
-            linkPointsToNonExistentMemberDetails
-                { exposed = Set.toList exposedMembers
-                , badLink = String.join "." moduleNameParts
-                }
-
         checkLink error match =
             let
                 { moduleName, kind } =
@@ -318,7 +311,7 @@ check { linksInReadme, exposed, linksInModules } =
                     else
                         [ error
                             { message = moduleInLinkNotExposed
-                            , details = details moduleName
+                            , details = details exposedMembers moduleName
                             }
                             match.range
                         ]
@@ -340,7 +333,7 @@ check { linksInReadme, exposed, linksInModules } =
                     else
                         [ error
                             { message = definitionInLinkNotExposedMessage
-                            , details = details moduleName
+                            , details = details exposedMembers moduleName
                             }
                             match.range
                         ]
@@ -378,6 +371,14 @@ check { linksInReadme, exposed, linksInModules } =
             )
     ]
         |> List.concat
+
+
+details : EverySet String -> ModuleName -> List String
+details exposedMembers moduleNameParts =
+    linkPointsToNonExistentMemberDetails
+        { exposed = Set.toList exposedMembers
+        , badLink = String.join "." moduleNameParts
+        }
 
 
 definitionInLinkNotExposedMessage : String
