@@ -411,9 +411,7 @@ noModuleSpecifiedForDefinitionInLinkInReadme { exposed, badLink } =
     }
 
 
-linkPointsToNonExistentMemberDetails :
-    { exposed : List String, badLink : String }
-    -> List String
+linkPointsToNonExistentMemberDetails : { exposed : List String, badLink : String } -> List String
 linkPointsToNonExistentMemberDetails { exposed, badLink } =
     let
         suggestions : String
