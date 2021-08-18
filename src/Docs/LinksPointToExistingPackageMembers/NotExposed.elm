@@ -404,13 +404,7 @@ noModuleSpecifiedForDefinitionInLinkInReadme { exposed, badLink } =
     { message = "Using a link of the form [..](#definition) in the readme."
     , details =
         [ "There's no way to figure out in which module to look for this definition."
-        , [ "I found `"
-          , badLink
-          , "` in the nodule(s) "
-          , String.join ", " moduleSuggestions
-          , "."
-          ]
-            |> String.concat
+        , "I found `" ++ badLink ++ "` in the nodule(s) " ++ String.join ", " moduleSuggestions ++ "."
         ]
     }
 
