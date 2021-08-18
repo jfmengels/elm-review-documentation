@@ -265,7 +265,7 @@ exposedInModule (Node _ module_) context =
                             >> (==) info.moduleName
                         )
             then
-                context.exposed |> Set.insert info
+                Set.insert info context.exposed
 
             else
                 context.exposed
