@@ -3,6 +3,7 @@ module Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionIn
 import Elm.Module as Module
 import Elm.Project as Project exposing (Project)
 import Elm.Syntax.Module exposing (Module)
+import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import EverySet as Set exposing (EverySet)
@@ -289,10 +290,11 @@ check { inReadme, exposed, inModules } =
                     )
                 |> Set.fromList
 
+        details : ModuleName -> List String
         details moduleNameParts =
             linkPointsToNonExistentMemberDetails
-                { exposed = exposedMembers |> Set.toList
-                , badLink = moduleNameParts |> String.join "."
+                { exposed = Set.toList exposedMembers
+                , badLink = String.join "." moduleNameParts
                 }
 
         checkLink error match =
