@@ -13,7 +13,7 @@ import JaroWinkler
 import ParserExtra as Parser
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
-import SyntaxHelp exposing (ExposingKind)
+import SyntaxHelp exposing (ExposedDefinitions)
 
 
 rule : Rule
@@ -266,7 +266,7 @@ finalEvaluation context =
             context.exposed
                 |> EverySet.toList
 
-        exposedDict : Dict ModuleName ( ExposingKind, List String )
+        exposedDict : Dict ModuleName ( ExposedDefinitions, List String )
         exposedDict =
             exposed
                 |> List.map (\{ moduleName, exposedDefinitions } -> ( moduleName, exposedDefinitions ))
@@ -305,7 +305,7 @@ finalEvaluation context =
     List.append errorsForLinksInReadme errorsForLinksInModules
 
 
-errorForLinkInReadme : Dict ModuleName ( ExposingKind, List String ) -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
+errorForLinkInReadme : Dict ModuleName ( ExposedDefinitions, List String ) -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
 errorForLinkInReadme exposedDict exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -328,7 +328,7 @@ errorForLinkInReadme exposedDict exposedMembers { key, links } =
             )
 
 
-errorForLinkInModule : Dict ModuleName ( ExposingKind, List String ) -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
+errorForLinkInModule : Dict ModuleName ( ExposedDefinitions, List String ) -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
 errorForLinkInModule exposedDict exposedMembers { key, links } =
     links
         |> EverySet.toList
@@ -336,7 +336,7 @@ errorForLinkInModule exposedDict exposedMembers { key, links } =
 
 
 checkLink :
-    Dict ModuleName ( ExposingKind, List String )
+    Dict ModuleName ( ExposedDefinitions, List String )
     -> Set String
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange

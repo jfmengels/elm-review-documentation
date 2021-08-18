@@ -1,5 +1,5 @@
 module SyntaxHelp exposing
-    ( ExposingKind(..)
+    ( ExposedDefinitions(..)
     , Link
     , LinkKind(..)
     , ModuleInfo
@@ -48,14 +48,14 @@ docOfDeclaration declaration =
             Nothing
 
 
-type ExposingKind
+type ExposedDefinitions
     = All
     | Explicit
 
 
 type alias ModuleInfo =
     { moduleName : ModuleName
-    , exposedDefinitions : ( ExposingKind, List String )
+    , exposedDefinitions : ( ExposedDefinitions, List String )
     }
 
 
@@ -72,7 +72,7 @@ moduleInfo module_ =
             extract data
 
 
-extract : { a | moduleName : Node ModuleName, exposingList : Node Exposing.Exposing } -> { moduleName : ModuleName, exposedDefinitions : ( ExposingKind, List String ) }
+extract : { a | moduleName : Node ModuleName, exposingList : Node Exposing.Exposing } -> { moduleName : ModuleName, exposedDefinitions : ( ExposedDefinitions, List String ) }
 extract { moduleName, exposingList } =
     { moduleName = moduleName |> Node.value
     , exposedDefinitions =
@@ -87,7 +87,7 @@ extract { moduleName, exposingList } =
     }
 
 
-isExposed : String -> ( ExposingKind, List String ) -> Bool
+isExposed : String -> ( ExposedDefinitions, List String ) -> Bool
 isExposed definition exposings =
     case exposings of
         ( All, _ ) ->
