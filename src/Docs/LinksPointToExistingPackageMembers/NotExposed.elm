@@ -196,9 +196,7 @@ moduleVisitor schema =
             (\comments context ->
                 ( []
                 , comments
-                    |> List.filter
-                        (isFileComment << Node.value)
-                    |> List.head
+                    |> find (isFileComment << Node.value)
                     |> Maybe.map (insertDoc context)
                     |> Maybe.withDefault context
                 )
