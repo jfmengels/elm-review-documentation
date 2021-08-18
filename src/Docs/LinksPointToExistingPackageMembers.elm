@@ -1,10 +1,10 @@
 module Docs.LinksPointToExistingPackageMembers exposing (rule)
 
 import Dict exposing (Dict)
-import Elm.Module as Module
+import Elm.Module
 import Elm.Project as Project exposing (Project)
 import Elm.Syntax.Declaration exposing (Declaration)
-import Elm.Syntax.Module exposing (Module)
+import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
@@ -170,7 +170,7 @@ exposedModulesInElmJson { project } =
                 |> EverySet.map
                     (\name ->
                         { moduleName =
-                            name |> Module.toString |> String.split "."
+                            name |> Elm.Module.toString |> String.split "."
                         , exposedDefinitions = ( SyntaxHelp.Explicit, [] )
                         }
                     )
@@ -252,11 +252,7 @@ moduleDefinitionVisitor (Node _ module_) context =
     ( []
     , { context
         | exposedFromModule =
-            if
-                context.exposedFromModule
-                    |> EverySet.toList
-                    |> List.any (\exposedElement -> exposedElement.moduleName == info.moduleName)
-            then
+            if Set.member (Module.moduleName module_) context.exposedModules then
                 EverySet.insert info context.exposedFromModule
 
             else
