@@ -82,8 +82,7 @@ extract { moduleName, exposingList } =
 
             Exposing.Explicit list ->
                 ( Explicit
-                , list
-                    |> List.map (nameOfExpose << Node.value)
+                , List.map (Node.value >> nameOfExpose) list
                 )
     }
 
