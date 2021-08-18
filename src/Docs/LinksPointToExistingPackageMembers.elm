@@ -1,4 +1,4 @@
-module Docs.LinksPointToExistingPackageMembers.NotExposed exposing (rule)
+module Docs.LinksPointToExistingPackageMembers exposing (rule)
 
 import Elm.Module as Module
 import Elm.Project as Project exposing (Project)
