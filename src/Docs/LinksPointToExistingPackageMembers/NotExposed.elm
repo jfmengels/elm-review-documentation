@@ -285,9 +285,7 @@ check { inReadme, exposed, inModules } =
                         in
                         moduleNameString
                             :: List.map
-                                (\def ->
-                                    moduleNameString ++ "." ++ def
-                                )
+                                (\def -> moduleNameString ++ "." ++ def)
                                 exposedDefs
                     )
                 |> Set.fromList
