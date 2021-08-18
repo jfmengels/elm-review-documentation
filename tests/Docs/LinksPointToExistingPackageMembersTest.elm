@@ -24,14 +24,11 @@ all =
         [ test "exposed function"
             (\() ->
                 """module A.And.B exposing (a, b)
-
-b =
-    "b"
+b = 1
 
 {-| Not [`b`](A-And-B#b).
 -}
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
@@ -44,14 +41,12 @@ a =
         , test "exposed alias"
             (\() ->
                 """module A.And.B exposing (a, B)
-
 type alias B =
     B
 
 {-| Not [`B`](A-And-B#B).
 -}
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
@@ -64,16 +59,12 @@ a =
         , test "definition exposed in different module"
             (\() ->
                 [ """module A exposing (a)
-
 {-| Not [`b`](B#b).
 -}
-a =
-    "a"
+a = 2
 """
                 , """module B exposing (b)
-
-b =
-    "b"
+b = 1
 """
                 ]
                     |> Review.Test.runOnModulesWithProjectData
@@ -87,14 +78,11 @@ b =
         , test "exposed all"
             (\() ->
                 """module A.And.B exposing (..)
-
-b =
-    "b"
+b = 1
 
 {-| Not [`b`](A-And-B#b).
 -}
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
@@ -108,14 +96,11 @@ a =
             [ test "because it isn't exposed"
                 (\() ->
                     """module A.And.B exposing (a)
-
-b =
-    "b"
+b = 1
 
 {-| Not [`b`](A-And-B#b).
 -}
-a =
-    "a"
+a = 2
 """
                         |> Review.Test.runWithProjectData
                             (Project.new
@@ -137,14 +122,11 @@ a =
             , test "because its module isn't in exposed-modules"
                 (\() ->
                     """module A.And.B exposing (a, b)
-
-b =
-    "b"
+b = 1
 
 {-| Not [`b`](A-And-B#b).
 -}
-a =
-    "a"
+a = 2
 """
                         |> Review.Test.runWithProjectData
                             (Project.new
@@ -167,9 +149,7 @@ a =
         , test "in readme because link doesn't point to member"
             (\() ->
                 """module A exposing (a)
-
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
@@ -195,9 +175,7 @@ a =
         , test "in readme no module was specified for definition in link"
             (\() ->
                 """module A exposing (a)
-
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
@@ -225,14 +203,11 @@ a =
         , test "module link because it isn't in exposed-modules"
             (\() ->
                 """module A.And.B exposing (a, b)
-
-b =
-    "b"
+b = 1
 
 {-| Not [`A.And.B`](A-And-B).
 -}
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
@@ -256,15 +231,12 @@ a =
         , test "in file comment"
             (\() ->
                 """module A.And.B exposing (a)
-
 {-| Contains a and [`b`](A-And-B#b).
 -}
 
-b =
-    "b"
+b = 1
 
-a =
-    "a"
+a = 2
 """
                     |> Review.Test.runWithProjectData
                         (Project.new
