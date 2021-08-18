@@ -222,6 +222,8 @@ a =
                             { message = "Using a link of the form [..](#definition) in the readme."
                             , details =
                                 [ "There's no way to figure out in which module to look for this definition."
+
+                                -- TODO REPLACEME This is improvable
                                 , "I found `a` in the nodule(s) A.."
                                 ]
                             , under = "[`a`](#a)"
