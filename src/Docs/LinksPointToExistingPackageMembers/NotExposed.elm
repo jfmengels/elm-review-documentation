@@ -1,6 +1,5 @@
 module Docs.LinksPointToExistingPackageMembers.NotExposed exposing
     ( definitionInLinkNotExposedMessage
-    , linkPointsToNonExistentMemberDetails
     , moduleInLinkNotExposed
     , rule
     )

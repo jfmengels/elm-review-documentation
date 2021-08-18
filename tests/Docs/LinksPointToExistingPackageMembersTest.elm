@@ -1,7 +1,7 @@
 module Docs.LinksPointToExistingPackageMembersTest exposing (all)
 
 import Docs.LinksPointToExistingPackageMembers exposing (rule)
-import Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, linkPointsToNonExistentMemberDetails, moduleInLinkNotExposed)
+import Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, moduleInLinkNotExposed)
 import Elm.Project
 import Json.Decode
 import Review.Project as Project
@@ -132,10 +132,9 @@ a =
                             [ Review.Test.error
                                 { message = definitionInLinkNotExposedMessage
                                 , details =
-                                    linkPointsToNonExistentMemberDetails
-                                        { exposed = [ "A.And.B", "A.And.B.a" ]
-                                        , badLink = "A.And.B.b"
-                                        }
+                                    [ "Links are only useful when they point to exposed package members."
+                                    , "Maybe you meant one of those: A.And.B, A.And.B.a."
+                                    ]
                                 , under = "[`b`](A-And-B#b)"
                                 }
                             ]
@@ -162,10 +161,9 @@ a =
                             [ Review.Test.error
                                 { message = definitionInLinkNotExposedMessage
                                 , details =
-                                    linkPointsToNonExistentMemberDetails
-                                        { exposed = []
-                                        , badLink = "A.And.B.b"
-                                        }
+                                    [ "Links are only useful when they point to exposed package members."
+                                    , "Maybe you meant one of those: ."
+                                    ]
                                 , under = "[`b`](A-And-B#b)"
                                 }
                             ]
@@ -192,10 +190,9 @@ a =
                         [ Review.Test.error
                             { message = moduleInLinkNotExposed
                             , details =
-                                linkPointsToNonExistentMemberDetails
-                                    { exposed = [ "A", "A.a" ]
-                                    , badLink = "B"
-                                    }
+                                [ "Links are only useful when they point to exposed package members."
+                                , "Maybe you meant one of those: A, A.a."
+                                ]
                             , under = "[`B`](B)"
                             }
                         ]
@@ -252,10 +249,11 @@ a =
                         [ Review.Test.error
                             { message = moduleInLinkNotExposed
                             , details =
-                                linkPointsToNonExistentMemberDetails
-                                    { exposed = []
-                                    , badLink = "A.And.B"
-                                    }
+                                [ "Links are only useful when they point to exposed package members."
+
+                                -- TODO REPLACEME This is improvable
+                                , "Maybe you meant one of those: ."
+                                ]
                             , under = "[`A.And.B`](A-And-B)"
                             }
                         ]
@@ -283,10 +281,9 @@ a =
                         [ Review.Test.error
                             { message = definitionInLinkNotExposedMessage
                             , details =
-                                linkPointsToNonExistentMemberDetails
-                                    { exposed = [ "A.And.B", "A.And.B.a" ]
-                                    , badLink = "A.And.B.b"
-                                    }
+                                [ "Links are only useful when they point to exposed package members."
+                                , "Maybe you meant one of those: A.And.B, A.And.B.a."
+                                ]
                             , under = "[`b`](A-And-B#b)"
                             }
                         ]
