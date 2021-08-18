@@ -2,7 +2,7 @@ module SyntaxHelp exposing (ExposingKind(..), Link, LinkKind(..), ModuleInfo, ad
 
 import Elm.Module as Module
 import Elm.Project as Project
-import Elm.Syntax.Declaration exposing (Declaration(..))
+import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose(..))
 import Elm.Syntax.Module as Module exposing (Module)
@@ -17,22 +17,22 @@ import ParserExtra
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
 docOfDeclaration declaration =
     case declaration of
-        FunctionDeclaration { documentation } ->
+        Declaration.FunctionDeclaration { documentation } ->
             documentation
 
-        AliasDeclaration { documentation } ->
+        Declaration.AliasDeclaration { documentation } ->
             documentation
 
-        CustomTypeDeclaration { documentation } ->
+        Declaration.CustomTypeDeclaration { documentation } ->
             documentation
 
-        PortDeclaration _ ->
+        Declaration.PortDeclaration _ ->
             Nothing
 
-        InfixDeclaration _ ->
+        Declaration.InfixDeclaration _ ->
             Nothing
 
-        Destructuring _ _ ->
+        Declaration.Destructuring _ _ ->
             Nothing
 
 
