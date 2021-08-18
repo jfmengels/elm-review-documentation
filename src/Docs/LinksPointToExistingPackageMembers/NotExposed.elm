@@ -29,8 +29,8 @@ rule =
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withModuleVisitor moduleVisitor
         |> (let
-                toModule : ProjectContext -> ModuleContext
-                toModule context =
+                fromProjectToModule : ProjectContext -> ModuleContext
+                fromProjectToModule context =
                     { exposed = context.exposed
                     , docs = Set.empty
                     }
@@ -54,12 +54,12 @@ rule =
                                     match.parsed
                     }
 
-                toProject :
+                fromModuleToProject :
                     Rule.ModuleKey
                     -> Node (List String)
                     -> ModuleContext
                     -> ProjectContext
-                toProject moduleKey (Node _ moduleName) { exposed, docs } =
+                fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
                     { inReadme = Nothing
                     , exposed = exposed
                     , inModules =
@@ -77,8 +77,8 @@ rule =
                         ]
                     }
 
-                merge : ProjectContext -> ProjectContext -> ProjectContext
-                merge a b =
+                foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
+                foldProjectContexts a b =
                     { exposed = Set.union a.exposed b.exposed
                     , inModules = List.append a.inModules b.inModules
                     , inReadme =
@@ -88,9 +88,9 @@ rule =
                     }
             in
             Rule.withModuleContext
-                { fromProjectToModule = \_ _ -> toModule
-                , fromModuleToProject = toProject
-                , foldProjectContexts = merge
+                { fromProjectToModule = \_ _ -> fromProjectToModule
+                , fromModuleToProject = fromModuleToProject
+                , foldProjectContexts = foldProjectContexts
                 }
            )
         |> Rule.withFinalProjectEvaluation check
