@@ -277,8 +277,9 @@ check { inReadme, exposed, inModules } =
                 |> List.concatMap
                     (\{ moduleName, exposedDefinitions } ->
                         let
+                            moduleNameString : String
                             moduleNameString =
-                                moduleName |> String.join "."
+                                String.join "." moduleName
 
                             ( _, exposedDefs ) =
                                 exposedDefinitions
