@@ -29,17 +29,7 @@ rule =
         , inReadme = Nothing
         }
         |> Rule.withReadmeProjectVisitor readmeVisitor
-        |> Rule.withElmJsonProjectVisitor
-            (\maybeElmJson context ->
-                ( []
-                , { context
-                    | exposed =
-                        maybeElmJson
-                            |> Maybe.map exposedModulesInElmJson
-                            |> Maybe.withDefault Set.empty
-                  }
-                )
-            )
+        |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withModuleVisitor
             (let
                 insertDoc context doc =
@@ -158,6 +148,22 @@ readmeVisitor maybeReadme context =
 
         Nothing ->
             context
+    )
+
+
+
+-- ELM.JSON VISITOR
+
+
+elmJsonVisitor : Maybe { key_ | project : Project } -> ProjectContext -> ( List nothing, ProjectContext )
+elmJsonVisitor maybeElmJson context =
+    ( []
+    , { context
+        | exposed =
+            maybeElmJson
+                |> Maybe.map exposedModulesInElmJson
+                |> Maybe.withDefault Set.empty
+      }
     )
 
 
