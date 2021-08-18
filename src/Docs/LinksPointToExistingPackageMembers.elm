@@ -94,15 +94,15 @@ useIfNoModuleSpecified :
     List String
     -> { range | parsed : SyntaxHelp.Link }
     -> { range | parsed : SyntaxHelp.Link }
-useIfNoModuleSpecified moduleName ({ parsed } as match) =
-    { match
+useIfNoModuleSpecified moduleName ({ parsed } as link) =
+    { link
         | parsed =
             case parsed.moduleName of
                 [] ->
                     { parsed | moduleName = moduleName }
 
                 _ ->
-                    match.parsed
+                    link.parsed
     }
 
 
@@ -206,11 +206,11 @@ linksIn { doc, start } =
     doc
         |> Parser.find SyntaxHelp.linkParser
         |> List.map
-            (\match ->
-                { match
+            (\link ->
+                { link
                     | range =
-                        { start = SyntaxHelp.addLocation start match.range.start
-                        , end = SyntaxHelp.addLocation start match.range.end
+                        { start = SyntaxHelp.addLocation start link.range.start
+                        , end = SyntaxHelp.addLocation start link.range.end
                         }
                 }
             )
@@ -303,8 +303,8 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
     links
         |> EverySet.toList
         |> List.concatMap
-            (\match ->
-                case ( match.parsed.moduleName, match.parsed.kind ) of
+            (\link ->
+                case ( link.parsed.moduleName, link.parsed.kind ) of
                     ( [], SyntaxHelp.DefinitionLink definition ) ->
                         [ Rule.errorForReadme key
                             (noModuleSpecifiedForDefinitionInLinkInReadme
@@ -312,11 +312,11 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
                                 , exposed = Set.toList exposedMembers
                                 }
                             )
-                            match.range
+                            link.range
                         ]
 
                     _ ->
-                        checkLink exposed exposedMembers (Rule.errorForReadme key) match
+                        checkLink exposed exposedMembers (Rule.errorForReadme key) link
             )
 
 
@@ -333,10 +333,10 @@ checkLink :
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange
     -> List (Rule.Error scope)
-checkLink exposed exposedMembers error match =
+checkLink exposed exposedMembers error link =
     let
         { moduleName, kind } =
-            match.parsed
+            link.parsed
     in
     case kind of
         SyntaxHelp.ModuleLink ->
@@ -355,7 +355,7 @@ checkLink exposed exposedMembers error match =
                     { message = moduleInLinkNotExposed
                     , details = details exposedMembers moduleName
                     }
-                    match.range
+                    link.range
                 ]
 
         SyntaxHelp.DefinitionLink definition ->
@@ -377,7 +377,7 @@ checkLink exposed exposedMembers error match =
                     { message = definitionInLinkNotExposedMessage
                     , details = details exposedMembers moduleName
                     }
-                    match.range
+                    link.range
                 ]
 
 
