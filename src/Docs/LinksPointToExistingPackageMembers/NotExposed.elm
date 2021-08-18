@@ -2,6 +2,7 @@ module Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionIn
 
 import Elm.Module as Module
 import Elm.Project as Project exposing (Project)
+import Elm.Syntax.Declaration exposing (Declaration)
 import Elm.Syntax.Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
@@ -183,16 +184,18 @@ moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRu
 moduleVisitor schema =
     schema
         |> Rule.withModuleDefinitionVisitor exposedInModule
-        |> Rule.withDeclarationEnterVisitor
-            (\(Node _ declaration) context ->
-                ( []
-                , declaration
-                    |> docOfDeclaration
-                    |> Maybe.map (insertDoc context)
-                    |> Maybe.withDefault context
-                )
-            )
+        |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.withCommentsVisitor commentsVisitor
+
+
+declarationVisitor : Node Declaration -> ModuleContext -> ( List a, ModuleContext )
+declarationVisitor (Node _ declaration) context =
+    ( []
+    , declaration
+        |> docOfDeclaration
+        |> Maybe.map (insertDoc context)
+        |> Maybe.withDefault context
+    )
 
 
 commentsVisitor : List (Node String) -> ModuleContext -> ( List nothing, ModuleContext )
