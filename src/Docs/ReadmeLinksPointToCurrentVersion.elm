@@ -20,6 +20,10 @@ where the version is set to `latest` or a different version than the current ver
 
 🔧 Running with `--fix` will automatically remove all the reported errors.
 
+    config =
+        [ Docs.ReadmeLinksPointToCurrentVersion.rule
+        ]
+
 The problem with linking to `latest` is that if you release a new version later,
 the users who read the README for the older version will be directed to a version
 where the module/function/section you pointed to may not exist anymore.
