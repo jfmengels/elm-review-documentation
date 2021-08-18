@@ -332,6 +332,12 @@ check { linksInReadme, exposed, linksInModules } =
         |> List.concat
 
 
+checkLink :
+    EverySet ModuleInfo
+    -> EverySet String
+    -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
+    -> LinkWithRange
+    -> List (Rule.Error scope)
 checkLink exposed exposedMembers error match =
     let
         { moduleName, kind } =
