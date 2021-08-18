@@ -1,5 +1,6 @@
 module Docs.LinksPointToExistingPackageMembers exposing (rule)
 
+import Dict exposing (Dict)
 import Elm.Module as Module
 import Elm.Project as Project exposing (Project)
 import Elm.Syntax.Declaration exposing (Declaration)
@@ -12,7 +13,7 @@ import JaroWinkler
 import ParserExtra as Parser
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
-import SyntaxHelp
+import SyntaxHelp exposing (ExposingKind)
 
 
 rule : Rule
@@ -266,6 +267,12 @@ finalEvaluation context =
             context.exposed
                 |> EverySet.toList
 
+        exposedDict : Dict ModuleName ( ExposingKind, List String )
+        exposedDict =
+            exposed
+                |> List.map (\{ moduleName, exposedDefinitions } -> ( moduleName, exposedDefinitions ))
+                |> Dict.fromList
+
         exposedMembers : Set String
         exposedMembers =
             exposed
@@ -289,18 +296,18 @@ finalEvaluation context =
         errorsForLinksInReadme : List (Rule.Error scope)
         errorsForLinksInReadme =
             context.linksInReadme
-                |> Maybe.map (errorForLinkInReadme exposed exposedMembers)
+                |> Maybe.map (errorForLinkInReadme exposedDict exposedMembers)
                 |> Maybe.withDefault []
 
         errorsForLinksInModules : List (Rule.Error scope)
         errorsForLinksInModules =
-            List.concatMap (errorForLinkInModule exposed exposedMembers) context.linksInModules
+            List.concatMap (errorForLinkInModule exposedDict exposedMembers) context.linksInModules
     in
     List.append errorsForLinksInReadme errorsForLinksInModules
 
 
-errorForLinkInReadme : List SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
-errorForLinkInReadme exposed exposedMembers { key, links } =
+errorForLinkInReadme : Dict ModuleName ( ExposingKind, List String ) -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
+errorForLinkInReadme exposedDict exposedMembers { key, links } =
     links
         |> EverySet.toList
         |> List.filterMap
@@ -318,27 +325,27 @@ errorForLinkInReadme exposed exposedMembers { key, links } =
                             )
 
                     _ ->
-                        checkLink exposed exposedMembers (Rule.errorForReadme key) link
+                        checkLink exposedDict exposedMembers (Rule.errorForReadme key) link
             )
 
 
-errorForLinkInModule : List SyntaxHelp.ModuleInfo -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
-errorForLinkInModule exposed exposedMembers { key, links } =
+errorForLinkInModule : Dict ModuleName ( ExposingKind, List String ) -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
+errorForLinkInModule exposedDict exposedMembers { key, links } =
     links
         |> EverySet.toList
-        |> List.filterMap (checkLink exposed exposedMembers (Rule.errorForModule key))
+        |> List.filterMap (checkLink exposedDict exposedMembers (Rule.errorForModule key))
 
 
 checkLink :
-    List SyntaxHelp.ModuleInfo
+    Dict ModuleName ( ExposingKind, List String )
     -> Set String
     -> ({ message : String, details : List String } -> Range -> Rule.Error scope)
     -> LinkWithRange
     -> Maybe (Rule.Error scope)
-checkLink exposed exposedMembers error link =
+checkLink exposedDict exposedMembers error link =
     case link.parsed.kind of
         SyntaxHelp.ModuleLink ->
-            if List.any (\exposedElement -> exposedElement.moduleName == link.parsed.moduleName) exposed then
+            if Dict.member link.parsed.moduleName exposedDict then
                 Nothing
 
             else
@@ -351,24 +358,29 @@ checkLink exposed exposedMembers error link =
                     )
 
         SyntaxHelp.DefinitionLink definition ->
-            if
-                List.any
-                    (\m ->
-                        (m.moduleName == link.parsed.moduleName)
-                            && SyntaxHelp.isExposed definition m.exposedDefinitions
-                    )
-                    exposed
-            then
-                Nothing
+            case Dict.get link.parsed.moduleName exposedDict of
+                Just exposedDefinitions ->
+                    if SyntaxHelp.isExposed definition exposedDefinitions then
+                        Nothing
 
-            else
-                Just
-                    (error
-                        { message = definitionInLinkNotExposedMessage
-                        , details = details exposedMembers link.parsed.moduleName
-                        }
-                        link.range
-                    )
+                    else
+                        Just
+                            (error
+                                { message = definitionInLinkNotExposedMessage
+                                , details = details exposedMembers link.parsed.moduleName
+                                }
+                                link.range
+                            )
+
+                Nothing ->
+                    -- TODO No corresponding module could be found, this should be a different error message
+                    Just
+                        (error
+                            { message = definitionInLinkNotExposedMessage
+                            , details = details exposedMembers link.parsed.moduleName
+                            }
+                            link.range
+                        )
 
 
 details : Set String -> ModuleName -> List String
