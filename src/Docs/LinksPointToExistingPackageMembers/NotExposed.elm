@@ -267,7 +267,7 @@ exposedInModule (Node _ module_) context =
     )
 
 
-check : ProjectContext -> List (Rule.Error e_)
+check : ProjectContext -> List (Rule.Error scope)
 check { inReadme, exposed, inModules } =
     let
         exposedMembers : Set String
