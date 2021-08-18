@@ -334,18 +334,14 @@ checkLink :
     -> LinkWithRange
     -> List (Rule.Error scope)
 checkLink exposed exposedMembers error link =
-    let
-        { moduleName, kind } =
-            link.parsed
-    in
-    case kind of
+    case link.parsed.kind of
         SyntaxHelp.ModuleLink ->
             if
                 exposed
                     |> EverySet.toList
                     |> List.any
                         (.moduleName
-                            >> (==) moduleName
+                            >> (==) link.parsed.moduleName
                         )
             then
                 []
@@ -353,7 +349,7 @@ checkLink exposed exposedMembers error link =
             else
                 [ error
                     { message = moduleInLinkNotExposed
-                    , details = details exposedMembers moduleName
+                    , details = details exposedMembers link.parsed.moduleName
                     }
                     link.range
                 ]
@@ -364,7 +360,7 @@ checkLink exposed exposedMembers error link =
                     |> EverySet.toList
                     |> List.any
                         (\m ->
-                            (m.moduleName == moduleName)
+                            (m.moduleName == link.parsed.moduleName)
                                 && (m.exposedDefinitions
                                         |> SyntaxHelp.isExposed definition
                                    )
@@ -375,7 +371,7 @@ checkLink exposed exposedMembers error link =
             else
                 [ error
                     { message = definitionInLinkNotExposedMessage
-                    , details = details exposedMembers moduleName
+                    , details = details exposedMembers link.parsed.moduleName
                     }
                     link.range
                 ]
