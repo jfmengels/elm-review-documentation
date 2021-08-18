@@ -49,7 +49,7 @@ type alias ProjectContext =
 
 type alias SourceAndLinks key =
     { key : key
-    , links : EverySet LinkWithRange
+    , links : List LinkWithRange
     }
 
 
@@ -97,7 +97,6 @@ fromModuleToProject moduleKey (Node _ moduleName) { exposedFromModule, docs } =
                             linksIn { doc = doc, start = start }
                         )
                     |> List.map (useIfNoModuleSpecified moduleName)
-                    |> EverySet.fromList
           }
         ]
     }
@@ -220,13 +219,12 @@ linksIn { doc, start } =
             )
 
 
-findLinksInReadme : String -> EverySet LinkWithRange
+findLinksInReadme : String -> List LinkWithRange
 findLinksInReadme content =
     linksIn
         { doc = content
         , start = { row = 1, column = 1 }
         }
-        |> EverySet.fromList
 
 
 moduleDefinitionVisitor :
@@ -300,32 +298,29 @@ finalEvaluation context =
 
 errorForLinkInReadme : Dict ModuleName ( ExposedDefinitions, List String ) -> Set String -> SourceAndLinks Rule.ReadmeKey -> List (Rule.Error scope)
 errorForLinkInReadme exposedDict exposedMembers { key, links } =
-    links
-        |> EverySet.toList
-        |> List.filterMap
-            (\link ->
-                case ( link.parsed.moduleName, link.parsed.kind ) of
-                    ( [], SyntaxHelp.DefinitionLink definition ) ->
-                        Just
-                            (Rule.errorForReadme key
-                                (noModuleSpecifiedForDefinitionInLinkInReadme
-                                    { badLink = definition
-                                    , exposed = Set.toList exposedMembers
-                                    }
-                                )
-                                link.range
+    List.filterMap
+        (\link ->
+            case ( link.parsed.moduleName, link.parsed.kind ) of
+                ( [], SyntaxHelp.DefinitionLink definition ) ->
+                    Just
+                        (Rule.errorForReadme key
+                            (noModuleSpecifiedForDefinitionInLinkInReadme
+                                { badLink = definition
+                                , exposed = Set.toList exposedMembers
+                                }
                             )
+                            link.range
+                        )
 
-                    _ ->
-                        checkLink exposedDict exposedMembers (Rule.errorForReadme key) link
-            )
+                _ ->
+                    checkLink exposedDict exposedMembers (Rule.errorForReadme key) link
+        )
+        links
 
 
 errorForLinkInModule : Dict ModuleName ( ExposedDefinitions, List String ) -> Set String -> SourceAndLinks Rule.ModuleKey -> List (Rule.Error scope)
 errorForLinkInModule exposedDict exposedMembers { key, links } =
-    links
-        |> EverySet.toList
-        |> List.filterMap (checkLink exposedDict exposedMembers (Rule.errorForModule key))
+    List.filterMap (checkLink exposedDict exposedMembers (Rule.errorForModule key)) links
 
 
 checkLink :
