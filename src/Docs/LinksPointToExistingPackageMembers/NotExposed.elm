@@ -437,3 +437,21 @@ linkPointsToNonExistentMemberDetails { exposed, badLink } =
     [ "Links are only useful when they point to exposed package members."
     , "Maybe you meant one of those: " ++ suggestions ++ "."
     ]
+
+
+
+-- Utils
+
+
+find : (a -> Bool) -> List a -> Maybe a
+find predicate list =
+    case list of
+        [] ->
+            Nothing
+
+        head :: rest ->
+            if predicate head then
+                Just head
+
+            else
+                find predicate rest
