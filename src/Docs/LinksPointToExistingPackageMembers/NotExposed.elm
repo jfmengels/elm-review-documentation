@@ -283,12 +283,12 @@ check { inReadme, exposed, inModules } =
                             ( _, exposedDefs ) =
                                 exposedDefinitions
                         in
-                        exposedDefs
-                            |> List.map
+                        moduleNameString
+                            :: List.map
                                 (\def ->
                                     moduleNameString ++ "." ++ def
                                 )
-                            |> (::) moduleNameString
+                                exposedDefs
                     )
                 |> Set.fromList
 
