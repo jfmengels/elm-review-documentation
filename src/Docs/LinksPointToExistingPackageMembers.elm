@@ -16,7 +16,7 @@ import SyntaxHelp
 
 rule : Rule
 rule =
-    Rule.newProjectRuleSchema "LinksPointToExistingPackageMembers" initialProjectContext
+    Rule.newProjectRuleSchema "Docs.LinksPointToExistingPackageMembers" initialProjectContext
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withModuleVisitor moduleVisitor

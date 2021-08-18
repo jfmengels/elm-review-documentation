@@ -20,7 +20,7 @@ moduleInLinkNotExposed =
 
 all : Test
 all =
-    describe "LinksPointToExistingPackageMembers"
+    describe "Docs.LinksPointToExistingPackageMembers"
         [ succeeds
         , fails
         ]
