@@ -39,7 +39,7 @@ rule =
 
 type alias ProjectContext =
     { inReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
-    , inModules : List (SourceAndLinks Rule.ModuleKey)
+    , linksInModules : List (SourceAndLinks Rule.ModuleKey)
     , exposed : Set ModuleInfo
     }
 
@@ -59,7 +59,7 @@ type alias ModuleContext =
 initialProjectContext : ProjectContext
 initialProjectContext =
     { exposed = Set.empty
-    , inModules = []
+    , linksInModules = []
     , inReadme = Nothing
     }
 
@@ -75,7 +75,7 @@ fromModuleToProject : Rule.ModuleKey -> Node (List String) -> ModuleContext -> P
 fromModuleToProject moduleKey (Node _ moduleName) { exposed, docs } =
     { inReadme = Nothing
     , exposed = exposed
-    , inModules =
+    , linksInModules =
         [ { key = moduleKey
           , links =
                 docs
@@ -110,7 +110,7 @@ useIfNoModuleSpecified moduleName ({ parsed } as match) =
 foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
     { exposed = Set.union newContext.exposed previousContext.exposed
-    , inModules = List.append newContext.inModules previousContext.inModules
+    , linksInModules = List.append newContext.linksInModules previousContext.linksInModules
     , inReadme = previousContext.inReadme
     }
 
@@ -268,7 +268,7 @@ exposedInModule (Node _ module_) context =
 
 
 check : ProjectContext -> List (Rule.Error scope)
-check { inReadme, exposed, inModules } =
+check { inReadme, exposed, linksInModules } =
     let
         exposedMembers : Set String
         exposedMembers =
@@ -368,7 +368,7 @@ check { inReadme, exposed, inModules } =
                         )
             )
         |> Maybe.withDefault []
-    , inModules
+    , linksInModules
         |> List.concatMap
             (\{ key, links } ->
                 links
