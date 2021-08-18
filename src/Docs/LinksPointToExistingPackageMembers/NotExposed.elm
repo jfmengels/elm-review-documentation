@@ -254,8 +254,9 @@ exposedInModule (Node _ module_) context =
     , { context
         | exposed =
             let
+                info : ModuleInfo
                 info =
-                    module_ |> moduleInfo
+                    moduleInfo module_
             in
             if
                 context.exposed
