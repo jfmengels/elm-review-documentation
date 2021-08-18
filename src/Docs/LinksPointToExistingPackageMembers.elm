@@ -77,7 +77,7 @@ initialProjectContext =
 
 fromProjectToModule : ProjectContext -> ModuleContext
 fromProjectToModule projectContext =
-    { exposedFromModule = projectContext.exposed
+    { exposedFromModule = EverySet.empty
     , exposedModules = projectContext.exposedModules
     , docs = EverySet.empty
     }
