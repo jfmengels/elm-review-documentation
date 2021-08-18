@@ -1,7 +1,7 @@
 module Docs.LinksPointToExistingPackageMembersTest exposing (all)
 
 import Docs.LinksPointToExistingPackageMembers exposing (rule)
-import Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, linkPointsToNonExistentMemberDetails, moduleInLinkNotExposed, noModuleSpecifiedForDefinitionInLinkInReadme)
+import Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, linkPointsToNonExistentMemberDetails, moduleInLinkNotExposed)
 import Elm.Project
 import Json.Decode
 import Review.Project as Project
@@ -218,16 +218,12 @@ a =
                         )
                         rule
                     |> Review.Test.expectErrorsForReadme
-                        [ let
-                            { message, details } =
-                                noModuleSpecifiedForDefinitionInLinkInReadme
-                                    { exposed = [ "A", "A.a" ]
-                                    , badLink = "a"
-                                    }
-                          in
-                          Review.Test.error
-                            { message = message
-                            , details = details
+                        [ Review.Test.error
+                            { message = "Using a link of the form [..](#definition) in the readme."
+                            , details =
+                                [ "There's no way to figure out in which module to look for this definition."
+                                , "I found `a` in the nodule(s) A.."
+                                ]
                             , under = "[`a`](#a)"
                             }
                         ]

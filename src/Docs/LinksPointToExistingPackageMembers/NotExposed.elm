@@ -2,7 +2,6 @@ module Docs.LinksPointToExistingPackageMembers.NotExposed exposing
     ( definitionInLinkNotExposedMessage
     , linkPointsToNonExistentMemberDetails
     , moduleInLinkNotExposed
-    , noModuleSpecifiedForDefinitionInLinkInReadme
     , rule
     )
 
