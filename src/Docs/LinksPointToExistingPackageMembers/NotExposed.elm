@@ -63,25 +63,24 @@ rule =
                     { inReadme = Nothing
                     , exposed = exposed
                     , inModules =
-                        { key = moduleKey
-                        , links =
-                            docs
-                                |> Set.toList
-                                |> List.concatMap
-                                    (\(Node { start } doc) ->
-                                        linksIn { doc = doc, start = start }
-                                    )
-                                |> List.map (useIfNoModuleSpecified moduleName)
-                                |> Set.fromList
-                        }
-                            |> Set.singleton
+                        [ { key = moduleKey
+                          , links =
+                                docs
+                                    |> Set.toList
+                                    |> List.concatMap
+                                        (\(Node { start } doc) ->
+                                            linksIn { doc = doc, start = start }
+                                        )
+                                    |> List.map (useIfNoModuleSpecified moduleName)
+                                    |> Set.fromList
+                          }
+                        ]
                     }
 
                 merge : ProjectContext -> ProjectContext -> ProjectContext
                 merge a b =
                     { exposed = Set.union a.exposed b.exposed
-                    , inModules =
-                        Set.union a.inModules b.inModules
+                    , inModules = List.append a.inModules b.inModules
                     , inReadme =
                         a.inReadme
                             |> Maybe.map Just
@@ -100,7 +99,7 @@ rule =
 
 type alias ProjectContext =
     { inReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
-    , inModules : Set (SourceAndLinks Rule.ModuleKey)
+    , inModules : List (SourceAndLinks Rule.ModuleKey)
     , exposed : Set ModuleInfo
     }
 
@@ -120,7 +119,7 @@ type alias ModuleContext =
 initialProjectContext : ProjectContext
 initialProjectContext =
     { exposed = Set.empty
-    , inModules = Set.empty
+    , inModules = []
     , inReadme = Nothing
     }
 
@@ -380,7 +379,6 @@ check { inReadme, exposed, inModules } =
             )
         |> Maybe.withDefault []
     , inModules
-        |> Set.toList
         |> List.concatMap
             (\{ key, links } ->
                 links
