@@ -103,19 +103,15 @@ rule =
 
 
 type alias ProjectContext =
-    { inReadme :
-        Maybe
-            { key : Rule.ReadmeKey
-            , links :
-                Set { parsed : Link, range : Range }
-            }
-    , inModules :
-        Set
-            { key : Rule.ModuleKey
-            , links :
-                Set { parsed : Link, range : Range }
-            }
+    { inReadme : Maybe (SourceAndLinks Rule.ReadmeKey)
+    , inModules : Set (SourceAndLinks Rule.ModuleKey)
     , exposed : Set ModuleInfo
+    }
+
+
+type alias SourceAndLinks key =
+    { key : key
+    , links : Set { parsed : Link, range : Range }
     }
 
 
