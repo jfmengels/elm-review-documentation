@@ -95,7 +95,7 @@ isExposed definition exposings =
             True
 
         ( Explicit, list ) ->
-            list |> List.member definition
+            List.member definition list
 
 
 nameOfExpose : TopLevelExpose -> String
@@ -126,8 +126,7 @@ exposedModules exposed =
             exposedList
 
         Project.ExposedDict fakeDict ->
-            fakeDict
-                |> List.concatMap (\( _, names ) -> names)
+            List.concatMap (\( _, names ) -> names) fakeDict
 
 
 addLocation : Location -> Location -> Location
