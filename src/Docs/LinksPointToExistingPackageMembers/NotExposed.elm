@@ -98,15 +98,15 @@ useIfNoModuleSpecified :
     -> { range | parsed : Link }
 useIfNoModuleSpecified moduleName match =
     let
-        link : Link
-        link =
+        parsed : Link
+        parsed =
             match.parsed
     in
     { match
         | parsed =
-            case link.moduleName of
+            case parsed.moduleName of
                 [] ->
-                    { link | moduleName = moduleName }
+                    { parsed | moduleName = moduleName }
 
                 _ ->
                     match.parsed
