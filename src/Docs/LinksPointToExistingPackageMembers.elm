@@ -355,9 +355,7 @@ checkLink exposed exposedMembers error link =
                 List.any
                     (\m ->
                         (m.moduleName == link.parsed.moduleName)
-                            && (m.exposedDefinitions
-                                    |> SyntaxHelp.isExposed definition
-                               )
+                            && SyntaxHelp.isExposed definition m.exposedDefinitions
                     )
                     exposed
             then
