@@ -1,4 +1,4 @@
-module LinkParserTest exposing (suite)
+module Docs.LinkParserTest exposing (suite)
 
 import Expect
 import Parser

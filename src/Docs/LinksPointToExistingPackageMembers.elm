@@ -1,4 +1,4 @@
-module LinksPointToExistingPackageMembers exposing (rule)
+module Docs.LinksPointToExistingPackageMembers exposing (rule)
 
 {-|
 
@@ -6,7 +6,7 @@ module LinksPointToExistingPackageMembers exposing (rule)
 
 -}
 
-import LinksPointToExistingPackageMembers.NotExposed
+import Docs.LinksPointToExistingPackageMembers.NotExposed
 import Review.Rule exposing (Rule)
 
 
@@ -56,4 +56,4 @@ elm-review --template lue-bird/elm-review-links-point-to-existing-package-member
 -}
 rule : Rule
 rule =
-    LinksPointToExistingPackageMembers.NotExposed.rule
+    Docs.LinksPointToExistingPackageMembers.NotExposed.rule

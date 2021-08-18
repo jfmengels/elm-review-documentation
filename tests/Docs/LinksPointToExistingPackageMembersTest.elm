@@ -1,9 +1,9 @@
-module LinksPointToExistingPackageMembersTest exposing (all)
+module Docs.LinksPointToExistingPackageMembersTest exposing (all)
 
+import Docs.LinksPointToExistingPackageMembers exposing (rule)
+import Docs.LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, linkPointsToNonExistentMemberDetails, moduleInLinkNotExposed, noModuleSpecifiedForDefinitionInLinkInReadme)
 import Elm.Project
 import Json.Decode
-import LinksPointToExistingPackageMembers exposing (rule)
-import LinksPointToExistingPackageMembers.NotExposed exposing (definitionInLinkNotExposedMessage, linkPointsToNonExistentMemberDetails, moduleInLinkNotExposed, noModuleSpecifiedForDefinitionInLinkInReadme)
 import Review.Project as Project
 import Review.Test
 import Test exposing (Test, describe, test)
