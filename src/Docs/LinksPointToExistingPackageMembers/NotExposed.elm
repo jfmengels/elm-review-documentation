@@ -207,11 +207,7 @@ moduleVisitor schema =
 
 insertDoc : ModuleContext -> Node String -> ModuleContext
 insertDoc context doc =
-    { context
-        | docs =
-            context.docs
-                |> Set.insert doc
-    }
+    { context | docs = Set.insert doc context.docs }
 
 
 linksIn :
