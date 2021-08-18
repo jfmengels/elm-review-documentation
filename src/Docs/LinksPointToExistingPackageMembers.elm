@@ -168,7 +168,7 @@ exposedModulesInElmJson { project } =
 moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
 moduleVisitor schema =
     schema
-        |> Rule.withModuleDefinitionVisitor exposedInModule
+        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.withCommentsVisitor commentsVisitor
 
@@ -233,11 +233,11 @@ findLinksInReadme readme =
     }
 
 
-exposedInModule :
+moduleDefinitionVisitor :
     Node Module
     -> ModuleContext
     -> ( List error_, ModuleContext )
-exposedInModule (Node _ module_) context =
+moduleDefinitionVisitor (Node _ module_) context =
     ( []
     , { context
         | exposedFromModule =
