@@ -238,14 +238,14 @@ moduleDefinitionVisitor :
     -> ModuleContext
     -> ( List error_, ModuleContext )
 moduleDefinitionVisitor (Node _ module_) context =
+    let
+        info : SyntaxHelp.ModuleInfo
+        info =
+            SyntaxHelp.moduleInfo module_
+    in
     ( []
     , { context
         | exposedFromModule =
-            let
-                info : SyntaxHelp.ModuleInfo
-                info =
-                    SyntaxHelp.moduleInfo module_
-            in
             if
                 context.exposedFromModule
                     |> EverySet.toList
