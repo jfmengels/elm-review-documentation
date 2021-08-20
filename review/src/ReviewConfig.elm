@@ -11,6 +11,7 @@ when inside the directory containing this file.
 
 -}
 
+import CognitiveComplexity
 import Docs.ReadmeLinksPointToCurrentVersion
 import NoDebug.Log
 import NoDebug.TodoOrToString
@@ -20,8 +21,10 @@ import NoImportingEverything
 import NoMissingTypeAnnotation
 import NoMissingTypeAnnotationInLetIn
 import NoMissingTypeExpose
-import NoUnused.CustomTypeConstructors
+import NoPrematureLetComputation
+import NoSimpleLetBody
 import NoUnused.CustomTypeConstructorArgs
+import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
 import NoUnused.Exports
 import NoUnused.Modules
@@ -29,6 +32,7 @@ import NoUnused.Parameters
 import NoUnused.Patterns
 import NoUnused.Variables
 import Review.Rule as Rule exposing (Rule)
+import Simplify
 
 
 config : List Rule
@@ -43,6 +47,8 @@ config =
     , NoMissingTypeAnnotation.rule
     , NoMissingTypeAnnotationInLetIn.rule
     , NoMissingTypeExpose.rule
+    , NoSimpleLetBody.rule
+    , NoPrematureLetComputation.rule
     , NoUnused.CustomTypeConstructors.rule []
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.Dependencies.rule
@@ -51,4 +57,6 @@ config =
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule
     , NoUnused.Variables.rule
+    , Simplify.rule Simplify.defaults
+    , CognitiveComplexity.rule 10
     ]
