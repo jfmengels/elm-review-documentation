@@ -231,15 +231,15 @@ moduleDefinitionVisitor :
     -> ModuleContext
     -> ( List error_, ModuleContext )
 moduleDefinitionVisitor (Node _ module_) context =
-    let
-        info : SyntaxHelp.ModuleInfo
-        info =
-            SyntaxHelp.moduleInfo module_
-    in
     ( []
     , { context
         | exposedFromModule =
             if Set.member (Module.moduleName module_) context.exposedModules then
+                let
+                    info : SyntaxHelp.ModuleInfo
+                    info =
+                        SyntaxHelp.moduleInfo module_
+                in
                 info :: context.exposedFromModule
 
             else
