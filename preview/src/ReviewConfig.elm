@@ -11,6 +11,7 @@ when inside the directory containing this file.
 
 -}
 
+import Docs.NoLinksToMissingSections
 import Docs.ReadmeLinksPointToCurrentVersion
 import Review.Rule exposing (Rule)
 
@@ -18,4 +19,5 @@ import Review.Rule exposing (Rule)
 config : List Rule
 config =
     [ Docs.ReadmeLinksPointToCurrentVersion.rule
+    , Docs.NoLinksToMissingSections.rule
     ]

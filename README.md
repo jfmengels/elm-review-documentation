@@ -5,6 +5,7 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 
 ## Provided rules
 
+- [`Docs.NoLinksToMissingSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoLinksToMissingSections) - Reports REPLACEME.
 - [🔧 `Docs.ReadmeLinksPointToCurrentVersion`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReadmeLinksPointToCurrentVersion "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
 
 ## Configuration
@@ -12,12 +13,14 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ```elm
 module ReviewConfig exposing (config)
 
-import Review.Rule exposing (Rule)
+import Docs.NoLinksToMissingSections
 import Docs.ReadmeLinksPointToCurrentVersion
+import Review.Rule exposing (Rule)
 
 config : List Rule
 config =
     [ Docs.ReadmeLinksPointToCurrentVersion.rule
+    , Docs.NoLinksToMissingSections.rule
     ]
 ```
 
