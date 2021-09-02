@@ -148,8 +148,8 @@ linkParser =
     Parser.succeed
         (\( startRow, startCol ) moduleName section ( endRow, endCol ) ->
             Node
-                { start = { row = startRow, column = startCol }
-                , end = { row = endRow, column = endCol }
+                { start = { row = startRow - 1, column = startCol - 2 }
+                , end = { row = endRow - 1, column = endCol - 3 }
                 }
                 { moduleName = moduleName, section = section }
         )
