@@ -243,12 +243,12 @@ linksIn : Node Documentation -> List (Node SyntaxHelp.Link)
 linksIn documentation =
     Node.value documentation
         |> ParserExtra.find SyntaxHelp.linkParser
-        |> List.map (mapNodeRange (SyntaxHelp.addOffset (Node.range documentation).start))
+        |> List.map (addOffset (Node.range documentation).start)
 
 
-mapNodeRange : (Range -> Range) -> Node a -> Node a
-mapNodeRange mapper (Node range a) =
-    Node (mapper range) a
+addOffset : Location -> Node a -> Node a
+addOffset offset (Node range a) =
+    Node (SyntaxHelp.addOffset offset range) a
 
 
 
