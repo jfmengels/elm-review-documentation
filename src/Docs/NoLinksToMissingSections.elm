@@ -110,18 +110,16 @@ exposedName node =
 -- DECLARATION VISITOR
 
 
-declarationVisitor : Node Declaration -> Context -> ( List (Rule.Error {}), Context )
+declarationVisitor : Node Declaration -> Context -> ( List nothing, Context )
 declarationVisitor node context =
     case docOfDeclaration (Node.value node) of
         Just (Node range doc) ->
             let
-                errors : List (Rule.Error {})
-                errors =
+                links : List (Node SyntaxHelp.Link)
+                links =
                     linksIn { doc = doc, start = range.start }
-                        |> List.filter (linksToMissingSection context.sections)
-                        |> List.map reportLink
             in
-            ( errors, context )
+            ( [], { context | links = links ++ context.links } )
 
         Nothing ->
             ( [], context )
