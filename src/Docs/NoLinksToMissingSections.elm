@@ -69,6 +69,13 @@ type alias ProjectContext =
         }
 
 
+type alias ModuleContext =
+    { exposingAll : Bool
+    , sections : Set String
+    , links : List (Node SyntaxHelp.Link)
+    }
+
+
 fromModuleToProject : Rule.ContextCreator ModuleContext ProjectContext
 fromModuleToProject =
     Rule.initContextCreator
@@ -84,11 +91,15 @@ fromModuleToProject =
         |> Rule.withModuleKey
 
 
-type alias ModuleContext =
-    { exposingAll : Bool
-    , sections : Set String
-    , links : List (Node SyntaxHelp.Link)
-    }
+fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
+fromProjectToModule =
+    Rule.initContextCreator
+        (\_ ->
+            { exposingAll = False
+            , sections = Set.empty
+            , links = []
+            }
+        )
 
 
 initialContext : ModuleContext
