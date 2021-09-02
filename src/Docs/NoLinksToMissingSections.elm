@@ -8,8 +8,11 @@ module Docs.NoLinksToMissingSections exposing (rule)
 
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
-import Elm.Syntax.Node as Node exposing (Node)
+import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Range exposing (Location, Range)
+import ParserExtra
 import Review.Rule as Rule exposing (Rule)
+import SyntaxHelp2 as SyntaxHelp
 
 
 {-| Reports... REPLACEME
@@ -59,15 +62,18 @@ type alias Context =
 
 declarationVisitor : Node Declaration -> Context -> ( List (Rule.Error {}), Context )
 declarationVisitor node context =
-    let
-        errors : List (Rule.Error {})
-        errors =
-            node
-                |> Node.value
-                |> docOfDeclaration
-                |> always []
-    in
-    ( errors, context )
+    case docOfDeclaration (Node.value node) of
+        Just (Node range doc) ->
+            let
+                errors : List (Rule.Error {})
+                errors =
+                    linksIn { doc = doc, start = range.start }
+                        |> List.concatMap (always [])
+            in
+            ( errors, context )
+
+        Nothing ->
+            ( [], context )
 
 
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
@@ -90,3 +96,24 @@ docOfDeclaration declaration =
 
         Declaration.Destructuring _ _ ->
             Nothing
+
+
+type alias LinkWithRange =
+    { parsed : SyntaxHelp.Link
+    , range : Range
+    }
+
+
+linksIn : { doc : String, start : Location } -> List LinkWithRange
+linksIn { doc, start } =
+    doc
+        |> ParserExtra.find SyntaxHelp.linkParser
+        |> List.map
+            (\link ->
+                { link
+                    | range =
+                        { start = SyntaxHelp.addLocation start link.range.start
+                        , end = SyntaxHelp.addLocation start link.range.end
+                        }
+                }
+            )
