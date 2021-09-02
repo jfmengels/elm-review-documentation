@@ -138,7 +138,7 @@ addLocation aRange bRange =
 {-| `moduleName = []` for links like `[`a`](#a)`.
 -}
 type alias Link =
-    { moduleName : List String
+    { moduleName : ModuleName
     , kind : LinkKind
     }
 
