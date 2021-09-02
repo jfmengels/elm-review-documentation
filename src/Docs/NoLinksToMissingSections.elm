@@ -117,7 +117,7 @@ linksIn documentation =
                 { parsed = Node.value link.parsed
                 , range =
                     { start = SyntaxHelp.addLocation documentation.start start
-                    , end = SyntaxHelp.addLocation documentation.start { end | column = end.column - 1 }
+                    , end = SyntaxHelp.addLocation documentation.start end
                     }
                 }
             )
