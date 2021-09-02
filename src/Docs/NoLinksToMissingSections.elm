@@ -182,17 +182,6 @@ declarationListVisitor declarations context =
     )
 
 
-isLinkToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
-isLinkToMissingSection existingSections (Node _ link) =
-    case link.section of
-        Just section ->
-            not (Set.member section existingSections)
-
-        Nothing ->
-            -- TODO
-            False
-
-
 nameOfDeclaration : Declaration -> Maybe String
 nameOfDeclaration decl =
     case decl of
@@ -273,6 +262,17 @@ errorsForModule context =
     context.links
         |> List.filter (isLinkToMissingSection context.sections)
         |> List.map (reportLink context.moduleKey)
+
+
+isLinkToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
+isLinkToMissingSection existingSections (Node _ link) =
+    case link.section of
+        Just section ->
+            not (Set.member section existingSections)
+
+        Nothing ->
+            -- TODO
+            False
 
 
 reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error { useErrorForModule : () }
