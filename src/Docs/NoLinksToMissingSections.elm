@@ -263,6 +263,11 @@ mapNodeRange mapper (Node range a) =
 -- FINAL EVALUATION
 
 
+finalProjectEvaluation : ProjectContext -> List (Rule.Error {})
+finalProjectEvaluation projectContext =
+    List.concatMap finalEvaluation projectContext
+
+
 finalEvaluation : { a | sections : Set String, links : List (Node SyntaxHelp.Link) } -> List (Rule.Error {})
 finalEvaluation context =
     context.links
