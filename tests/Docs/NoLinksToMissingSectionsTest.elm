@@ -24,7 +24,7 @@ all =
     describe "Docs.NoLinksToMissingSections"
         [ test "should not report link to an existing sibling section from declaration documentation" <|
             \() ->
-                """module A.And.B exposing (a, b)
+                """module A exposing (a, b)
 b = 1
 
 {-| [link](#b)
@@ -35,7 +35,7 @@ a = 2
                     |> Review.Test.expectNoErrors
         , test "should report a link to an unknown sibling section from declaration documentation" <|
             \() ->
-                """module A.And.B exposing (a)
+                """module A exposing (a)
 {-| [link](#b)
 -}
 a = 2
@@ -50,7 +50,7 @@ a = 2
                         ]
         , test "should not report a link to a known sibling section from declaration documentation when everything is exposed" <|
             \() ->
-                """module A.And.B exposing (..)
+                """module A exposing (..)
 b = 1
 
 {-| [link](#b)
@@ -61,7 +61,7 @@ a = 2
                     |> Review.Test.expectNoErrors
         , test "should report a link to an unknown sibling section from declaration documentation when everything is exposed" <|
             \() ->
-                """module A.And.B exposing (..)
+                """module A exposing (..)
 {-| [link](#b)
 -}
 a = 2
@@ -76,7 +76,7 @@ a = 2
                         ]
         , test "should consider an exposed type alias to be an existing section" <|
             \() ->
-                """module A.And.B exposing (..)
+                """module A exposing (..)
 type alias B = {}
 {-| [link](#B)
 -}
@@ -86,7 +86,7 @@ a = 2
                     |> Review.Test.expectNoErrors
         , test "should consider an exposed custom type to be an existing section" <|
             \() ->
-                """module A.And.B exposing (..)
+                """module A exposing (..)
 type B = C
 {-| [link](#B)
 -}
@@ -96,7 +96,7 @@ a = 2
                     |> Review.Test.expectNoErrors
         , test "should consider an exposed port to be an existing section" <|
             \() ->
-                """module A.And.B exposing (..)
+                """module A exposing (..)
 port b : Int -> Cmd msg
 
 {-| [link](#b)
@@ -108,7 +108,7 @@ a = 2
         , test "should consider an infix declaration to be an existing section" <|
             -- TODO Test is not actually passing. Probably need to check the parser for the link to accept links to operators.
             \() ->
-                """module A.And.B exposing (..)
+                """module A exposing (..)
 infix right 5 (++) = append
 
 {-| [link](#++)
