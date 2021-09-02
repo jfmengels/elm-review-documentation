@@ -16,6 +16,7 @@ import Test exposing (Test, describe, test)
 -- TODO Report links to non-existent things in README
 -- TODO Report links to dependencies?
 -- TODO Force links to be for the minimal version?
+-- TODO Report when duplicate sections are found? Check if case sensitivity is important for ids.
 
 
 all : Test
