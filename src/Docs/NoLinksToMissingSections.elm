@@ -68,7 +68,7 @@ declarationVisitor node context =
                 errors : List (Rule.Error {})
                 errors =
                     linksIn { doc = doc, start = range.start }
-                        |> List.concatMap (always [])
+                        |> List.map reportLink
             in
             ( errors, context )
 
@@ -117,3 +117,12 @@ linksIn { doc, start } =
                         }
                 }
             )
+
+
+reportLink : LinkWithRange -> Rule.Error {}
+reportLink link =
+    Rule.error
+        { message = "Link points to a non-existing section or element"
+        , details = [ "This is a dead link." ]
+        }
+        link.range
