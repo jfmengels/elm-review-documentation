@@ -182,8 +182,8 @@ declarationListVisitor declarations context =
     )
 
 
-linksToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
-linksToMissingSection existingSections (Node _ link) =
+isLinkToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
+isLinkToMissingSection existingSections (Node _ link) =
     case link.section of
         Just section ->
             not (Set.member section existingSections)
@@ -266,7 +266,7 @@ mapNodeRange mapper (Node range a) =
 finalEvaluation : { a | sections : Set String, links : List (Node SyntaxHelp.Link) } -> List (Rule.Error {})
 finalEvaluation context =
     context.links
-        |> List.filter (linksToMissingSection context.sections)
+        |> List.filter (isLinkToMissingSection context.sections)
         |> List.map reportLink
 
 
