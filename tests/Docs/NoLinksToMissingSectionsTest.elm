@@ -173,4 +173,35 @@ c = 1
                             ]
                           )
                         ]
+        , test "should not report links to existing sections in a different module (using ./)" <|
+            \() ->
+                [ """module A exposing (..)
+{-| [link](./B#b)
+-}
+a = 2
+""", """module B exposing (b)
+b = 1
+""" ]
+                    |> Review.Test.runOnModules rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links to missing sections in a different module (using ./)" <|
+            \() ->
+                [ """module A exposing (..)
+{-| [link](./B#b)
+-}
+a = 2
+""", """module B exposing (c)
+c = 1
+""" ]
+                    |> Review.Test.runOnModules rule
+                    |> Review.Test.expectErrorsForModules
+                        [ ( "A"
+                          , [ Review.Test.error
+                                { message = "Link points to a non-existing section or element"
+                                , details = [ "This is a dead link." ]
+                                , under = "./B#b"
+                                }
+                            ]
+                          )
+                        ]
         ]

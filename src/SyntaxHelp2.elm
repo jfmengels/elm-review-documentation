@@ -169,6 +169,7 @@ linkParser =
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
         |= Parser.getPosition
+        |. ignoreDotSlash
         |= ParserExtra.manySeparated
             { by = "-"
             , item = moduleNameParser
@@ -182,3 +183,12 @@ linkParser =
                 |. Parser.token ")"
             ]
         |= Parser.getPosition
+
+
+ignoreDotSlash : Parser ()
+ignoreDotSlash =
+    Parser.oneOf
+        [ Parser.symbol "."
+            |. Parser.symbol "/"
+        , Parser.succeed ()
+        ]
