@@ -263,7 +263,7 @@ mapNodeRange mapper (Node range a) =
 -- FINAL EVALUATION
 
 
-finalEvaluation : ModuleContext -> List (Rule.Error {})
+finalEvaluation : { a | sections : Set String, links : List (Node SyntaxHelp.Link) } -> List (Rule.Error {})
 finalEvaluation context =
     context.links
         |> List.filter (linksToMissingSection context.sections)
