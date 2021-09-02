@@ -163,8 +163,7 @@ nameOfDeclaration decl =
             Just (Node.value name)
 
         Declaration.PortDeclaration signature ->
-            -- TODO
-            Nothing
+            Just (Node.value signature.name)
 
         Declaration.InfixDeclaration _ ->
             -- TODO

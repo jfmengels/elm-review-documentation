@@ -94,4 +94,15 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should consider an exposed port to be an existing section" <|
+            \() ->
+                """module A.And.B exposing (..)
+port b : Int -> Cmd msg
+
+{-| [link](#b)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
