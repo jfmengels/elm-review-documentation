@@ -55,9 +55,14 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 -}
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
-        |> moduleVisitor
-        |> Rule.fromModuleRuleSchema
+    Rule.newProjectRuleSchema "Docs.NoLinksToMissingSections" []
+        |> Rule.withModuleVisitor moduleVisitor
+        |> Rule.withModuleContextUsingContextCreator
+            { fromProjectToModule = fromProjectToModule
+            , fromModuleToProject = fromModuleToProject
+            , foldProjectContexts = List.append
+            }
+        |> Rule.fromProjectRuleSchema
 
 
 type alias ProjectContext =
