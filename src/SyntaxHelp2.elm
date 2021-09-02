@@ -18,8 +18,8 @@ import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose)
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node as Node exposing (Node)
-import Elm.Syntax.Range exposing (Location)
+import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Range as Range exposing (Location)
 import Parser exposing ((|.), (|=), Parser)
 import Parser.Extras
 import ParserExtra
@@ -143,11 +143,11 @@ nameParser test =
 
 {-| See [`Link`](#Link).
 -}
-linkParser : Parser Link
+linkParser : Parser (Node Link)
 linkParser =
     Parser.succeed
         (\start moduleName section end ->
-            { moduleName = moduleName, section = section }
+            Node Range.emptyRange { moduleName = moduleName, section = section }
         )
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
