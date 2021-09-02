@@ -12,6 +12,7 @@ import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import ParserExtra
 import Review.Rule as Rule exposing (Rule)
+import Set
 import SyntaxHelp2 as SyntaxHelp
 
 
@@ -78,8 +79,14 @@ declarationVisitor node context =
 
 
 linksToMissingSection : Node SyntaxHelp.Link -> Bool
-linksToMissingSection node =
-    True
+linksToMissingSection (Node _ link) =
+    case link.section of
+        Just section ->
+            not (Set.member section (Set.singleton section))
+
+        Nothing ->
+            -- TODO
+            False
 
 
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
