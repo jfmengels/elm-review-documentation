@@ -1,4 +1,4 @@
-module ParserExtra exposing (find, manySeparated)
+module ParserExtra exposing (find, findWithRange, manySeparated)
 
 import Elm.Syntax.Range exposing (Range)
 import Parser exposing ((|.), (|=), Parser)
@@ -6,20 +6,20 @@ import Parser exposing ((|.), (|=), Parser)
 
 {-| `range` is relative to the string start (so 0,0).
 -}
-find :
+findWithRange :
     Parser a
     -> String
     -> List { parsed : a, range : Range }
-find parser string =
+findWithRange parser string =
     string
-        |> Parser.run (findParser parser)
+        |> Parser.run (findParserWithRange parser)
         |> Result.withDefault []
 
 
-findParser :
+findParserWithRange :
     Parser a
     -> Parser (List { parsed : a, range : Range })
-findParser parser =
+findParserWithRange parser =
     Parser.loop []
         (\parsed ->
             Parser.oneOf
@@ -38,6 +38,33 @@ findParser parser =
                             |= parser
                             |= Parser.getPosition
                        )
+                    |> Parser.map Parser.Loop
+                , Parser.succeed parsed
+                    |. Parser.chompIf (\_ -> True)
+                    |> Parser.map Parser.Loop
+                , Parser.succeed (List.reverse parsed)
+                    |. Parser.end
+                    |> Parser.map Parser.Done
+                ]
+        )
+
+
+{-| `range` is relative to the string start (so 0,0).
+-}
+find : Parser a -> String -> List a
+find parser string =
+    string
+        |> Parser.run (findParser parser)
+        |> Result.withDefault []
+
+
+findParser : Parser a -> Parser (List a)
+findParser parser =
+    Parser.loop []
+        (\parsed ->
+            Parser.oneOf
+                [ Parser.succeed (\p -> p :: parsed)
+                    |= parser
                     |> Parser.map Parser.Loop
                 , Parser.succeed parsed
                     |. Parser.chompIf (\_ -> True)

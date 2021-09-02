@@ -206,7 +206,7 @@ commentsVisitor comments context =
 linksIn : { doc : String, start : Location } -> List LinkWithRange
 linksIn { doc, start } =
     doc
-        |> Parser.find SyntaxHelp.linkParser
+        |> Parser.findWithRange SyntaxHelp.linkParser
         |> List.map
             (\link ->
                 { link

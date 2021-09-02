@@ -112,9 +112,9 @@ linksIn documentation =
             (\link ->
                 let
                     { start, end } =
-                        Node.range link.parsed
+                        Node.range link
                 in
-                { parsed = Node.value link.parsed
+                { parsed = Node.value link
                 , range =
                     { start = SyntaxHelp.addLocation documentation.start start
                     , end = SyntaxHelp.addLocation documentation.start end
