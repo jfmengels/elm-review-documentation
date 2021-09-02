@@ -113,9 +113,10 @@ exposedName node =
 declarationListVisitor : List (Node Declaration) -> Context -> ( List nothing, Context )
 declarationListVisitor declarations context =
     let
+        newSections : List String
         newSections =
             if context.exposingAll then
-                []
+                List.filterMap (Node.value >> nameOfDeclaration) declarations
 
             else
                 []
