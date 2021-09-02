@@ -8,6 +8,8 @@ module Docs.NoLinksToMissingSections exposing (rule)
 
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
+import Elm.Syntax.Exposing as Exposing
+import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import ParserExtra
@@ -53,6 +55,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
+        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
 
@@ -66,6 +69,24 @@ initialContext : Context
 initialContext =
     { sections = Set.empty
     }
+
+
+
+-- MODULE DEFINITION VISITOR
+
+
+moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
+moduleDefinitionVisitor node context =
+    case Module.exposingList (Node.value node) of
+        Exposing.All _ ->
+            ( [], context )
+
+        Exposing.Explicit _ ->
+            ( [], context )
+
+
+
+-- DECLARATION VISITOR
 
 
 declarationVisitor : Node Declaration -> Context -> ( List (Rule.Error {}), Context )
