@@ -12,7 +12,7 @@ import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import ParserExtra
 import Review.Rule as Rule exposing (Rule)
-import Set
+import Set exposing (Set)
 import SyntaxHelp2 as SyntaxHelp
 
 
@@ -69,7 +69,7 @@ declarationVisitor node context =
                 errors : List (Rule.Error {})
                 errors =
                     linksIn { doc = doc, start = range.start }
-                        |> List.filter linksToMissingSection
+                        |> List.filter (linksToMissingSection (Set.singleton "b"))
                         |> List.map reportLink
             in
             ( errors, context )
@@ -78,11 +78,11 @@ declarationVisitor node context =
             ( [], context )
 
 
-linksToMissingSection : Node SyntaxHelp.Link -> Bool
-linksToMissingSection (Node _ link) =
+linksToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
+linksToMissingSection existingSections (Node _ link) =
     case link.section of
         Just section ->
-            not (Set.member section (Set.singleton section))
+            not (Set.member section existingSections)
 
         Nothing ->
             -- TODO
