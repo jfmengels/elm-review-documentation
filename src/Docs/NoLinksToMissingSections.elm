@@ -61,13 +61,15 @@ rule =
 
 
 type alias Context =
-    { sections : Set String
+    { exposingAll : Bool
+    , sections : Set String
     }
 
 
 initialContext : Context
 initialContext =
-    { sections = Set.empty
+    { exposingAll = False
+    , sections = Set.empty
     }
 
 
@@ -79,7 +81,7 @@ moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
 moduleDefinitionVisitor node context =
     case Module.exposingList (Node.value node) of
         Exposing.All _ ->
-            ( [], context )
+            ( [], { context | exposingAll = True } )
 
         Exposing.Explicit exposed ->
             ( [], { context | sections = Set.fromList (List.map exposedName exposed) } )
