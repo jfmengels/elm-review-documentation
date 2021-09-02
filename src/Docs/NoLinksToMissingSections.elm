@@ -110,10 +110,14 @@ linksIn documentation =
         |> ParserExtra.find SyntaxHelp.linkParser
         |> List.map
             (\link ->
+                let
+                    { start, end } =
+                        link.range
+                in
                 { link
                     | range =
-                        { start = SyntaxHelp.addLocation documentation.start link.range.start
-                        , end = SyntaxHelp.addLocation documentation.start link.range.end
+                        { start = SyntaxHelp.addLocation documentation.start start
+                        , end = SyntaxHelp.addLocation documentation.start end
                         }
                 }
             )
