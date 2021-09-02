@@ -57,6 +57,7 @@ rule =
     Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withDeclarationEnterVisitor declarationVisitor
+        |> Rule.withFinalModuleEvaluation finalEvaluation
         |> Rule.fromModuleRuleSchema
 
 
@@ -182,3 +183,12 @@ reportLink link =
 mapNodeRange : (Range -> Range) -> Node a -> Node a
 mapNodeRange mapper (Node range a) =
     Node (mapper range) a
+
+
+
+-- FINAL EVALUATION
+
+
+finalEvaluation : Context -> List (Rule.Error scope)
+finalEvaluation context =
+    []
