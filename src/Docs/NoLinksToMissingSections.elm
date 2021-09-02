@@ -207,15 +207,6 @@ linksIn documentation =
         |> List.map (mapNodeRange (SyntaxHelp.addOffset (Node.range documentation).start))
 
 
-reportLink : Node SyntaxHelp.Link -> Rule.Error {}
-reportLink link =
-    Rule.error
-        { message = "Link points to a non-existing section or element"
-        , details = [ "This is a dead link." ]
-        }
-        (Node.range link)
-
-
 mapNodeRange : (Range -> Range) -> Node a -> Node a
 mapNodeRange mapper (Node range a) =
     Node (mapper range) a
@@ -230,3 +221,12 @@ finalEvaluation context =
     context.links
         |> List.filter (linksToMissingSection context.sections)
         |> List.map reportLink
+
+
+reportLink : Node SyntaxHelp.Link -> Rule.Error {}
+reportLink link =
+    Rule.error
+        { message = "Link points to a non-existing section or element"
+        , details = [ "This is a dead link." ]
+        }
+        (Node.range link)
