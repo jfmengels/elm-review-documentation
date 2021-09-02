@@ -7,10 +7,8 @@ import Test exposing (Test, describe, test)
 
 
 -- TODO From module documentation
--- TODO With ./
 -- TODO With links like `[foo]: #b`
 -- TODO With Forbid linking from exposed sections to non-exposed sections
--- TODO Report unknown modules
 -- TODO Report links in the README
 -- TODO Report links to non-existent things in README
 -- TODO Report links to dependencies?
@@ -140,6 +138,36 @@ a = 2
                             { message = "Link points to a non-existing section or element"
                             , details = [ "This is a dead link." ]
                             , under = "#++"
+                            }
+                        ]
+        , test "should report links to unknown modules" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](B-C)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module B.C"
+                            , details = [ "This is a dead link." ]
+                            , under = "B-C"
+                            }
+                        ]
+        , test "should report links to sections in unknown modules" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](B#b)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module B"
+                            , details = [ "This is a dead link." ]
+                            , under = "B#b"
                             }
                         ]
         , test "should not report links to existing sections in a different module" <|

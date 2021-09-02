@@ -274,26 +274,29 @@ finalEvaluation projectContext =
 
 errorsForModule : Dict ModuleName (Set String) -> CompiledModuleContext -> List (Rule.Error { useErrorForModule : () })
 errorsForModule sectionsPerModule context =
-    context.links
-        |> List.filter (isLinkToMissingSection sectionsPerModule)
-        |> List.map (reportLink context.moduleKey)
+    List.filterMap
+        (isLinkToMissingSection sectionsPerModule context.moduleKey)
+        context.links
 
 
-isLinkToMissingSection : Dict ModuleName (Set String) -> Node SyntaxHelp.Link -> Bool
-isLinkToMissingSection sectionsPerModule (Node _ link) =
+isLinkToMissingSection : Dict ModuleName (Set String) -> Rule.ModuleKey -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
+isLinkToMissingSection sectionsPerModule moduleKey ((Node _ link) as linkNode) =
     case Dict.get link.moduleName sectionsPerModule of
         Just existingSections ->
             case link.section of
                 Just section ->
-                    not (Set.member section existingSections)
+                    if not (Set.member section existingSections) then
+                        Just (reportLink moduleKey linkNode)
+
+                    else
+                        Nothing
 
                 Nothing ->
                     -- TODO
-                    False
+                    Nothing
 
         Nothing ->
-            -- TODO
-            False
+            Just (reportUnknownModule moduleKey linkNode)
 
 
 reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error scope
@@ -304,3 +307,13 @@ reportLink moduleKey link =
         , details = [ "This is a dead link." ]
         }
         (Node.range link)
+
+
+reportUnknownModule : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error scope
+reportUnknownModule moduleKey (Node range link) =
+    Rule.errorForModule
+        moduleKey
+        { message = "Link points to non-existing module " ++ String.join "." link.moduleName
+        , details = [ "This is a dead link." ]
+        }
+        range
