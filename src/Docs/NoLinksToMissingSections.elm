@@ -10,6 +10,7 @@ import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
+import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import ParserExtra
@@ -57,6 +58,15 @@ rule =
     Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
         |> moduleVisitor
         |> Rule.fromModuleRuleSchema
+
+
+type alias ProjectContext =
+    List
+        { moduleName : ModuleName
+        , moduleKey : Rule.ModuleKey
+        , sections : Set String
+        , links : List (Node SyntaxHelp.Link)
+        }
 
 
 type alias ModuleContext =
