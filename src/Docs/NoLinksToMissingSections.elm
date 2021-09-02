@@ -115,10 +115,7 @@ linksIn documentation =
                         Node.range link
                 in
                 { parsed = Node.value link
-                , range =
-                    { start = SyntaxHelp.addLocation documentation.start start
-                    , end = SyntaxHelp.addLocation documentation.start end
-                    }
+                , range = SyntaxHelp.addOffset documentation.start (Node.range link)
                 }
             )
 

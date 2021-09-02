@@ -4,6 +4,7 @@ module SyntaxHelp2 exposing
     , LinkKind(..)
     , ModuleInfo
     , addLocation
+    , addOffset
     , exposedModules
     , isExposed
     , isFileComment
@@ -19,7 +20,7 @@ import Elm.Syntax.Exposing as Exposing exposing (TopLevelExpose)
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range as Range exposing (Location)
+import Elm.Syntax.Range as Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
 import Parser.Extras
 import ParserExtra
@@ -109,6 +110,13 @@ addLocation : Location -> Location -> Location
 addLocation aRange bRange =
     { row = aRange.row + bRange.row
     , column = aRange.column + bRange.column
+    }
+
+
+addOffset : Location -> Range -> Range
+addOffset offset { start, end } =
+    { start = addLocation offset start
+    , end = addLocation offset end
     }
 
 
