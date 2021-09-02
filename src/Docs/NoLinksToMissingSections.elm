@@ -160,9 +160,7 @@ nameOfDeclaration decl =
             Just (Node.value name)
 
         Declaration.CustomTypeDeclaration { name } ->
-            -- TODO
-            --Just (Node.value name)
-            Nothing
+            Just (Node.value name)
 
         Declaration.PortDeclaration signature ->
             -- TODO

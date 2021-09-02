@@ -84,4 +84,14 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should consider an exposed custom type to be an existing section" <|
+            \() ->
+                """module A.And.B exposing (..)
+type B = C
+{-| [link](#B)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
