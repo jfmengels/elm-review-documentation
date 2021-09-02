@@ -6,6 +6,7 @@ module Docs.NoLinksToMissingSections exposing (rule)
 
 -}
 
+import Dict exposing (Dict)
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing
@@ -80,6 +81,7 @@ type alias CompiledModuleContext =
 
 type alias ModuleContext =
     { exposingAll : Bool
+    , moduleName : ModuleName
     , sections : Set String
     , links : List (Node SyntaxHelp.Link)
     }
@@ -88,35 +90,28 @@ type alias ModuleContext =
 fromModuleToProject : Rule.ContextCreator ModuleContext ProjectContext
 fromModuleToProject =
     Rule.initContextCreator
-        (\metadata moduleKey moduleContext ->
-            [ { moduleName = Rule.moduleNameFromMetadata metadata
+        (\moduleKey moduleContext ->
+            [ { moduleName = moduleContext.moduleName
               , moduleKey = moduleKey
               , sections = moduleContext.sections
               , links = moduleContext.links
               }
             ]
         )
-        |> Rule.withMetadata
         |> Rule.withModuleKey
 
 
 fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
 fromProjectToModule =
     Rule.initContextCreator
-        (\_ ->
+        (\metadata _ ->
             { exposingAll = False
+            , moduleName = Rule.moduleNameFromMetadata metadata
             , sections = Set.empty
             , links = []
             }
         )
-
-
-initialContext : ModuleContext
-initialContext =
-    { exposingAll = False
-    , sections = Set.empty
-    , links = []
-    }
+        |> Rule.withMetadata
 
 
 moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
@@ -174,11 +169,12 @@ declarationListVisitor declarations context =
         links : List (Node SyntaxHelp.Link)
         links =
             List.concatMap
-                (Node.value >> docOfDeclaration >> Maybe.map linksIn >> Maybe.withDefault [])
+                (Node.value >> docOfDeclaration >> Maybe.map (linksIn context.moduleName) >> Maybe.withDefault [])
                 declarations
     in
     ( []
     , { exposingAll = context.exposingAll
+      , moduleName = context.moduleName
       , sections = Set.union context.sections (Set.fromList newSections)
       , links = links ++ context.links
       }
@@ -239,11 +235,20 @@ type alias LinkWithRange =
     }
 
 
-linksIn : Node Documentation -> List (Node SyntaxHelp.Link)
-linksIn documentation =
+linksIn : ModuleName -> Node Documentation -> List (Node SyntaxHelp.Link)
+linksIn currentModuleName documentation =
     Node.value documentation
         |> ParserExtra.find SyntaxHelp.linkParser
-        |> List.map (addOffset (Node.range documentation).start)
+        |> List.map (normalizeModuleName currentModuleName >> addOffset (Node.range documentation).start)
+
+
+normalizeModuleName : ModuleName -> Node SyntaxHelp.Link -> Node SyntaxHelp.Link
+normalizeModuleName currentModuleName ((Node range link) as node) =
+    if List.isEmpty link.moduleName then
+        Node range { link | moduleName = currentModuleName }
+
+    else
+        node
 
 
 addOffset : Location -> Node a -> Node a
@@ -257,21 +262,34 @@ addOffset offset (Node range a) =
 
 finalEvaluation : ProjectContext -> List (Rule.Error { useErrorForModule : () })
 finalEvaluation projectContext =
-    List.concatMap errorsForModule projectContext
+    let
+        sectionsPerModule : Dict ModuleName (Set String)
+        sectionsPerModule =
+            projectContext
+                |> List.map (\module_ -> ( module_.moduleName, module_.sections ))
+                |> Dict.fromList
+    in
+    List.concatMap (errorsForModule sectionsPerModule) projectContext
 
 
-errorsForModule : CompiledModuleContext -> List (Rule.Error { useErrorForModule : () })
-errorsForModule context =
+errorsForModule : Dict ModuleName (Set String) -> CompiledModuleContext -> List (Rule.Error { useErrorForModule : () })
+errorsForModule sectionsPerModule context =
     context.links
-        |> List.filter (isLinkToMissingSection context.sections)
+        |> List.filter (isLinkToMissingSection sectionsPerModule)
         |> List.map (reportLink context.moduleKey)
 
 
-isLinkToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
-isLinkToMissingSection existingSections (Node _ link) =
-    case link.section of
-        Just section ->
-            not (Set.member section existingSections)
+isLinkToMissingSection : Dict ModuleName (Set String) -> Node SyntaxHelp.Link -> Bool
+isLinkToMissingSection sectionsPerModule (Node _ link) =
+    case Dict.get link.moduleName sectionsPerModule of
+        Just existingSections ->
+            case link.section of
+                Just section ->
+                    not (Set.member section existingSections)
+
+                Nothing ->
+                    -- TODO
+                    False
 
         Nothing ->
             -- TODO
