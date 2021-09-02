@@ -146,8 +146,12 @@ nameParser test =
 linkParser : Parser (Node Link)
 linkParser =
     Parser.succeed
-        (\start moduleName section end ->
-            Node Range.emptyRange { moduleName = moduleName, section = section }
+        (\( startRow, startCol ) moduleName section ( endRow, endCol ) ->
+            Node
+                { start = { row = startRow, column = startCol }
+                , end = { row = endRow, column = endCol }
+                }
+                { moduleName = moduleName, section = section }
         )
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
