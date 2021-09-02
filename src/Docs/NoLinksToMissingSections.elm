@@ -105,15 +105,15 @@ type alias LinkWithRange =
 
 
 linksIn : { doc : String, start : Location } -> List LinkWithRange
-linksIn { doc, start } =
-    doc
+linksIn documentation =
+    documentation.doc
         |> ParserExtra.find SyntaxHelp.linkParser
         |> List.map
             (\link ->
                 { link
                     | range =
-                        { start = SyntaxHelp.addLocation start link.range.start
-                        , end = SyntaxHelp.addLocation start link.range.end
+                        { start = SyntaxHelp.addLocation documentation.start link.range.start
+                        , end = SyntaxHelp.addLocation documentation.start link.range.end
                         }
                 }
             )
