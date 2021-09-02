@@ -6,6 +6,8 @@ module Docs.NoLinksToMissingSections exposing (rule)
 
 -}
 
+import Elm.Syntax.Declaration exposing (Declaration)
+import Elm.Syntax.Node exposing (Node)
 import Review.Rule as Rule exposing (Rule)
 
 
@@ -46,5 +48,14 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" ()
-        -- Add your visitors
+        |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
+
+
+type alias Context =
+    ()
+
+
+declarationVisitor : Node Declaration -> Context -> ( List (Rule.Error {}), Context )
+declarationVisitor node context =
+    ( [], context )
