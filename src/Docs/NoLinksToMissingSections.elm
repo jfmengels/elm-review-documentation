@@ -55,10 +55,16 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
+        |> moduleVisitor
+        |> Rule.fromModuleRuleSchema
+
+
+moduleVisitor : Rule.ModuleRuleSchema schemaState Context -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } Context
+moduleVisitor schema =
+    schema
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withDeclarationListVisitor declarationListVisitor
         |> Rule.withFinalModuleEvaluation finalEvaluation
-        |> Rule.fromModuleRuleSchema
 
 
 type alias Context =
