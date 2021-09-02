@@ -8,17 +8,18 @@ import Test exposing (Test, describe, test)
 all : Test
 all =
     describe "Docs.NoLinksToMissingSections"
-        [ test "should not report link to an existing sibling section from declaration documentation" <|
-            \() ->
-                """module A.And.B exposing (a, b)
+        [ Test.skip <|
+            test "should not report link to an existing sibling section from declaration documentation" <|
+                \() ->
+                    """module A.And.B exposing (a, b)
 b = 1
 
 {-| [link](#b)
 -}
 a = 2
 """
-                    |> Review.Test.run rule
-                    |> Review.Test.expectNoErrors
+                        |> Review.Test.run rule
+                        |> Review.Test.expectNoErrors
         , test "should report a link to an unknown sibling section from declaration documentation" <|
             \() ->
                 """module A.And.B exposing (a)
