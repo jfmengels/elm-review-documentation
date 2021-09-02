@@ -113,11 +113,11 @@ exposedName node =
 declarationVisitor : Node Declaration -> Context -> ( List nothing, Context )
 declarationVisitor node context =
     case docOfDeclaration (Node.value node) of
-        Just (Node range doc) ->
+        Just docRange ->
             let
                 links : List (Node SyntaxHelp.Link)
                 links =
-                    linksIn { doc = doc, start = range.start }
+                    linksIn docRange
             in
             ( [], { context | links = links ++ context.links } )
 
@@ -164,11 +164,11 @@ type alias LinkWithRange =
     }
 
 
-linksIn : { doc : String, start : Location } -> List (Node SyntaxHelp.Link)
+linksIn : Node Documentation -> List (Node SyntaxHelp.Link)
 linksIn documentation =
-    documentation.doc
+    Node.value documentation
         |> ParserExtra.find SyntaxHelp.linkParser
-        |> List.map (mapNodeRange (SyntaxHelp.addOffset documentation.start))
+        |> List.map (mapNodeRange (SyntaxHelp.addOffset (Node.range documentation).start))
 
 
 reportLink : Node SyntaxHelp.Link -> Rule.Error {}
