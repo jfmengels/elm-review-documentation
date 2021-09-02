@@ -10,7 +10,12 @@ import Test exposing (Test, describe, test)
 -- TODO From module documentation
 -- TODO With ./
 -- TODO With links like `[foo]: #b`
--- TODO With Forbid linking from exposed to non-exposed elements
+-- TODO With Forbid linking from exposed sections to non-exposed sections
+-- TODO Report unknown modules
+-- TODO Report links in the README
+-- TODO Report links to non-existent things in README
+-- TODO Report links to dependencies?
+-- TODO Force links to be for the minimal version?
 
 
 all : Test
