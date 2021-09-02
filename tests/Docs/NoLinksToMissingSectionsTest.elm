@@ -106,8 +106,7 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
-        , test "should consider an infix declaration to be an existing section" <|
-            -- TODO Test is not actually passing. Probably need to check the parser for the link to accept links to operators.
+        , test "should consider an infix declaration to be an existing section (operator exists)" <|
             \() ->
                 """module A exposing (..)
 infix right 5 (++) = append
@@ -118,4 +117,19 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should consider an infix declaration to be an existing section (operator doesn't exist)" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](#++)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#++"
+                            }
+                        ]
         ]

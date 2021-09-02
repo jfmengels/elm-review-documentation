@@ -139,13 +139,18 @@ type LinkKind
     | DefinitionLink String
 
 
-nameParser : { first : Char -> Bool } -> Parser String
-nameParser test =
+idParser : Parser String
+idParser =
     Parser.succeed ()
-        |. Parser.chompIf
-            (\c -> test.first c && Char.isAlphaNum c)
-        |. Parser.chompWhile
-            (\c -> Char.isAlphaNum c || c == '_')
+        |. Parser.chompWhile (\c -> c /= ')')
+        |> Parser.getChompedString
+
+
+moduleNameParser : Parser String
+moduleNameParser =
+    Parser.succeed ()
+        |. Parser.chompIf (\c -> Char.isUpper c)
+        |. Parser.chompWhile (\c -> Char.isAlphaNum c)
         |> Parser.getChompedString
 
 
@@ -166,12 +171,12 @@ linkParser =
         |= Parser.getPosition
         |= ParserExtra.manySeparated
             { by = "-"
-            , item = nameParser { first = Char.isUpper }
+            , item = moduleNameParser
             }
         |= Parser.oneOf
             [ Parser.succeed Just
                 |. Parser.symbol "#"
-                |= nameParser { first = \_ -> True }
+                |= idParser
                 |. Parser.symbol ")"
             , Parser.succeed Nothing
                 |. Parser.token ")"
