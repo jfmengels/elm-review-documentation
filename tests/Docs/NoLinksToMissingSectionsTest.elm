@@ -30,11 +30,8 @@ a = 2
                     |> Review.Test.run rule
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "The link points to a definition that isn't exposed from any exposed module in this package."
-                            , details =
-                                [ "Links are only useful when they point to exposed package members."
-                                , "Maybe you meant one of those: A.And.B, A.And.B.a."
-                                ]
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
                             , under = "#b"
                             }
                         ]
