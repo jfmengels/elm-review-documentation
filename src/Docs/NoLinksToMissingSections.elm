@@ -58,4 +58,9 @@ type alias Context =
 
 declarationVisitor : Node Declaration -> Context -> ( List (Rule.Error {}), Context )
 declarationVisitor node context =
-    ( [], context )
+    let
+        errors : List (Rule.Error {})
+        errors =
+            []
+    in
+    ( errors, context )
