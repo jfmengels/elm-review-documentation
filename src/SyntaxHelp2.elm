@@ -4,7 +4,6 @@ module SyntaxHelp2 exposing
     , LinkKind(..)
     , ModuleInfo
     , addLocation
-    , docOfDeclaration
     , exposedModules
     , isExposed
     , isFileComment
@@ -24,28 +23,6 @@ import Elm.Syntax.Range exposing (Location)
 import Parser exposing ((|.), (|=), Parser)
 import Parser.Extras
 import ParserExtra
-
-
-docOfDeclaration : Declaration -> Maybe (Node Documentation)
-docOfDeclaration declaration =
-    case declaration of
-        Declaration.FunctionDeclaration { documentation } ->
-            documentation
-
-        Declaration.AliasDeclaration { documentation } ->
-            documentation
-
-        Declaration.CustomTypeDeclaration { documentation } ->
-            documentation
-
-        Declaration.PortDeclaration _ ->
-            Nothing
-
-        Declaration.InfixDeclaration _ ->
-            Nothing
-
-        Declaration.Destructuring _ _ ->
-            Nothing
 
 
 type ExposedDefinitions
