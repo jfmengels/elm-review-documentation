@@ -5,6 +5,14 @@ import Review.Test
 import Test exposing (Test, describe, test)
 
 
+
+-- TODO From different modules
+-- TODO From module documentation
+-- TODO With ./
+-- TODO With links like `[foo]: #b`
+-- TODO With Forbid linking from exposed to non-exposed elements
+
+
 all : Test
 all =
     describe "Docs.NoLinksToMissingSections"
