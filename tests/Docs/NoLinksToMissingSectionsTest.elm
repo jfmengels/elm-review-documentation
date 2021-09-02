@@ -10,6 +10,7 @@ import Test exposing (Test, describe, test)
 -- TODO With links like `[foo]: #b`
 -- TODO With Forbid linking from exposed sections to non-exposed sections
 -- TODO Report links in the README
+-- TODO Report links to README when README does not exist
 -- TODO Report links to non-existent things in README
 -- TODO Report links to dependencies?
 -- TODO Force links to be for the minimal version?
