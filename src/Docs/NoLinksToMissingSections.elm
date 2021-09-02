@@ -104,22 +104,22 @@ type alias LinkWithRange =
     }
 
 
-linksIn : { doc : String, start : Location } -> List LinkWithRange
+linksIn : { doc : String, start : Location } -> List (Node SyntaxHelp.Link)
 linksIn documentation =
     documentation.doc
         |> ParserExtra.find SyntaxHelp.linkParser
-        |> List.map
-            (\link ->
-                { parsed = Node.value link
-                , range = SyntaxHelp.addOffset documentation.start (Node.range link)
-                }
-            )
+        |> List.map (mapNodeRange (SyntaxHelp.addOffset documentation.start))
 
 
-reportLink : LinkWithRange -> Rule.Error {}
+reportLink : Node SyntaxHelp.Link -> Rule.Error {}
 reportLink link =
     Rule.error
         { message = "Link points to a non-existing section or element"
         , details = [ "This is a dead link." ]
         }
-        link.range
+        (Node.range link)
+
+
+mapNodeRange : (Range -> Range) -> Node a -> Node a
+mapNodeRange mapper (Node range a) =
+    Node (mapper range) a
