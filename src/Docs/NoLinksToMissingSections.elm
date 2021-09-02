@@ -14,10 +14,12 @@ import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
+import Parser
 import ParserExtra
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
 import SyntaxHelp2 as SyntaxHelp
+import TitleParser
 
 
 {-| Reports... REPLACEME
@@ -158,27 +160,46 @@ exposedName node =
 declarationListVisitor : List (Node Declaration) -> ModuleContext -> ( List nothing, ModuleContext )
 declarationListVisitor declarations context =
     let
-        newSections : List String
-        newSections =
+        docs : List (Node Documentation)
+        docs =
+            List.filterMap
+                (Node.value >> docOfDeclaration)
+                declarations
+
+        declarationSections : List String
+        declarationSections =
             if context.exposingAll then
                 List.filterMap (Node.value >> nameOfDeclaration) declarations
 
             else
                 []
 
+        titleSections : List String
+        titleSections =
+            docs
+                |> List.concatMap (Node.value >> String.lines {- TODO >> List.drop 1 -})
+                |> List.filterMap extractTitle
+
         links : List (Node SyntaxHelp.Link)
         links =
             List.concatMap
-                (Node.value >> docOfDeclaration >> Maybe.map (linksIn context.moduleName) >> Maybe.withDefault [])
-                declarations
+                (linksIn context.moduleName)
+                docs
     in
     ( []
     , { exposingAll = context.exposingAll
       , moduleName = context.moduleName
-      , sections = Set.union context.sections (Set.fromList newSections)
+      , sections = Set.union context.sections (Set.fromList (titleSections ++ declarationSections))
       , links = links ++ context.links
       }
     )
+
+
+extractTitle : String -> Maybe String
+extractTitle string =
+    string
+        |> Parser.run TitleParser.parser
+        |> Result.toMaybe
 
 
 nameOfDeclaration : Declaration -> Maybe String

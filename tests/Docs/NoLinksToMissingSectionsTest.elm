@@ -141,6 +141,51 @@ a = 2
                             , under = "#++"
                             }
                         ]
+        , test "should consider a header inside a function documentation comment to be an existing section (h1)" <|
+            \() ->
+                """module A exposing (..)
+{-|
+# Section
+-}
+b = 1
+{-| [link](#section)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should consider a header inside a function documentation comment to be an existing section (h2)" <|
+            \() ->
+                """module A exposing (..)
+{-|
+## Section
+-}
+b = 1
+{-| [link](#section)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should not consider a 'h7' header inside a function documentation comment to be an existing section" <|
+            \() ->
+                """module A exposing (..)
+{-|
+####### Section
+-}
+b = 1
+{-| [link](#section)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#section"
+                            }
+                        ]
         , test "should report links to unknown modules" <|
             \() ->
                 """module A exposing (..)
