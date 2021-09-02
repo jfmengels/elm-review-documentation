@@ -75,6 +75,17 @@ a = 2
                             , under = "#b"
                             }
                         ]
+        , test "should not report links to unknown external resources" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](https://foo.com)
+[link](./image.png)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         , test "should consider an exposed type alias to be an existing section" <|
             \() ->
                 """module A exposing (..)
