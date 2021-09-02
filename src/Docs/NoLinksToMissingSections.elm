@@ -81,8 +81,24 @@ moduleDefinitionVisitor node context =
         Exposing.All _ ->
             ( [], context )
 
-        Exposing.Explicit _ ->
-            ( [], context )
+        Exposing.Explicit exposed ->
+            ( [], { context | sections = Set.fromList (List.map exposedName exposed) } )
+
+
+exposedName : Node Exposing.TopLevelExpose -> String
+exposedName node =
+    case Node.value node of
+        Exposing.InfixExpose string ->
+            string
+
+        Exposing.FunctionExpose string ->
+            string
+
+        Exposing.TypeOrAliasExpose string ->
+            string
+
+        Exposing.TypeExpose exposedType ->
+            exposedType.name
 
 
 
