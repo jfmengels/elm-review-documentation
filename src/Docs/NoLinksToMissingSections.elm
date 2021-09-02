@@ -59,14 +59,6 @@ rule =
         |> Rule.fromModuleRuleSchema
 
 
-moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
-moduleVisitor schema =
-    schema
-        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
-        |> Rule.withDeclarationListVisitor declarationListVisitor
-        |> Rule.withFinalModuleEvaluation finalEvaluation
-
-
 type alias ModuleContext =
     { exposingAll : Bool
     , sections : Set String
@@ -80,6 +72,14 @@ initialContext =
     , sections = Set.empty
     , links = []
     }
+
+
+moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
+moduleVisitor schema =
+    schema
+        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
+        |> Rule.withDeclarationListVisitor declarationListVisitor
+        |> Rule.withFinalModuleEvaluation finalEvaluation
 
 
 
