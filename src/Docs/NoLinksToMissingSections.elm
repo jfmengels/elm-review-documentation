@@ -68,12 +68,18 @@ declarationVisitor node context =
                 errors : List (Rule.Error {})
                 errors =
                     linksIn { doc = doc, start = range.start }
+                        |> List.filter linksToMissingSection
                         |> List.map reportLink
             in
             ( errors, context )
 
         Nothing ->
             ( [], context )
+
+
+linksToMissingSection : Node SyntaxHelp.Link -> Bool
+linksToMissingSection node =
+    True
 
 
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
