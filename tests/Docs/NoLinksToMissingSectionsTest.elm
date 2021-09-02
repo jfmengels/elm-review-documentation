@@ -105,4 +105,16 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should consider an infix declaration to be an existing section" <|
+            -- TODO Test is not actually passing. Probably need to check the parser for the link to accept links to operators.
+            \() ->
+                """module A.And.B exposing (..)
+infix right 5 (++) = append
+
+{-| [link](#++)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
