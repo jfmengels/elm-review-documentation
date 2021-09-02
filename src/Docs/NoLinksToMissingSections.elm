@@ -52,13 +52,20 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 -}
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" ()
+    Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
         |> Rule.withDeclarationEnterVisitor declarationVisitor
         |> Rule.fromModuleRuleSchema
 
 
 type alias Context =
-    ()
+    { sections : Set String
+    }
+
+
+initialContext : Context
+initialContext =
+    { sections = Set.empty
+    }
 
 
 declarationVisitor : Node Declaration -> Context -> ( List (Rule.Error {}), Context )
@@ -69,7 +76,7 @@ declarationVisitor node context =
                 errors : List (Rule.Error {})
                 errors =
                     linksIn { doc = doc, start = range.start }
-                        |> List.filter (linksToMissingSection (Set.singleton "b"))
+                        |> List.filter (linksToMissingSection context.sections)
                         |> List.map reportLink
             in
             ( errors, context )
