@@ -139,7 +139,7 @@ addLocation aRange bRange =
 -}
 type alias Link =
     { moduleName : ModuleName
-    , section : LinkKind
+    , section : Maybe String
     }
 
 
@@ -169,8 +169,8 @@ nameParser test =
 linkParser : Parser Link
 linkParser =
     Parser.succeed
-        (\moduleName kind ->
-            { moduleName = moduleName, section = kind }
+        (\moduleName section ->
+            { moduleName = moduleName, section = section }
         )
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
@@ -179,10 +179,10 @@ linkParser =
             , item = nameParser { first = Char.isUpper }
             }
         |= Parser.oneOf
-            [ Parser.succeed DefinitionLink
+            [ Parser.succeed Just
                 |. Parser.symbol "#"
                 |= nameParser { first = \_ -> True }
                 |. Parser.symbol ")"
-            , Parser.succeed ModuleLink
+            , Parser.succeed Nothing
                 |. Parser.token ")"
             ]
