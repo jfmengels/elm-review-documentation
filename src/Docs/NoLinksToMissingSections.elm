@@ -278,7 +278,7 @@ isLinkToMissingSection existingSections (Node _ link) =
             False
 
 
-reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error { useErrorForModule : () }
+reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error scope
 reportLink moduleKey link =
     Rule.errorForModule
         moduleKey
