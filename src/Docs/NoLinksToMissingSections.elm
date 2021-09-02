@@ -67,12 +67,15 @@ rule =
 
 
 type alias ProjectContext =
-    List
-        { moduleName : ModuleName
-        , moduleKey : Rule.ModuleKey
-        , sections : Set String
-        , links : List (Node SyntaxHelp.Link)
-        }
+    List CompiledModuleContext
+
+
+type alias CompiledModuleContext =
+    { moduleName : ModuleName
+    , moduleKey : Rule.ModuleKey
+    , sections : Set String
+    , links : List (Node SyntaxHelp.Link)
+    }
 
 
 type alias ModuleContext =
@@ -257,7 +260,7 @@ finalEvaluation projectContext =
     List.concatMap errorsForModule projectContext
 
 
-errorsForModule : { moduleName : ModuleName, moduleKey : Rule.ModuleKey, sections : Set String, links : List (Node SyntaxHelp.Link) } -> List (Rule.Error { useErrorForModule : () })
+errorsForModule : CompiledModuleContext -> List (Rule.Error { useErrorForModule : () })
 errorsForModule context =
     context.links
         |> List.filter (isLinkToMissingSection context.sections)
