@@ -59,7 +59,7 @@ rule =
         |> Rule.fromModuleRuleSchema
 
 
-moduleVisitor : Rule.ModuleRuleSchema schemaState Context -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } Context
+moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
 moduleVisitor schema =
     schema
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
@@ -67,14 +67,14 @@ moduleVisitor schema =
         |> Rule.withFinalModuleEvaluation finalEvaluation
 
 
-type alias Context =
+type alias ModuleContext =
     { exposingAll : Bool
     , sections : Set String
     , links : List (Node SyntaxHelp.Link)
     }
 
 
-initialContext : Context
+initialContext : ModuleContext
 initialContext =
     { exposingAll = False
     , sections = Set.empty
@@ -86,7 +86,7 @@ initialContext =
 -- MODULE DEFINITION VISITOR
 
 
-moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
+moduleDefinitionVisitor : Node Module -> ModuleContext -> ( List nothing, ModuleContext )
 moduleDefinitionVisitor node context =
     case Module.exposingList (Node.value node) of
         Exposing.All _ ->
@@ -116,7 +116,7 @@ exposedName node =
 -- DECLARATION VISITOR
 
 
-declarationListVisitor : List (Node Declaration) -> Context -> ( List nothing, Context )
+declarationListVisitor : List (Node Declaration) -> ModuleContext -> ( List nothing, ModuleContext )
 declarationListVisitor declarations context =
     let
         newSections : List String
@@ -222,7 +222,7 @@ mapNodeRange mapper (Node range a) =
 -- FINAL EVALUATION
 
 
-finalEvaluation : Context -> List (Rule.Error {})
+finalEvaluation : ModuleContext -> List (Rule.Error {})
 finalEvaluation context =
     context.links
         |> List.filter (linksToMissingSection context.sections)
