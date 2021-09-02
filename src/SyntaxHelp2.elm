@@ -139,7 +139,7 @@ addLocation aRange bRange =
 -}
 type alias Link =
     { moduleName : ModuleName
-    , kind : LinkKind
+    , section : LinkKind
     }
 
 
@@ -170,7 +170,7 @@ linkParser : Parser Link
 linkParser =
     Parser.succeed
         (\moduleName kind ->
-            { moduleName = moduleName, kind = kind }
+            { moduleName = moduleName, section = kind }
         )
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
