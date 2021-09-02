@@ -19,4 +19,22 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should report a link to an unknown sibling section from declaration documentation" <|
+            \() ->
+                """module A.And.B exposing (a)
+{-| [link](#b)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "The link points to a definition that isn't exposed from any exposed module in this package."
+                            , details =
+                                [ "Links are only useful when they point to exposed package members."
+                                , "Maybe you meant one of those: A.And.B, A.And.B.a."
+                                ]
+                            , under = "#b"
+                            }
+                        ]
         ]
