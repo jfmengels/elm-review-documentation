@@ -145,6 +145,38 @@ linksToMissingSection existingSections (Node _ link) =
             False
 
 
+nameOfDeclaration : Declaration -> Maybe String
+nameOfDeclaration decl =
+    case decl of
+        Declaration.FunctionDeclaration { declaration } ->
+            declaration
+                |> Node.value
+                |> .name
+                |> Node.value
+                |> Just
+
+        Declaration.AliasDeclaration { name } ->
+            -- TODO
+            --Just (Node.value name)
+            Nothing
+
+        Declaration.CustomTypeDeclaration { name } ->
+            -- TODO
+            --Just (Node.value name)
+            Nothing
+
+        Declaration.PortDeclaration signature ->
+            -- TODO
+            Nothing
+
+        Declaration.InfixDeclaration _ ->
+            -- TODO
+            Nothing
+
+        Declaration.Destructuring _ _ ->
+            Nothing
+
+
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
 docOfDeclaration declaration =
     case declaration of
