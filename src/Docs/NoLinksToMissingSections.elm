@@ -162,8 +162,8 @@ nameOfDeclaration decl =
         Declaration.CustomTypeDeclaration { name } ->
             Just (Node.value name)
 
-        Declaration.PortDeclaration signature ->
-            Just (Node.value signature.name)
+        Declaration.PortDeclaration { name } ->
+            Just (Node.value name)
 
         Declaration.InfixDeclaration { operator } ->
             Just (Node.value operator)
