@@ -6,7 +6,7 @@ module Docs.NoLinksToMissingSections exposing (rule)
 
 -}
 
-import Elm.Syntax.Declaration exposing (Declaration)
+import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Node as Node exposing (Node)
 import Review.Rule as Rule exposing (Rule)
 
@@ -69,5 +69,20 @@ declarationVisitor node context =
 findLinks : Node Declaration -> List (Rule.Error {})
 findLinks node =
     case Node.value node of
-        _ ->
+        Declaration.FunctionDeclaration function ->
+            []
+
+        Declaration.AliasDeclaration typeAlias ->
+            []
+
+        Declaration.CustomTypeDeclaration _ ->
+            []
+
+        Declaration.PortDeclaration signature ->
+            []
+
+        Declaration.InfixDeclaration _ ->
+            []
+
+        Declaration.Destructuring _ _ ->
             []
