@@ -157,9 +157,7 @@ nameOfDeclaration decl =
                 |> Just
 
         Declaration.AliasDeclaration { name } ->
-            -- TODO
-            --Just (Node.value name)
-            Nothing
+            Just (Node.value name)
 
         Declaration.CustomTypeDeclaration { name } ->
             -- TODO

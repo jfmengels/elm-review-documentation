@@ -74,4 +74,14 @@ a = 2
                             , under = "#b"
                             }
                         ]
+        , test "should consider an exposed type alias to be an existing section" <|
+            \() ->
+                """module A.And.B exposing (..)
+type alias B = {}
+{-| [link](#B)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
