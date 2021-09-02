@@ -56,7 +56,7 @@ rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoLinksToMissingSections" initialContext
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
-        |> Rule.withDeclarationEnterVisitor declarationVisitor
+        |> Rule.withDeclarationListVisitor declarationListVisitor
         |> Rule.withFinalModuleEvaluation finalEvaluation
         |> Rule.fromModuleRuleSchema
 
@@ -110,19 +110,16 @@ exposedName node =
 -- DECLARATION VISITOR
 
 
-declarationVisitor : Node Declaration -> Context -> ( List nothing, Context )
-declarationVisitor node context =
-    case docOfDeclaration (Node.value node) of
-        Just docRange ->
-            let
-                links : List (Node SyntaxHelp.Link)
-                links =
-                    linksIn docRange
-            in
-            ( [], { context | links = links ++ context.links } )
-
-        Nothing ->
-            ( [], context )
+declarationListVisitor : List (Node Declaration) -> Context -> ( List nothing, Context )
+declarationListVisitor declarations context =
+    let
+        links : List (Node SyntaxHelp.Link)
+        links =
+            List.concatMap
+                (Node.value >> docOfDeclaration >> Maybe.map linksIn >> Maybe.withDefault [])
+                declarations
+    in
+    ( [], { context | links = links ++ context.links } )
 
 
 linksToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
