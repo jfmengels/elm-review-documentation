@@ -8,17 +8,15 @@ import Test exposing (Test, describe, test)
 all : Test
 all =
     describe "Docs.NoLinksToMissingSections"
-        [ test "should report an error when REPLACEME" <|
+        [ test "should not report link to an existing sibling section from declaration documentation" <|
             \() ->
-                """module A exposing (..)
-a = 1
+                """module A.And.B exposing (a, b)
+b = 1
+
+{-| [link](#b)
+-}
+a = 2
 """
                     |> Review.Test.run rule
-                    |> Review.Test.expectErrors
-                        [ Review.Test.error
-                            { message = "REPLACEME"
-                            , details = [ "REPLACEME" ]
-                            , under = "REPLACEME"
-                            }
-                        ]
+                    |> Review.Test.expectNoErrors
         ]
