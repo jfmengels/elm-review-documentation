@@ -146,11 +146,12 @@ nameParser test =
 linkParser : Parser Link
 linkParser =
     Parser.succeed
-        (\moduleName section ->
+        (\start moduleName section end ->
             { moduleName = moduleName, section = section }
         )
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
+        |= Parser.getPosition
         |= ParserExtra.manySeparated
             { by = "-"
             , item = nameParser { first = Char.isUpper }
@@ -163,3 +164,4 @@ linkParser =
             , Parser.succeed Nothing
                 |. Parser.token ")"
             ]
+        |= Parser.getPosition
