@@ -244,11 +244,15 @@ linksIn currentModuleName documentation =
 
 normalizeModuleName : ModuleName -> Node SyntaxHelp.Link -> Node SyntaxHelp.Link
 normalizeModuleName currentModuleName ((Node range link) as node) =
-    if List.isEmpty link.moduleName then
-        Node range { link | moduleName = currentModuleName }
+    case link.file of
+        SyntaxHelp.ModuleTarget [] ->
+            Node range { link | file = SyntaxHelp.ModuleTarget currentModuleName }
 
-    else
-        node
+        SyntaxHelp.ModuleTarget _ ->
+            node
+
+        SyntaxHelp.ReadmeTarget ->
+            node
 
 
 addOffset : Location -> Node a -> Node a
@@ -281,22 +285,28 @@ errorsForModule sectionsPerModule context =
 
 isLinkToMissingSection : Dict ModuleName (Set String) -> Rule.ModuleKey -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
 isLinkToMissingSection sectionsPerModule moduleKey ((Node _ link) as linkNode) =
-    case Dict.get link.moduleName sectionsPerModule of
-        Just existingSections ->
-            case link.section of
-                Just section ->
-                    if not (Set.member section existingSections) then
-                        Just (reportLink moduleKey linkNode)
+    case link.file of
+        SyntaxHelp.ModuleTarget moduleName ->
+            case Dict.get moduleName sectionsPerModule of
+                Just existingSections ->
+                    case link.section of
+                        Just section ->
+                            if not (Set.member section existingSections) then
+                                Just (reportLink moduleKey linkNode)
 
-                    else
-                        Nothing
+                            else
+                                Nothing
+
+                        Nothing ->
+                            -- TODO
+                            Nothing
 
                 Nothing ->
-                    -- TODO
-                    Nothing
+                    Just (reportUnknownModule moduleKey moduleName linkNode)
 
-        Nothing ->
-            Just (reportUnknownModule moduleKey linkNode)
+        SyntaxHelp.ReadmeTarget ->
+            -- TODO
+            Nothing
 
 
 reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error scope
@@ -309,11 +319,11 @@ reportLink moduleKey link =
         (Node.range link)
 
 
-reportUnknownModule : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error scope
-reportUnknownModule moduleKey (Node range link) =
+reportUnknownModule : Rule.ModuleKey -> ModuleName -> Node SyntaxHelp.Link -> Rule.Error scope
+reportUnknownModule moduleKey moduleName (Node range link) =
     Rule.errorForModule
         moduleKey
-        { message = "Link points to non-existing module " ++ String.join "." link.moduleName
+        { message = "Link points to non-existing module " ++ String.join "." moduleName
         , details = [ "This is a dead link." ]
         }
         range

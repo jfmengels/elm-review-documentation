@@ -1,5 +1,6 @@
 module SyntaxHelp2 exposing
     ( ExposedDefinitions
+    , FileTarget(..)
     , Link
     , LinkKind(..)
     , ModuleInfo
@@ -123,9 +124,14 @@ addOffset offset { start, end } =
 {-| `moduleName = []` for links like `[`a`](#a)`.
 -}
 type alias Link =
-    { moduleName : ModuleName
+    { file : FileTarget
     , section : Maybe String
     }
+
+
+type FileTarget
+    = ModuleTarget ModuleName
+    | ReadmeTarget
 
 
 {-|
@@ -159,30 +165,64 @@ moduleNameParser =
 linkParser : Parser (Node Link)
 linkParser =
     Parser.succeed
-        (\( startRow, startCol ) moduleName section ( endRow, endCol ) ->
+        (\( startRow, startCol ) link ( endRow, endCol ) ->
             Node
                 { start = { row = startRow - 1, column = startCol - 2 }
                 , end = { row = endRow - 1, column = endCol - 3 }
                 }
-                { moduleName = moduleName, section = section }
+                link
         )
         |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
         |= Parser.getPosition
-        |. ignoreDotSlash
-        |= ParserExtra.manySeparated
-            { by = "-"
-            , item = moduleNameParser
-            }
-        |= Parser.oneOf
-            [ Parser.succeed Just
-                |. Parser.symbol "#"
-                |= idParser
-                |. Parser.symbol ")"
-            , Parser.succeed Nothing
-                |. Parser.token ")"
-            ]
+        |= pathParser
+        |. Parser.token ")"
         |= Parser.getPosition
+
+
+pathParser : Parser Link
+pathParser =
+    Parser.oneOf
+        [ Parser.succeed
+            (\section ->
+                { file = ModuleTarget [], section = Just section }
+            )
+            |. Parser.symbol "#"
+            |= idParser
+        , Parser.succeed
+            (\file section ->
+                { file = file, section = section }
+            )
+            |. ignoreDotSlash
+            |= parseModuleName
+            |= optionalSectionParser
+        ]
+
+
+optionalSectionParser : Parser (Maybe String)
+optionalSectionParser =
+    Parser.oneOf
+        [ Parser.succeed Just
+            |. Parser.symbol "#"
+            |= idParser
+        , Parser.succeed Nothing
+        ]
+
+
+parseModuleName : Parser FileTarget
+parseModuleName =
+    ParserExtra.manySeparated
+        { by = "-"
+        , item = moduleNameParser
+        }
+        |> Parser.map
+            (\moduleName ->
+                if List.isEmpty moduleName then
+                    ReadmeTarget
+
+                else
+                    ModuleTarget moduleName
+            )
 
 
 ignoreDotSlash : Parser ()
