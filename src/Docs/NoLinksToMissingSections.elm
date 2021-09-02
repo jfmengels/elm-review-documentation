@@ -113,13 +113,25 @@ exposedName node =
 declarationListVisitor : List (Node Declaration) -> Context -> ( List nothing, Context )
 declarationListVisitor declarations context =
     let
+        newSections =
+            if context.exposingAll then
+                []
+
+            else
+                []
+
         links : List (Node SyntaxHelp.Link)
         links =
             List.concatMap
                 (Node.value >> docOfDeclaration >> Maybe.map linksIn >> Maybe.withDefault [])
                 declarations
     in
-    ( [], { context | links = links ++ context.links } )
+    ( []
+    , { context
+        | sections = Set.union context.sections (Set.fromList newSections)
+        , links = links ++ context.links
+      }
+    )
 
 
 linksToMissingSection : Set String -> Node SyntaxHelp.Link -> Bool
