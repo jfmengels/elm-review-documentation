@@ -62,6 +62,7 @@ rule =
             , fromModuleToProject = fromModuleToProject
             , foldProjectContexts = List.append
             }
+        |> Rule.withFinalProjectEvaluation finalEvaluation
         |> Rule.fromProjectRuleSchema
 
 
@@ -120,7 +121,6 @@ moduleVisitor schema =
     schema
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withDeclarationListVisitor declarationListVisitor
-        |> Rule.withFinalModuleEvaluation finalEvaluation
 
 
 
@@ -263,21 +263,22 @@ mapNodeRange mapper (Node range a) =
 -- FINAL EVALUATION
 
 
-finalProjectEvaluation : ProjectContext -> List (Rule.Error {})
-finalProjectEvaluation projectContext =
-    List.concatMap finalEvaluation projectContext
+finalEvaluation : ProjectContext -> List (Rule.Error { useErrorForModule : () })
+finalEvaluation projectContext =
+    List.concatMap errorsForModule projectContext
 
 
-finalEvaluation : { a | sections : Set String, links : List (Node SyntaxHelp.Link) } -> List (Rule.Error {})
-finalEvaluation context =
+errorsForModule : { moduleName : ModuleName, moduleKey : Rule.ModuleKey, sections : Set String, links : List (Node SyntaxHelp.Link) } -> List (Rule.Error { useErrorForModule : () })
+errorsForModule context =
     context.links
         |> List.filter (isLinkToMissingSection context.sections)
-        |> List.map reportLink
+        |> List.map (reportLink context.moduleKey)
 
 
-reportLink : Node SyntaxHelp.Link -> Rule.Error {}
-reportLink link =
-    Rule.error
+reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error { useErrorForModule : () }
+reportLink moduleKey link =
+    Rule.errorForModule
+        moduleKey
         { message = "Link points to a non-existing section or element"
         , details = [ "This is a dead link." ]
         }
