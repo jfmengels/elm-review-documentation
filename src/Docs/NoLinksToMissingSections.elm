@@ -175,9 +175,9 @@ declarationListVisitor declarations context =
                 declarations
     in
     ( []
-    , { context
-        | sections = Set.union context.sections (Set.fromList newSections)
-        , links = links ++ context.links
+    , { exposingAll = context.exposingAll
+      , sections = Set.union context.sections (Set.fromList newSections)
+      , links = links ++ context.links
       }
     )
 
