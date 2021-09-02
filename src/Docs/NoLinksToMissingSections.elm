@@ -63,31 +63,11 @@ declarationVisitor node context =
         errors : List (Rule.Error {})
         errors =
             node
-                |> findLinks
+                |> Node.value
+                |> docOfDeclaration
+                |> always []
     in
     ( errors, context )
-
-
-findLinks : Node Declaration -> List (Rule.Error {})
-findLinks node =
-    case Node.value node of
-        Declaration.FunctionDeclaration function ->
-            []
-
-        Declaration.AliasDeclaration typeAlias ->
-            []
-
-        Declaration.CustomTypeDeclaration _ ->
-            []
-
-        Declaration.PortDeclaration signature ->
-            []
-
-        Declaration.InfixDeclaration _ ->
-            []
-
-        Declaration.Destructuring _ _ ->
-            []
 
 
 docOfDeclaration : Declaration -> Maybe (Node Documentation)
