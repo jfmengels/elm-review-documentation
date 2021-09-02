@@ -69,6 +69,21 @@ type alias ProjectContext =
         }
 
 
+fromModuleToProject : Rule.ContextCreator ModuleContext ProjectContext
+fromModuleToProject =
+    Rule.initContextCreator
+        (\metadata moduleKey moduleContext ->
+            [ { moduleName = Rule.moduleNameFromMetadata metadata
+              , moduleKey = moduleKey
+              , sections = moduleContext.sections
+              , links = moduleContext.links
+              }
+            ]
+        )
+        |> Rule.withMetadata
+        |> Rule.withModuleKey
+
+
 type alias ModuleContext =
     { exposingAll : Bool
     , sections : Set String
