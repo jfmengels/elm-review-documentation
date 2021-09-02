@@ -64,6 +64,7 @@ rule =
 type alias Context =
     { exposingAll : Bool
     , sections : Set String
+    , links : List (Node SyntaxHelp.Link)
     }
 
 
@@ -71,6 +72,7 @@ initialContext : Context
 initialContext =
     { exposingAll = False
     , sections = Set.empty
+    , links = []
     }
 
 
@@ -189,6 +191,8 @@ mapNodeRange mapper (Node range a) =
 -- FINAL EVALUATION
 
 
-finalEvaluation : Context -> List (Rule.Error scope)
+finalEvaluation : Context -> List (Rule.Error {})
 finalEvaluation context =
-    []
+    context.links
+        |> List.filter (linksToMissingSection context.sections)
+        |> List.map reportLink
