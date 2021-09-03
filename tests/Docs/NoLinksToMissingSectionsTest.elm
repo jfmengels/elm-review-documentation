@@ -7,7 +7,6 @@ import Test exposing (Test, describe, test)
 
 
 
--- TODO Remove old rule, unused code, then try to run it on projects
 -- TODO With Forbid linking from exposed sections to non-exposed sections
 -- TODO Report links to dependencies?
 -- TODO Force links to dependencies to be for the minimal version?

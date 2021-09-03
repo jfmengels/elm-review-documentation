@@ -20,7 +20,7 @@ import ParserExtra
 import Regex
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
-import SyntaxHelp2 as SyntaxHelp
+import SyntaxHelp
 
 
 {-| Reports... REPLACEME
@@ -436,54 +436,50 @@ errorsForFile sectionsPerModule context =
 
 
 isLinkToMissingSection : Dict ModuleName (Set String) -> FileKey -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
-isLinkToMissingSection sectionsPerModule fileKey ((Node _ link) as linkNode) =
+isLinkToMissingSection sectionsPerModule fileKey (Node linkRange link) =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
                 Just existingSections ->
-                    case link.section of
-                        Just section ->
-                            if not (Set.member section existingSections) then
-                                Just (reportLink fileKey linkNode)
-
-                            else
-                                Nothing
-
-                        Nothing ->
-                            Nothing
+                    reportIfMissingSection fileKey existingSections linkRange link
 
                 Nothing ->
-                    Just (reportUnknownModule fileKey moduleName linkNode)
+                    Just (reportUnknownModule fileKey moduleName linkRange)
 
         SyntaxHelp.ReadmeTarget ->
             case Dict.get [] sectionsPerModule of
                 Just existingSections ->
-                    case link.section of
-                        Just section ->
-                            if not (Set.member section existingSections) then
-                                Just (reportLink fileKey linkNode)
-
-                            else
-                                Nothing
-
-                        Nothing ->
-                            Nothing
+                    reportIfMissingSection fileKey existingSections linkRange link
 
                 Nothing ->
-                    Just (reportLinkToMissingReadme fileKey linkNode)
+                    Just (reportLinkToMissingReadme fileKey linkRange)
 
 
-reportLink : FileKey -> Node SyntaxHelp.Link -> Rule.Error scope
-reportLink fileKey link =
+reportIfMissingSection : FileKey -> Set String -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
+reportIfMissingSection fileKey existingSectionsForTargetFile linkRange link =
+    case link.section of
+        Just section ->
+            if not (Set.member section existingSectionsForTargetFile) then
+                Just (reportLink fileKey linkRange)
+
+            else
+                Nothing
+
+        Nothing ->
+            Nothing
+
+
+reportLink : FileKey -> Range -> Rule.Error scope
+reportLink fileKey range =
     reportForFile fileKey
         { message = "Link points to a non-existing section or element"
         , details = [ "This is a dead link." ]
         }
-        (Node.range link)
+        range
 
 
-reportUnknownModule : FileKey -> ModuleName -> Node SyntaxHelp.Link -> Rule.Error scope
-reportUnknownModule fileKey moduleName (Node range link) =
+reportUnknownModule : FileKey -> ModuleName -> Range -> Rule.Error scope
+reportUnknownModule fileKey moduleName range =
     reportForFile fileKey
         { message = "Link points to non-existing module " ++ String.join "." moduleName
         , details = [ "This is a dead link." ]
@@ -491,8 +487,8 @@ reportUnknownModule fileKey moduleName (Node range link) =
         range
 
 
-reportLinkToMissingReadme : FileKey -> Node SyntaxHelp.Link -> Rule.Error scope
-reportLinkToMissingReadme fileKey (Node range link) =
+reportLinkToMissingReadme : FileKey -> Range -> Rule.Error scope
+reportLinkToMissingReadme fileKey range =
     reportForFile fileKey
         { message = "Link points to missing README"
         , details = [ "elm-review only looks for a 'README.md' located next to your 'elm.json'. Maybe it's positioned elsewhere or named differently?" ]
