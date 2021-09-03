@@ -12,6 +12,7 @@ import Test exposing (Test, describe, test)
 -- TODO Force links to dependencies to be for the minimal version?
 -- TODO Report when duplicate sections are found? Check if case sensitivity is important for ids.
 -- TODO Report links to `#` or `Foo#` which are not useful?
+-- TODO Report unused `[foo]: #b` links?
 
 
 all : Test
