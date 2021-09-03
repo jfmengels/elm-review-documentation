@@ -587,8 +587,7 @@ packageProject =
 
 elmJson : String
 elmJson =
-    """
-{
+    """{
     "type": "package",
     "name": "author/package",
     "summary": "Summary",
@@ -603,6 +602,5 @@ elmJson =
     "dependencies": {
         "elm/core": "1.0.0 <= v < 2.0.0"
     },
-    "test-dependencies": {
-    }
+    "test-dependencies": {}
 }"""
