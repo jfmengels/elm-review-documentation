@@ -44,6 +44,35 @@ a = 2
                             , under = "#b"
                             }
                         ]
+        , test "should not report link to an existing sibling section from module documentation" <|
+            \() ->
+                """module A exposing (a, b)
+{-| [link](#b)
+-}
+
+import B
+b = 1
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should report a link to an unknown sibling section from module documentation" <|
+            \() ->
+                """module A exposing (a)
+{-| [link](#b)
+-}
+
+import B
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#b"
+                            }
+                        ]
         , test "should not report a link to a known sibling section from declaration documentation when everything is exposed" <|
             \() ->
                 """module A exposing (..)

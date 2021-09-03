@@ -129,6 +129,7 @@ moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRu
 moduleVisitor schema =
     schema
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
+        |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withDeclarationListVisitor declarationListVisitor
 
 
@@ -181,6 +182,28 @@ exposedName node =
 
         Exposing.TypeExpose exposedType ->
             exposedType.name
+
+
+
+-- COMMENTS VISITOR
+
+
+commentsVisitor : List (Node String) -> ModuleContext -> ( List nothing, ModuleContext )
+commentsVisitor comments context =
+    let
+        links : List (Node SyntaxHelp.Link)
+        links =
+            comments
+                |> List.filter (Node.value >> String.startsWith "{-|")
+                |> List.concatMap (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
+    in
+    ( []
+    , { exposingAll = context.exposingAll
+      , moduleName = context.moduleName
+      , sections = {- TODO -} context.sections
+      , links = links ++ context.links
+      }
+    )
 
 
 
