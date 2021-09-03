@@ -432,8 +432,22 @@ isLinkToMissingSection sectionsPerModule fileKey ((Node _ link) as linkNode) =
                     Just (reportUnknownModule fileKey moduleName linkNode)
 
         SyntaxHelp.ReadmeTarget ->
-            -- TODO
-            Nothing
+            case Dict.get [] sectionsPerModule of
+                Just existingSections ->
+                    case link.section of
+                        Just section ->
+                            if not (Set.member section existingSections) then
+                                Just (reportLink fileKey linkNode)
+
+                            else
+                                Nothing
+
+                        Nothing ->
+                            Nothing
+
+                Nothing ->
+                    -- TODO
+                    Nothing
 
 
 reportLink : FileKey -> Node SyntaxHelp.Link -> Rule.Error scope
