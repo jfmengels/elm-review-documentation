@@ -7,7 +7,6 @@ import Test exposing (Test, describe, test)
 
 
 
--- TODO From module documentation
 -- TODO With Forbid linking from exposed sections to non-exposed sections
 -- TODO Report links to dependencies?
 -- TODO Force links to dependencies to be for the minimal version?
@@ -267,6 +266,22 @@ a = 2
                             , under = "#section"
                             }
                         ]
+        , test "should consider a header inside a module documentation comment to be an existing section" <|
+            \() ->
+                """module A exposing (..)
+{-|
+# Section
+-}
+
+import B
+
+b = 1
+{-| [link](#section)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         , Test.skip <|
             test "should slugify complex headings" <|
                 \() ->

@@ -191,16 +191,24 @@ exposedName node =
 commentsVisitor : List (Node String) -> ModuleContext -> ( List nothing, ModuleContext )
 commentsVisitor comments context =
     let
+        docs : List (Node String)
+        docs =
+            List.filter (Node.value >> String.startsWith "{-|") comments
+
+        titleSections : List String
+        titleSections =
+            List.concatMap (Node.value >> extractSectionsFromHeadings) docs
+
         links : List (Node SyntaxHelp.Link)
         links =
-            comments
-                |> List.filter (Node.value >> String.startsWith "{-|")
-                |> List.concatMap (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
+            List.concatMap
+                (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
+                docs
     in
     ( []
     , { exposingAll = context.exposingAll
       , moduleName = context.moduleName
-      , sections = {- TODO -} context.sections
+      , sections = Set.union context.sections (Set.fromList titleSections)
       , links = links ++ context.links
       }
     )
