@@ -293,6 +293,30 @@ c = 1
                             ]
                           )
                         ]
+        , test "should not report links to existing sections inside the README" <|
+            \() ->
+                """module A exposing (a)
+a = 2
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "# A\n[link](#a)" } Project.new)
+                        rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links to missing sections inside the README" <|
+            \() ->
+                """module A exposing (a)
+a = 2
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "# A\n[link](#b)" } Project.new)
+                        rule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#b"
+                            }
+                        ]
         , test "should not report links to existing sections from another module inside the README" <|
             \() ->
                 """module A exposing (a)

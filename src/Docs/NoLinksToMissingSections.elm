@@ -143,7 +143,7 @@ readmeVisitor maybeReadmeInfo projectContext =
             ( []
             , { moduleName = []
               , moduleKey = ReadmeKey readmeKey
-              , sections = Set.empty
+              , sections = Set.fromList (extractSectionsFromHeadings content)
               , links = linksIn [] { row = 1, column = 1 } content
               }
                 :: projectContext
@@ -206,8 +206,7 @@ declarationListVisitor declarations context =
 
         titleSections : List String
         titleSections =
-            docs
-                |> List.concatMap (Node.value >> extractSectionsFromHeadings)
+            List.concatMap (Node.value >> extractSectionsFromHeadings) docs
 
         links : List (Node SyntaxHelp.Link)
         links =
