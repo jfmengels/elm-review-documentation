@@ -1,6 +1,7 @@
 module Docs.NoLinksToMissingSectionsTest exposing (all)
 
 import Docs.NoLinksToMissingSections exposing (rule)
+import Review.Project as Project
 import Review.Test
 import Test exposing (Test, describe, test)
 
@@ -291,5 +292,29 @@ c = 1
                                 }
                             ]
                           )
+                        ]
+        , test "should not report links to existing sections from another module inside the README" <|
+            \() ->
+                """module A exposing (a)
+a = 2
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "[link](./A#a)" } Project.new)
+                        rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links to missing sections from another module inside the README" <|
+            \() ->
+                """module A exposing (a)
+a = 2
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "[link](./A#b)" } Project.new)
+                        rule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "./A#b"
+                            }
                         ]
         ]

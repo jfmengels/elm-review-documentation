@@ -13,7 +13,7 @@ import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range exposing (Location, Range)
+import Elm.Syntax.Range as Range exposing (Location, Range)
 import Markdown.Block
 import Markdown.Parser
 import Parser
@@ -62,6 +62,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 rule : Rule
 rule =
     Rule.newProjectRuleSchema "Docs.NoLinksToMissingSections" []
+        |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withModuleVisitor moduleVisitor
         |> Rule.withModuleContextUsingContextCreator
             { fromProjectToModule = fromProjectToModule
@@ -73,15 +74,20 @@ rule =
 
 
 type alias ProjectContext =
-    List CompiledModuleContext
+    List FileLinksAndSections
 
 
-type alias CompiledModuleContext =
+type alias FileLinksAndSections =
     { moduleName : ModuleName
-    , moduleKey : Rule.ModuleKey
+    , moduleKey : FileKey
     , sections : Set String
     , links : List (Node SyntaxHelp.Link)
     }
+
+
+type FileKey
+    = ModuleKey Rule.ModuleKey
+    | ReadmeKey Rule.ReadmeKey
 
 
 type alias ModuleContext =
@@ -97,7 +103,7 @@ fromModuleToProject =
     Rule.initContextCreator
         (\moduleKey moduleContext ->
             [ { moduleName = moduleContext.moduleName
-              , moduleKey = moduleKey
+              , moduleKey = ModuleKey moduleKey
               , sections = moduleContext.sections
               , links = moduleContext.links
               }
@@ -124,6 +130,27 @@ moduleVisitor schema =
     schema
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withDeclarationListVisitor declarationListVisitor
+
+
+
+-- README VISITOR
+
+
+readmeVisitor : Maybe { readmeKey : Rule.ReadmeKey, content : String } -> ProjectContext -> ( List nothing, ProjectContext )
+readmeVisitor maybeReadmeInfo projectContext =
+    case maybeReadmeInfo of
+        Just { readmeKey, content } ->
+            ( []
+            , { moduleName = []
+              , moduleKey = ReadmeKey readmeKey
+              , sections = Set.empty
+              , links = linksIn [] { row = 1, column = 1 } content
+              }
+                :: projectContext
+            )
+
+        Nothing ->
+            ( [], projectContext )
 
 
 
@@ -185,7 +212,7 @@ declarationListVisitor declarations context =
         links : List (Node SyntaxHelp.Link)
         links =
             List.concatMap
-                (linksIn context.moduleName)
+                (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
                 docs
     in
     ( []
@@ -337,11 +364,11 @@ type alias LinkWithRange =
     }
 
 
-linksIn : ModuleName -> Node Documentation -> List (Node SyntaxHelp.Link)
-linksIn currentModuleName documentation =
-    Node.value documentation
+linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
+linksIn currentModuleName offset documentation =
+    documentation
         |> ParserExtra.find SyntaxHelp.linkParser
-        |> List.map (normalizeModuleName currentModuleName >> addOffset (Node.range documentation).start)
+        |> List.map (normalizeModuleName currentModuleName >> addOffset offset)
 
 
 normalizeModuleName : ModuleName -> Node SyntaxHelp.Link -> Node SyntaxHelp.Link
@@ -375,18 +402,18 @@ finalEvaluation projectContext =
                 |> List.map (\module_ -> ( module_.moduleName, module_.sections ))
                 |> Dict.fromList
     in
-    List.concatMap (errorsForModule sectionsPerModule) projectContext
+    List.concatMap (errorsForFile sectionsPerModule) projectContext
 
 
-errorsForModule : Dict ModuleName (Set String) -> CompiledModuleContext -> List (Rule.Error { useErrorForModule : () })
-errorsForModule sectionsPerModule context =
+errorsForFile : Dict ModuleName (Set String) -> FileLinksAndSections -> List (Rule.Error { useErrorForModule : () })
+errorsForFile sectionsPerModule context =
     List.filterMap
         (isLinkToMissingSection sectionsPerModule context.moduleKey)
         context.links
 
 
-isLinkToMissingSection : Dict ModuleName (Set String) -> Rule.ModuleKey -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
-isLinkToMissingSection sectionsPerModule moduleKey ((Node _ link) as linkNode) =
+isLinkToMissingSection : Dict ModuleName (Set String) -> FileKey -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
+isLinkToMissingSection sectionsPerModule fileKey ((Node _ link) as linkNode) =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
@@ -394,7 +421,7 @@ isLinkToMissingSection sectionsPerModule moduleKey ((Node _ link) as linkNode) =
                     case link.section of
                         Just section ->
                             if not (Set.member section existingSections) then
-                                Just (reportLink moduleKey linkNode)
+                                Just (reportLink fileKey linkNode)
 
                             else
                                 Nothing
@@ -404,28 +431,36 @@ isLinkToMissingSection sectionsPerModule moduleKey ((Node _ link) as linkNode) =
                             Nothing
 
                 Nothing ->
-                    Just (reportUnknownModule moduleKey moduleName linkNode)
+                    Just (reportUnknownModule fileKey moduleName linkNode)
 
         SyntaxHelp.ReadmeTarget ->
             -- TODO
             Nothing
 
 
-reportLink : Rule.ModuleKey -> Node SyntaxHelp.Link -> Rule.Error scope
-reportLink moduleKey link =
-    Rule.errorForModule
-        moduleKey
+reportLink : FileKey -> Node SyntaxHelp.Link -> Rule.Error scope
+reportLink fileKey link =
+    reportForFile fileKey
         { message = "Link points to a non-existing section or element"
         , details = [ "This is a dead link." ]
         }
         (Node.range link)
 
 
-reportUnknownModule : Rule.ModuleKey -> ModuleName -> Node SyntaxHelp.Link -> Rule.Error scope
-reportUnknownModule moduleKey moduleName (Node range link) =
-    Rule.errorForModule
-        moduleKey
+reportUnknownModule : FileKey -> ModuleName -> Node SyntaxHelp.Link -> Rule.Error scope
+reportUnknownModule fileKey moduleName (Node range link) =
+    reportForFile fileKey
         { message = "Link points to non-existing module " ++ String.join "." moduleName
         , details = [ "This is a dead link." ]
         }
         range
+
+
+reportForFile : FileKey -> { message : String, details : List String } -> Range -> Rule.Error scope
+reportForFile fileKey =
+    case fileKey of
+        ModuleKey moduleKey ->
+            Rule.errorForModule moduleKey
+
+        ReadmeKey readmeKey ->
+            Rule.errorForReadme readmeKey
