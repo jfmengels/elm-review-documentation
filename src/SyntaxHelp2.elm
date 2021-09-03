@@ -168,7 +168,7 @@ linkParser =
         (\( startRow, startCol ) link ( endRow, endCol ) ->
             Node
                 { start = { row = startRow - 1, column = startCol - 2 }
-                , end = { row = endRow - 1, column = endCol - 3 }
+                , end = { row = endRow - 1, column = endCol - 2 }
                 }
                 link
         )
@@ -176,8 +176,8 @@ linkParser =
         |. Parser.symbol "("
         |= Parser.getPosition
         |= pathParser
-        |. Parser.token ")"
         |= Parser.getPosition
+        |. Parser.token ")"
 
 
 pathParser : Parser Link
