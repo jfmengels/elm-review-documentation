@@ -426,7 +426,6 @@ isLinkToMissingSection sectionsPerModule fileKey ((Node _ link) as linkNode) =
                                 Nothing
 
                         Nothing ->
-                            -- TODO
                             Nothing
 
                 Nothing ->
