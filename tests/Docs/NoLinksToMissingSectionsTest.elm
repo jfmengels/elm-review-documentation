@@ -186,6 +186,20 @@ a = 2
                             , under = "#section"
                             }
                         ]
+        , Test.skip <|
+            test "should slugify complex headings" <|
+                \() ->
+                    """module A exposing (..)
+{-|
+# Section with spaces and_ $things   [`links`](foo)
+-}
+b = 1
+{-| [link](#section-with-spaces-and_-$things-links)
+-}
+a = 2
+"""
+                        |> Review.Test.run rule
+                        |> Review.Test.expectNoErrors
         , test "should report links to unknown modules" <|
             \() ->
                 """module A exposing (..)
