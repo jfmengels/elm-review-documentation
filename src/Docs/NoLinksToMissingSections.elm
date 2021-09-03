@@ -13,16 +13,14 @@ import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range as Range exposing (Location, Range)
+import Elm.Syntax.Range exposing (Location, Range)
 import Markdown.Block
 import Markdown.Parser
-import Parser
 import ParserExtra
 import Regex
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
 import SyntaxHelp2 as SyntaxHelp
-import TitleParser
 
 
 {-| Reports... REPLACEME
@@ -386,12 +384,6 @@ docOfDeclaration declaration =
 
         Declaration.Destructuring _ _ ->
             Nothing
-
-
-type alias LinkWithRange =
-    { parsed : SyntaxHelp.Link
-    , range : Range
-    }
 
 
 linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
