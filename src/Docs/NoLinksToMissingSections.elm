@@ -14,8 +14,11 @@ import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
+import Markdown.Block
+import Markdown.Parser
 import Parser
 import ParserExtra
+import Regex
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
 import SyntaxHelp2 as SyntaxHelp
@@ -177,8 +180,7 @@ declarationListVisitor declarations context =
         titleSections : List String
         titleSections =
             docs
-                |> List.concatMap (Node.value >> String.lines {- TODO >> List.drop 1 -})
-                |> List.filterMap extractTitle
+                |> List.concatMap (Node.value >> extractSectionsFromHeadings)
 
         links : List (Node SyntaxHelp.Link)
         links =
@@ -195,11 +197,90 @@ declarationListVisitor declarations context =
     )
 
 
-extractTitle : String -> Maybe String
-extractTitle string =
+extractSectionsFromHeadings : String -> List String
+extractSectionsFromHeadings string =
+    Markdown.Parser.parse string
+        |> Result.map extractTitles
+        |> Result.withDefault []
+
+
+toSlug : String -> String
+toSlug string =
     string
-        |> Parser.run TitleParser.parser
-        |> Result.toMaybe
+        |> String.toLower
+        |> Regex.replace specials (\_ -> "")
+        |> Regex.replace whitespace (\_ -> "-")
+
+
+specials : Regex.Regex
+specials =
+    "[\u{2000}-\u{206F}⸀-\u{2E7F}\\\\'!\"#$%&()*+,./:;<=>?@[\\\\]^`{|}~’]"
+        |> Regex.fromString
+        |> Maybe.withDefault Regex.never
+
+
+whitespace : Regex.Regex
+whitespace =
+    "\\s"
+        |> Regex.fromString
+        |> Maybe.withDefault Regex.never
+
+
+extractTitles : List Markdown.Block.Block -> List String
+extractTitles blocks =
+    Markdown.Block.foldl
+        (\block ( occurrencesTracker, acc ) ->
+            case block of
+                Markdown.Block.Heading _ inlines ->
+                    let
+                        rawSlug : String
+                        rawSlug =
+                            Markdown.Block.extractInlineText inlines
+                                |> toSlug
+
+                        ( finalSlug, updatedOccurrences ) =
+                            trackOccurence rawSlug occurrencesTracker
+                    in
+                    ( updatedOccurrences
+                    , finalSlug :: acc
+                    )
+
+                _ ->
+                    ( occurrencesTracker, acc )
+        )
+        ( Dict.empty, [] )
+        blocks
+        |> Tuple.second
+
+
+{-| Credit for this algorithm goes to
+<https://github.com/Flet/github-slugger/blob/master/index.js>
+TODO - this doesn't strip emoji yet
+-}
+trackOccurence : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
+trackOccurence slug occurences =
+    case Dict.get slug occurences of
+        Just n ->
+            occurences
+                |> increment slug
+                |> trackOccurence (slug ++ "-" ++ String.fromInt n)
+
+        Nothing ->
+            ( slug, increment slug occurences )
+
+
+increment : String -> Dict.Dict String Int -> Dict.Dict String Int
+increment value occurences =
+    Dict.update value
+        (\maybeOccurence ->
+            case maybeOccurence of
+                Just count ->
+                    Just <| count + 1
+
+                Nothing ->
+                    Just 1
+        )
+        occurences
 
 
 nameOfDeclaration : Declaration -> Maybe String
