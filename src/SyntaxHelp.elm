@@ -9,7 +9,6 @@ import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
-import Parser.Extras
 import ParserExtra
 
 
@@ -59,7 +58,7 @@ linkParser : Parser (Maybe (Node Link))
 linkParser =
     Parser.succeed identity
         |= Parser.getCol
-        |. Parser.Extras.brackets (Parser.chompUntil "]")
+        |. bracketsParser
         |> Parser.andThen
             (\col ->
                 if col == 1 then
@@ -177,3 +176,13 @@ ignoreDotSlash =
             |. Parser.symbol "/"
         , Parser.succeed ()
         ]
+
+
+bracketsParser : Parser ()
+bracketsParser =
+    Parser.succeed identity
+        |. Parser.symbol "["
+        |. Parser.spaces
+        |= Parser.chompUntil "]"
+        |. Parser.spaces
+        |. Parser.symbol "]"
