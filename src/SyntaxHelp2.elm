@@ -145,10 +145,10 @@ type LinkKind
     | DefinitionLink String
 
 
-idParser : Parser String
-idParser =
+idParser : Char -> Parser String
+idParser endChar =
     Parser.succeed ()
-        |. Parser.chompWhile (\c -> c /= ')')
+        |. Parser.chompWhile (\c -> c /= endChar)
         |> Parser.getChompedString
 
 
@@ -160,10 +160,37 @@ moduleNameParser =
         |> Parser.getChompedString
 
 
-{-| See [`Link`](#Link).
--}
-linkParser : Parser (Node Link)
+linkParser : Parser (Maybe (Node Link))
 linkParser =
+    Parser.succeed identity
+        |= Parser.getCol
+        |. Parser.Extras.brackets (Parser.chompUntil "]")
+        |> Parser.andThen
+            (\col ->
+                if col == 1 then
+                    Parser.oneOf
+                        [ inlineLinkParser
+                            |> Parser.map Just
+                        , shortcutLinkParser
+                            |> Parser.map Just
+                        , Parser.succeed Nothing
+                        ]
+
+                else
+                    Parser.oneOf
+                        [ Parser.map Just inlineLinkParser
+                        , Parser.succeed Nothing
+                        ]
+            )
+
+
+{-| Parses things like:
+
+    This is a [link](#Link).
+
+-}
+inlineLinkParser : Parser (Node Link)
+inlineLinkParser =
     Parser.succeed
         (\( startRow, startCol ) link ( endRow, endCol ) ->
             Node
@@ -172,39 +199,62 @@ linkParser =
                 }
                 link
         )
-        |. Parser.Extras.brackets (Parser.chompUntil "]")
         |. Parser.symbol "("
         |= Parser.getPosition
-        |= pathParser
+        |= pathParser ')'
         |= Parser.getPosition
         |. Parser.token ")"
 
 
-pathParser : Parser Link
-pathParser =
+{-| Parses things like:
+
+    This is a [link].
+
+    [link]: #Link
+
+-}
+shortcutLinkParser : Parser (Node Link)
+shortcutLinkParser =
+    Parser.succeed
+        (\( startRow, startCol ) link ( endRow, endCol ) ->
+            Node
+                { start = { row = startRow - 1, column = startCol - 2 }
+                , end = { row = endRow - 1, column = endCol - 2 }
+                }
+                link
+        )
+        |. Parser.symbol ":"
+        |. Parser.spaces
+        |= Parser.getPosition
+        |= pathParser '\n'
+        |= Parser.getPosition
+
+
+pathParser : Char -> Parser Link
+pathParser endChar =
     Parser.oneOf
         [ Parser.succeed
             (\section ->
                 { file = ModuleTarget [], section = Just section }
             )
             |. Parser.symbol "#"
-            |= idParser
+            |= idParser endChar
         , Parser.succeed
             (\file section ->
                 { file = file, section = section }
             )
             |. ignoreDotSlash
             |= parseModuleName
-            |= optionalSectionParser
+            |= optionalSectionParser endChar
         ]
 
 
-optionalSectionParser : Parser (Maybe String)
-optionalSectionParser =
+optionalSectionParser : Char -> Parser (Maybe String)
+optionalSectionParser endChar =
     Parser.oneOf
         [ Parser.succeed Just
             |. Parser.symbol "#"
-            |= idParser
+            |= idParser endChar
         , Parser.succeed Nothing
         ]
 

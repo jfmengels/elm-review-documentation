@@ -367,6 +367,7 @@ linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
 linksIn currentModuleName offset documentation =
     documentation
         |> ParserExtra.find SyntaxHelp.linkParser
+        |> List.filterMap identity
         |> List.map (normalizeModuleName currentModuleName >> addOffset offset)
 
 

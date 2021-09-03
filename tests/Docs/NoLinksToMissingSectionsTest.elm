@@ -8,7 +8,6 @@ import Test exposing (Test, describe, test)
 
 
 -- TODO From module documentation
--- TODO With links like `[foo]: #b`
 -- TODO With Forbid linking from exposed sections to non-exposed sections
 -- TODO Report links to dependencies?
 -- TODO Force links to be for the minimal version?
@@ -60,6 +59,36 @@ a = 2
             \() ->
                 """module A exposing (..)
 {-| [link](#b)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#b"
+                            }
+                        ]
+        , test "should not report link shortcuts that link to existing sections" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+{-| this is a [link] shortcut?
+
+[link]: #b
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should report link shortcuts that link to missing sections" <|
+            \() ->
+                """module A exposing ()
+{-| this is a [link] shortcut?
+
+[link]: #b
+
 -}
 a = 2
 """
