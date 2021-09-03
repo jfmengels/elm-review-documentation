@@ -446,8 +446,7 @@ isLinkToMissingSection sectionsPerModule fileKey ((Node _ link) as linkNode) =
                             Nothing
 
                 Nothing ->
-                    -- TODO
-                    Nothing
+                    Just (reportLinkToMissingReadme fileKey linkNode)
 
 
 reportLink : FileKey -> Node SyntaxHelp.Link -> Rule.Error scope
@@ -464,6 +463,15 @@ reportUnknownModule fileKey moduleName (Node range link) =
     reportForFile fileKey
         { message = "Link points to non-existing module " ++ String.join "." moduleName
         , details = [ "This is a dead link." ]
+        }
+        range
+
+
+reportLinkToMissingReadme : FileKey -> Node SyntaxHelp.Link -> Rule.Error scope
+reportLinkToMissingReadme fileKey (Node range link) =
+    reportForFile fileKey
+        { message = "Link points to missing README"
+        , details = [ "elm-review only looks for a 'README.md' located next to your 'elm.json'. Maybe it's positioned elsewhere or named differently?" ]
         }
         range
 

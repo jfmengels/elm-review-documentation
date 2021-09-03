@@ -10,9 +10,6 @@ import Test exposing (Test, describe, test)
 -- TODO From module documentation
 -- TODO With links like `[foo]: #b`
 -- TODO With Forbid linking from exposed sections to non-exposed sections
--- TODO Report links in the README
--- TODO Report links to README when README does not exist
--- TODO Report links to non-existent things in README
 -- TODO Report links to dependencies?
 -- TODO Force links to be for the minimal version?
 -- TODO Report when duplicate sections are found? Check if case sensitivity is important for ids.
@@ -363,6 +360,36 @@ a = 2
                             { message = "Link points to a non-existing section or element"
                             , details = [ "This is a dead link." ]
                             , under = "./A#b"
+                            }
+                        ]
+        , test "should report links to README when there is no README (without slug)" <|
+            \() ->
+                """module A exposing (a)              
+{-| [link](./)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to missing README"
+                            , details = [ "elm-review only looks for a 'README.md' located next to your 'elm.json'. Maybe it's positioned elsewhere or named differently?" ]
+                            , under = "./"
+                            }
+                        ]
+        , test "should report links to README when there is no README (with slug)" <|
+            \() ->
+                """module A exposing (a)
+{-| [link](./#b)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to missing README"
+                            , details = [ "elm-review only looks for a 'README.md' located next to your 'elm.json'. Maybe it's positioned elsewhere or named differently?" ]
+                            , under = "./#b"
                             }
                         ]
         ]
