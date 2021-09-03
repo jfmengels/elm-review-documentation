@@ -73,6 +73,31 @@ a = 2
                             , under = "#b"
                             }
                         ]
+        , test "should not report link to an existing sibling section from port documentation" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+{-| [link](#b)
+-}
+port a : String -> Cmd msg
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should report a link to an unknown sibling section from port documentation" <|
+            \() ->
+                """module A exposing (a)
+{-| [link](#b)
+-}
+port a : String -> Cmd msg
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#b"
+                            }
+                        ]
         , test "should not report a link to a known sibling section from declaration documentation when everything is exposed" <|
             \() ->
                 """module A exposing (..)
