@@ -7,6 +7,8 @@ module Docs.NoLinksToMissingSections exposing (rule)
 -}
 
 import Dict exposing (Dict)
+import Elm.Module
+import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
 import Elm.Syntax.Exposing as Exposing
@@ -59,25 +61,35 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 -}
 rule : Rule
 rule =
-    Rule.newProjectRuleSchema "Docs.NoLinksToMissingSections" []
+    Rule.newProjectRuleSchema "Docs.NoLinksToMissingSections" initialProjectContext
+        |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withModuleVisitor moduleVisitor
         |> Rule.withModuleContextUsingContextCreator
             { fromProjectToModule = fromProjectToModule
             , fromModuleToProject = fromModuleToProject
-            , foldProjectContexts = List.append
+            , foldProjectContexts = foldProjectContexts
             }
         |> Rule.withFinalProjectEvaluation finalEvaluation
         |> Rule.fromProjectRuleSchema
 
 
 type alias ProjectContext =
-    List FileLinksAndSections
+    { fileLinksAndSections : List FileLinksAndSections
+    , exposedModules : Set ModuleName
+    }
+
+
+initialProjectContext : ProjectContext
+initialProjectContext =
+    { fileLinksAndSections = []
+    , exposedModules = Set.empty
+    }
 
 
 type alias FileLinksAndSections =
     { moduleName : ModuleName
-    , moduleKey : FileKey
+    , fileKey : FileKey
     , sections : Set String
     , links : List (Node SyntaxHelp.Link)
     }
@@ -100,14 +112,24 @@ fromModuleToProject : Rule.ContextCreator ModuleContext ProjectContext
 fromModuleToProject =
     Rule.initContextCreator
         (\moduleKey moduleContext ->
-            [ { moduleName = moduleContext.moduleName
-              , moduleKey = ModuleKey moduleKey
-              , sections = moduleContext.sections
-              , links = moduleContext.links
-              }
-            ]
+            { fileLinksAndSections =
+                [ { moduleName = moduleContext.moduleName
+                  , fileKey = ModuleKey moduleKey
+                  , sections = moduleContext.sections
+                  , links = moduleContext.links
+                  }
+                ]
+            , exposedModules = Set.empty
+            }
         )
         |> Rule.withModuleKey
+
+
+foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
+foldProjectContexts newContext previousContext =
+    { fileLinksAndSections = List.append newContext.fileLinksAndSections previousContext.fileLinksAndSections
+    , exposedModules = previousContext.exposedModules
+    }
 
 
 fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
@@ -132,6 +154,41 @@ moduleVisitor schema =
 
 
 
+-- ELM.JSON VISITOR
+
+
+elmJsonVisitor : Maybe { a | project : Elm.Project.Project } -> ProjectContext -> ( List nothing, ProjectContext )
+elmJsonVisitor maybeElmJson projectContext =
+    case Maybe.map .project maybeElmJson of
+        Just (Elm.Project.Package { exposed }) ->
+            ( [], { projectContext | exposedModules = listExposedModules exposed } )
+
+        _ ->
+            ( [], projectContext )
+
+
+listExposedModules : Elm.Project.Exposed -> Set ModuleName
+listExposedModules exposed =
+    let
+        exposedModules : List (List String)
+        exposedModules =
+            exposedModulesFromPackageAsList exposed
+                |> List.map (Elm.Module.toString >> String.split ".")
+    in
+    Set.fromList ([] :: exposedModules)
+
+
+exposedModulesFromPackageAsList : Elm.Project.Exposed -> List Elm.Module.Name
+exposedModulesFromPackageAsList exposed =
+    case exposed of
+        Elm.Project.ExposedList list ->
+            list
+
+        Elm.Project.ExposedDict list ->
+            List.concatMap Tuple.second list
+
+
+
 -- README VISITOR
 
 
@@ -140,12 +197,15 @@ readmeVisitor maybeReadmeInfo projectContext =
     case maybeReadmeInfo of
         Just { readmeKey, content } ->
             ( []
-            , { moduleName = []
-              , moduleKey = ReadmeKey readmeKey
-              , sections = Set.fromList (extractSectionsFromHeadings content)
-              , links = linksIn [] { row = 1, column = 1 } content
+            , { fileLinksAndSections =
+                    { moduleName = []
+                    , fileKey = ReadmeKey readmeKey
+                    , sections = Set.fromList (extractSectionsFromHeadings content)
+                    , links = linksIn [] { row = 1, column = 1 } content
+                    }
+                        :: projectContext.fileLinksAndSections
+              , exposedModules = projectContext.exposedModules
               }
-                :: projectContext
             )
 
         Nothing ->
@@ -421,38 +481,42 @@ finalEvaluation projectContext =
     let
         sectionsPerModule : Dict ModuleName (Set String)
         sectionsPerModule =
-            projectContext
+            projectContext.fileLinksAndSections
                 |> List.map (\module_ -> ( module_.moduleName, module_.sections ))
                 |> Dict.fromList
     in
-    List.concatMap (errorsForFile sectionsPerModule) projectContext
+    List.concatMap (errorsForFile projectContext.exposedModules sectionsPerModule) projectContext.fileLinksAndSections
 
 
-errorsForFile : Dict ModuleName (Set String) -> FileLinksAndSections -> List (Rule.Error { useErrorForModule : () })
-errorsForFile sectionsPerModule context =
+errorsForFile : Set ModuleName -> Dict ModuleName (Set String) -> FileLinksAndSections -> List (Rule.Error scope)
+errorsForFile exposedModules sectionsPerModule fileLinksAndSections =
     List.filterMap
-        (isLinkToMissingSection sectionsPerModule context.moduleKey)
-        context.links
+        (isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections)
+        fileLinksAndSections.links
 
 
-isLinkToMissingSection : Dict ModuleName (Set String) -> FileKey -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
-isLinkToMissingSection sectionsPerModule fileKey (Node linkRange link) =
+isLinkToMissingSection : Set ModuleName -> Dict ModuleName (Set String) -> FileLinksAndSections -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
+isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (Node linkRange link) =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
                 Just existingSections ->
-                    reportIfMissingSection fileKey existingSections linkRange link
+                    if Set.member fileLinksAndSections.moduleName exposedModules && not (Set.member moduleName exposedModules) then
+                        Just (reportLinkToNonExposedModule fileLinksAndSections.fileKey linkRange)
+
+                    else
+                        reportIfMissingSection fileLinksAndSections.fileKey existingSections linkRange link
 
                 Nothing ->
-                    Just (reportUnknownModule fileKey moduleName linkRange)
+                    Just (reportUnknownModule fileLinksAndSections.fileKey moduleName linkRange)
 
         SyntaxHelp.ReadmeTarget ->
             case Dict.get [] sectionsPerModule of
                 Just existingSections ->
-                    reportIfMissingSection fileKey existingSections linkRange link
+                    reportIfMissingSection fileLinksAndSections.fileKey existingSections linkRange link
 
                 Nothing ->
-                    Just (reportLinkToMissingReadme fileKey linkRange)
+                    Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
 
 
 reportIfMissingSection : FileKey -> Set String -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
@@ -474,6 +538,15 @@ reportLink fileKey range =
     reportForFile fileKey
         { message = "Link points to a non-existing section or element"
         , details = [ "This is a dead link." ]
+        }
+        range
+
+
+reportLinkToNonExposedModule : FileKey -> Range -> Rule.Error scope
+reportLinkToNonExposedModule fileKey range =
+    reportForFile fileKey
+        { message = "Link in public documentation points to non-exposed module"
+        , details = [ "Users will not be able to follow the link." ]
         }
         range
 

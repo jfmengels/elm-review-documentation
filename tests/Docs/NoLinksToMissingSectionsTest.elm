@@ -1,7 +1,9 @@
 module Docs.NoLinksToMissingSectionsTest exposing (all)
 
 import Docs.NoLinksToMissingSections exposing (rule)
-import Review.Project as Project
+import Elm.Project
+import Json.Decode
+import Review.Project as Project exposing (Project)
 import Review.Test
 import Test exposing (Test, describe, test)
 
@@ -491,4 +493,116 @@ a = 2
                             , under = "./#b"
                             }
                         ]
+        , test "should not report links from non-exposed modules to non-exposed modules" <|
+            \() ->
+                [ """module NotExposed exposing (a)
+{-| [link](./AlsoNotExposed)
+-}
+a = 2
+""", """module AlsoNotExposed exposing (b)
+b = 1
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProject rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report links from non-exposed modules to exposed modules" <|
+            \() ->
+                """module NotExposed exposing (a)
+{-| [link](./Exposed)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProject rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report links from exposed modules to exposed modules" <|
+            \() ->
+                """module Exposed2 exposing (a)
+{-| [link](./Exposed)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProject rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links from exposed modules to non-exposed modules" <|
+            \() ->
+                [ """module Exposed2 exposing (a)
+{-| [link](./NotExposed)
+-}
+a = 2
+""", """module NotExposed exposing (b)
+b = 1
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProject rule
+                    |> Review.Test.expectErrorsForModules
+                        [ ( "Exposed2"
+                          , [ Review.Test.error
+                                { message = "Link in public documentation points to non-exposed module"
+                                , details = [ "Users will not be able to follow the link." ]
+                                , under = "./NotExposed"
+                                }
+                            ]
+                          )
+                        ]
+        , test "should report links from README to non-exposed modules" <|
+            \() ->
+                """module NotExposed exposing (a)
+a = 1
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "[link](./NotExposed)" } packageProject)
+                        rule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = "Link in public documentation points to non-exposed module"
+                            , details = [ "Users will not be able to follow the link." ]
+                            , under = "./NotExposed"
+                            }
+                        ]
+        , test "should report links from README to exposed modules" <|
+            \() ->
+                """module NotExposed exposing (a)
+a = 1
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "[link](./Exposed)" } packageProject)
+                        rule
+                    |> Review.Test.expectNoErrors
         ]
+
+
+packageProject : Project
+packageProject =
+    case Json.Decode.decodeString Elm.Project.decoder elmJson of
+        Ok project ->
+            Project.new
+                |> Project.addElmJson
+                    { path = "elm.json"
+                    , raw = elmJson
+                    , project = project
+                    }
+                |> Project.addModule { path = "src/Exposed", source = "module Exposed exposing (exposed)\nexposed = 1" }
+
+        Err err ->
+            Debug.todo ("Invalid elm.json supplied to test: " ++ Debug.toString err)
+
+
+elmJson : String
+elmJson =
+    """
+{
+    "type": "package",
+    "name": "author/package",
+    "summary": "Summary",
+    "license": "BSD-3-Clause",
+    "version": "1.0.0",
+    "exposed-modules": [
+        "Exposed",
+        "Exposed2",
+        "Exposed3"
+    ],
+    "elm-version": "0.19.0 <= v < 0.20.0",
+    "dependencies": {
+        "elm/core": "1.0.0 <= v < 2.0.0"
+    },
+    "test-dependencies": {
+    }
+}"""
