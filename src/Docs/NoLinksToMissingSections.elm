@@ -25,7 +25,7 @@ import Set exposing (Set)
 import SyntaxHelp
 
 
-{-| Reports... REPLACEME
+{-| Reports problems with links and sections in Elm projects.
 
     config =
         [ Docs.NoLinksToMissingSections.rule
@@ -34,20 +34,54 @@ import SyntaxHelp
 
 ## Fail
 
+Links to missing modules or sections are reported.
+
+    {-| Link to [missing module](Unknown-Module).
+    -}
     a =
-        "REPLACEME example to replace"
+        1
+
+    {-| Link to [missing section](#unknown).
+    -}
+    a =
+        1
+
+In packages, links that would appear in the public documentation and that link to sections not part of the public documentation are reported.
+
+    module Exposed exposing (a)
+
+    import Internal
+
+    {-| Link to [internal details](Internal#section).
+    -}
+    a =
+        1
 
 
 ## Success
 
+    module Exposed exposing (a, b)
+
+    import Internal
+
+    {-| Link to [exposed b](#b).
+    -}
     a =
-        "REPLACEME example to replace"
+        1
+
+    b =
+        2
 
 
 ## When (not) to enable this rule
 
-This rule is useful when REPLACEME.
-This rule is not useful when REPLACEME.
+For packages, this rule will be useful to prevent having dead links in the package documentation.
+
+For applications, this rule will be useful if you have the habit of writing documentation the way you do in Elm packages,
+and want to prevent it from going out of date.
+
+This rule will not be useful if your project is an application and no-one in the team has the habit of writing
+package-like documentation.
 
 
 ## Try it out
