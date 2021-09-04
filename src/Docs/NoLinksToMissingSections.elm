@@ -157,6 +157,25 @@ type MaybeExposedLink
         }
 
 
+fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
+fromProjectToModule =
+    Rule.initContextCreator
+        (\metadata projectContext ->
+            let
+                moduleName : ModuleName
+                moduleName =
+                    Rule.moduleNameFromMetadata metadata
+            in
+            { isModuleExposed = Set.member moduleName projectContext.exposedModules
+            , exposedElements = Set.empty
+            , moduleName = moduleName
+            , sections = []
+            , links = []
+            }
+        )
+        |> Rule.withMetadata
+
+
 fromModuleToProject : Rule.ContextCreator ModuleContext ProjectContext
 fromModuleToProject =
     Rule.initContextCreator
@@ -179,25 +198,6 @@ foldProjectContexts newContext previousContext =
     { fileLinksAndSections = List.append newContext.fileLinksAndSections previousContext.fileLinksAndSections
     , exposedModules = previousContext.exposedModules
     }
-
-
-fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
-fromProjectToModule =
-    Rule.initContextCreator
-        (\metadata projectContext ->
-            let
-                moduleName : ModuleName
-                moduleName =
-                    Rule.moduleNameFromMetadata metadata
-            in
-            { isModuleExposed = Set.member moduleName projectContext.exposedModules
-            , exposedElements = Set.empty
-            , moduleName = moduleName
-            , sections = []
-            , links = []
-            }
-        )
-        |> Rule.withMetadata
 
 
 moduleVisitor : Rule.ModuleRuleSchema schemaState ModuleContext -> Rule.ModuleRuleSchema { schemaState | hasAtLeastOneVisitor : () } ModuleContext
