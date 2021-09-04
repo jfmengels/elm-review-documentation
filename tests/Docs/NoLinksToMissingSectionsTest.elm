@@ -15,7 +15,7 @@ import Test exposing (Test, describe, test)
 -- TODO Report when duplicate sections are found? Check if case sensitivity is important for ids.
 -- TODO Report links to `#` or `Foo#` which are not useful?
 -- TODO Report unused `[foo]: #b` links?
--- TODO Report images that are relative. They should be linking to images hosted on GitHub for instance.
+-- TODO Report images that are relative (in packages and in exposed sections). They should be linking to images hosted on GitHub for instance.
 
 
 all : Test
