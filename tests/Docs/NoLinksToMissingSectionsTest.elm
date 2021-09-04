@@ -619,7 +619,7 @@ a = 1
                             , under = "./NotExposed"
                             }
                         ]
-        , test "should report links from README to exposed modules" <|
+        , test "should not report links from README to exposed modules" <|
             \() ->
                 """module NotExposed exposing (a)
 a = 1
