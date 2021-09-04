@@ -90,8 +90,8 @@ initialProjectContext =
 type alias FileLinksAndSections =
     { moduleName : ModuleName
     , fileKey : FileKey
-    , sections : Set String
-    , links : List (Node SyntaxHelp.Link)
+    , sections : List Section
+    , links : List MaybeExposedLink
     }
 
 
@@ -101,11 +101,26 @@ type FileKey
 
 
 type alias ModuleContext =
-    { exposingAll : Bool
+    { isModuleExposed : Bool
+    , exposedElements : Set String
     , moduleName : ModuleName
-    , sections : Set String
-    , links : List (Node SyntaxHelp.Link)
+    , sections : List Section
+    , links : List MaybeExposedLink
     }
+
+
+type alias Section =
+    { slug : String
+    , isExposed : Bool
+    }
+
+
+type MaybeExposedLink
+    = MaybeExposedLink
+        { link : SyntaxHelp.Link
+        , linkRange : Range
+        , isExposed : Bool
+        }
 
 
 fromModuleToProject : Rule.ContextCreator ModuleContext ProjectContext
@@ -135,10 +150,16 @@ foldProjectContexts newContext previousContext =
 fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
 fromProjectToModule =
     Rule.initContextCreator
-        (\metadata _ ->
-            { exposingAll = False
-            , moduleName = Rule.moduleNameFromMetadata metadata
-            , sections = Set.empty
+        (\metadata projectContext ->
+            let
+                moduleName : ModuleName
+                moduleName =
+                    Rule.moduleNameFromMetadata metadata
+            in
+            { isModuleExposed = Set.member moduleName projectContext.exposedModules
+            , exposedElements = Set.empty
+            , moduleName = moduleName
+            , sections = []
             , links = []
             }
         )
@@ -170,7 +191,7 @@ elmJsonVisitor maybeElmJson projectContext =
 listExposedModules : Elm.Project.Exposed -> Set ModuleName
 listExposedModules exposed =
     let
-        exposedModules : List (List String)
+        exposedModules : List ModuleName
         exposedModules =
             exposedModulesFromPackageAsList exposed
                 |> List.map (Elm.Module.toString >> String.split ".")
@@ -196,12 +217,28 @@ readmeVisitor : Maybe { readmeKey : Rule.ReadmeKey, content : String } -> Projec
 readmeVisitor maybeReadmeInfo projectContext =
     case maybeReadmeInfo of
         Just { readmeKey, content } ->
+            let
+                isReadmeExposed : Bool
+                isReadmeExposed =
+                    Set.member [] projectContext.exposedModules
+            in
             ( []
             , { fileLinksAndSections =
                     { moduleName = []
                     , fileKey = ReadmeKey readmeKey
-                    , sections = Set.fromList (extractSectionsFromHeadings content)
-                    , links = linksIn [] { row = 1, column = 1 } content
+                    , sections =
+                        extractSlugsFromHeadings content
+                            |> List.map (\slug -> { slug = slug, isExposed = isReadmeExposed })
+                    , links =
+                        linksIn [] { row = 1, column = 1 } content
+                            |> List.map
+                                (\link ->
+                                    MaybeExposedLink
+                                        { link = Node.value link
+                                        , linkRange = Node.range link
+                                        , isExposed = isReadmeExposed
+                                        }
+                                )
                     }
                         :: projectContext.fileLinksAndSections
               , exposedModules = projectContext.exposedModules
@@ -220,10 +257,12 @@ moduleDefinitionVisitor : Node Module -> ModuleContext -> ( List nothing, Module
 moduleDefinitionVisitor node context =
     case Module.exposingList (Node.value node) of
         Exposing.All _ ->
-            ( [], { context | exposingAll = True } )
+            -- We'll keep `exposedElements` empty, which will make `declarationListVisitor` fill it with the known
+            -- declarations.
+            ( [], context )
 
         Exposing.Explicit exposed ->
-            ( [], { context | sections = Set.fromList (List.map exposedName exposed) } )
+            ( [], { context | exposedElements = Set.fromList (List.map exposedName exposed) } )
 
 
 exposedName : Node Exposing.TopLevelExpose -> String
@@ -253,21 +292,30 @@ commentsVisitor comments context =
         docs =
             List.filter (Node.value >> String.startsWith "{-|") comments
 
-        titleSections : List String
+        titleSections : List Section
         titleSections =
-            List.concatMap (Node.value >> extractSectionsFromHeadings) docs
+            List.concatMap (Node.value >> extractSlugsFromHeadings) docs
+                |> List.map (\slug -> { slug = slug, isExposed = context.isModuleExposed })
 
-        links : List (Node SyntaxHelp.Link)
+        links : List MaybeExposedLink
         links =
-            List.concatMap
-                (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
-                docs
+            docs
+                |> List.concatMap (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
+                |> List.map
+                    (\link ->
+                        MaybeExposedLink
+                            { link = Node.value link
+                            , linkRange = Node.range link
+                            , isExposed = context.isModuleExposed
+                            }
+                    )
     in
     ( []
-    , { exposingAll = context.exposingAll
+    , { isModuleExposed = context.isModuleExposed
+      , exposedElements = context.exposedElements
       , moduleName = context.moduleName
-      , sections = Set.union context.sections (Set.fromList titleSections)
-      , links = links ++ context.links
+      , sections = List.append titleSections context.sections
+      , links = List.append links context.links
       }
     )
 
@@ -279,41 +327,45 @@ commentsVisitor comments context =
 declarationListVisitor : List (Node Declaration) -> ModuleContext -> ( List nothing, ModuleContext )
 declarationListVisitor declarations context =
     let
-        docs : List (Node Documentation)
-        docs =
-            List.filterMap
-                (Node.value >> docOfDeclaration)
-                declarations
-
-        declarationSections : List String
-        declarationSections =
-            if context.exposingAll then
-                List.filterMap (Node.value >> nameOfDeclaration) declarations
+        exposedElements : Set String
+        exposedElements =
+            if Set.isEmpty context.exposedElements then
+                Set.fromList (List.filterMap nameOfDeclaration declarations)
 
             else
-                []
+                context.exposedElements
 
-        titleSections : List String
-        titleSections =
-            List.concatMap (Node.value >> extractSectionsFromHeadings) docs
+        sectionsAndLinks : List { titleSections : List Section, links : List MaybeExposedLink }
+        sectionsAndLinks =
+            List.map
+                (findSectionsAndLinks
+                    context.moduleName
+                    (if context.isModuleExposed then
+                        exposedElements
 
-        links : List (Node SyntaxHelp.Link)
-        links =
-            List.concatMap
-                (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
-                docs
+                     else
+                        Set.empty
+                    )
+                )
+                declarations
     in
     ( []
-    , { exposingAll = context.exposingAll
+    , { isModuleExposed = context.isModuleExposed
+      , exposedElements = context.exposedElements
       , moduleName = context.moduleName
-      , sections = Set.union context.sections (Set.fromList (titleSections ++ declarationSections))
-      , links = links ++ context.links
+      , sections =
+            List.concat
+                [ List.concatMap .titleSections sectionsAndLinks
+                , List.map (\slug -> { slug = slug, isExposed = True }) (Set.toList exposedElements)
+                , context.sections
+                ]
+      , links = List.append (List.concatMap .links sectionsAndLinks) context.links
       }
     )
 
 
-extractSectionsFromHeadings : String -> List String
-extractSectionsFromHeadings string =
+extractSlugsFromHeadings : String -> List String
+extractSlugsFromHeadings string =
     Markdown.Parser.parse string
         |> Result.map extractTitles
         |> Result.withDefault []
@@ -398,9 +450,9 @@ increment value occurences =
         occurences
 
 
-nameOfDeclaration : Declaration -> Maybe String
-nameOfDeclaration decl =
-    case decl of
+nameOfDeclaration : Node Declaration -> Maybe String
+nameOfDeclaration node =
+    case Node.value node of
         Declaration.FunctionDeclaration { declaration } ->
             declaration
                 |> Node.value
@@ -446,6 +498,45 @@ docOfDeclaration declaration =
             Nothing
 
 
+findSectionsAndLinks : ModuleName -> Set String -> Node Declaration -> { titleSections : List Section, links : List MaybeExposedLink }
+findSectionsAndLinks currentModuleName exposedElements declaration =
+    case docOfDeclaration (Node.value declaration) of
+        Just doc ->
+            let
+                isExposed : Bool
+                isExposed =
+                    Set.member name exposedElements
+
+                titleSections : List Section
+                titleSections =
+                    extractSlugsFromHeadings (Node.value doc)
+                        |> List.map (\slug -> { slug = slug, isExposed = isExposed })
+
+                name : String
+                name =
+                    nameOfDeclaration declaration
+                        |> Maybe.withDefault ""
+
+                links : List MaybeExposedLink
+                links =
+                    linksIn currentModuleName (Node.range doc).start (Node.value doc)
+                        |> List.map
+                            (\link ->
+                                MaybeExposedLink
+                                    { link = Node.value link
+                                    , linkRange = Node.range link
+                                    , isExposed = isExposed
+                                    }
+                            )
+            in
+            { titleSections = titleSections
+            , links = links
+            }
+
+        Nothing ->
+            { titleSections = [], links = [] }
+
+
 linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
 linksIn currentModuleName offset documentation =
     documentation
@@ -479,7 +570,7 @@ addOffset offset (Node range a) =
 finalEvaluation : ProjectContext -> List (Rule.Error { useErrorForModule : () })
 finalEvaluation projectContext =
     let
-        sectionsPerModule : Dict ModuleName (Set String)
+        sectionsPerModule : Dict ModuleName (List Section)
         sectionsPerModule =
             projectContext.fileLinksAndSections
                 |> List.map (\module_ -> ( module_.moduleName, module_.sections ))
@@ -488,15 +579,15 @@ finalEvaluation projectContext =
     List.concatMap (errorsForFile projectContext.exposedModules sectionsPerModule) projectContext.fileLinksAndSections
 
 
-errorsForFile : Set ModuleName -> Dict ModuleName (Set String) -> FileLinksAndSections -> List (Rule.Error scope)
+errorsForFile : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> List (Rule.Error scope)
 errorsForFile exposedModules sectionsPerModule fileLinksAndSections =
     List.filterMap
         (isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections)
         fileLinksAndSections.links
 
 
-isLinkToMissingSection : Set ModuleName -> Dict ModuleName (Set String) -> FileLinksAndSections -> Node SyntaxHelp.Link -> Maybe (Rule.Error scope)
-isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (Node linkRange link) =
+isLinkToMissingSection : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
+isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
@@ -505,7 +596,7 @@ isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (No
                         Just (reportLinkToNonExposedModule fileLinksAndSections.fileKey linkRange)
 
                     else
-                        reportIfMissingSection fileLinksAndSections.fileKey existingSections linkRange link
+                        reportIfMissingSection fileLinksAndSections.fileKey existingSections isExposed linkRange link
 
                 Nothing ->
                     Just (reportUnknownModule fileLinksAndSections.fileKey moduleName linkRange)
@@ -513,21 +604,26 @@ isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (No
         SyntaxHelp.ReadmeTarget ->
             case Dict.get [] sectionsPerModule of
                 Just existingSections ->
-                    reportIfMissingSection fileLinksAndSections.fileKey existingSections linkRange link
+                    reportIfMissingSection fileLinksAndSections.fileKey existingSections isExposed linkRange link
 
                 Nothing ->
                     Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
 
 
-reportIfMissingSection : FileKey -> Set String -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
-reportIfMissingSection fileKey existingSectionsForTargetFile linkRange link =
-    case link.section of
-        Just section ->
-            if not (Set.member section existingSectionsForTargetFile) then
-                Just (reportLink fileKey linkRange)
+reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
+reportIfMissingSection fileKey existingSectionsForTargetFile isExposed linkRange link =
+    case link.slug of
+        Just slug ->
+            case find (\section -> section.slug == slug) existingSectionsForTargetFile of
+                Just section ->
+                    if isExposed && not section.isExposed then
+                        Just (reportLinkToNonExposedSection fileKey linkRange)
 
-            else
-                Nothing
+                    else
+                        Nothing
+
+                Nothing ->
+                    Just (reportLink fileKey linkRange)
 
         Nothing ->
             Nothing
@@ -546,6 +642,15 @@ reportLinkToNonExposedModule : FileKey -> Range -> Rule.Error scope
 reportLinkToNonExposedModule fileKey range =
     reportForFile fileKey
         { message = "Link in public documentation points to non-exposed module"
+        , details = [ "Users will not be able to follow the link." ]
+        }
+        range
+
+
+reportLinkToNonExposedSection : FileKey -> Range -> Rule.Error scope
+reportLinkToNonExposedSection fileKey range =
+    reportForFile fileKey
+        { message = "Link in public documentation points to non-exposed section"
         , details = [ "Users will not be able to follow the link." ]
         }
         range
@@ -577,3 +682,17 @@ reportForFile fileKey =
 
         ReadmeKey readmeKey ->
             Rule.errorForReadme readmeKey
+
+
+find : (a -> Bool) -> List a -> Maybe a
+find predicate list =
+    case list of
+        [] ->
+            Nothing
+
+        first :: rest ->
+            if predicate first then
+                Just first
+
+            else
+                find predicate rest

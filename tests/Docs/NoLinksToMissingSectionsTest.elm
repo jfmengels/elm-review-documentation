@@ -543,6 +543,67 @@ b = 1
                             ]
                           )
                         ]
+        , test "should not report links from non-exposed sections to non-exposed sections" <|
+            \() ->
+                [ """module Exposed2 exposing (b)
+b = a
+
+{-| [link](./Exposed3#hidden)
+-}
+a = 1
+""", """module Exposed3 exposing (exposed)
+exposed = 2
+
+{-|
+# Hidden
+-}
+a = 3
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProject rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report links from non-exposed sections to exposed sections" <|
+            \() ->
+                [ """module Exposed2 exposing (b)
+b = a
+
+{-| [link](./Exposed3#exposed)
+-}
+a = 1
+""", """module Exposed3 exposing (exposed)
+exposed = 2
+
+{-|
+# Hidden
+-}
+a = 3
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProject rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links from exposed sections to non-exposed sections" <|
+            \() ->
+                [ """module Exposed2 exposing (b)
+{-| [link](./Exposed3#hidden)
+-}
+b = 1
+""", """module Exposed3 exposing (exposed)
+exposed = 2
+
+{-|
+# Hidden
+-}
+a = 3
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProject rule
+                    |> Review.Test.expectErrorsForModules
+                        [ ( "Exposed2"
+                          , [ Review.Test.error
+                                { message = "Link in public documentation points to non-exposed section"
+                                , details = [ "Users will not be able to follow the link." ]
+                                , under = "./Exposed3#hidden"
+                                }
+                            ]
+                          )
+                        ]
         , test "should report links from README to non-exposed modules" <|
             \() ->
                 """module NotExposed exposing (a)

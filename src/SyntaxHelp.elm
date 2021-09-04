@@ -26,11 +26,9 @@ addOffset offset { start, end } =
     }
 
 
-{-| `moduleName = []` for links like `[`a`](#a)`.
--}
 type alias Link =
     { file : FileTarget
-    , section : Maybe String
+    , slug : Maybe String
     }
 
 
@@ -129,13 +127,13 @@ pathParser endChar =
     Parser.oneOf
         [ Parser.succeed
             (\section ->
-                { file = ModuleTarget [], section = Just section }
+                { file = ModuleTarget [], slug = Just section }
             )
             |. Parser.symbol "#"
             |= idParser endChar
         , Parser.succeed
-            (\file section ->
-                { file = file, section = section }
+            (\file slug ->
+                { file = file, slug = slug }
             )
             |. ignoreDotSlash
             |= parseModuleName
