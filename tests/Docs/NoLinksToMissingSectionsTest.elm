@@ -9,7 +9,6 @@ import Test exposing (Test, describe, test)
 
 
 
--- TODO With Forbid linking from exposed sections to non-exposed sections
 -- TODO Report links to dependencies?
 -- TODO Force links to dependencies to be for the minimal version?
 -- TODO Report when duplicate sections are found? Check if case sensitivity is important for ids.
