@@ -627,6 +627,38 @@ a = 1
                         (Project.addReadme { path = "README.md", content = "[link](./Exposed)" } packageProject)
                         rule
                     |> Review.Test.expectNoErrors
+        , test "should report links from README to non-exposed sections" <|
+            \() ->
+                """module Exposed2 exposing (a)
+a = 1
+{-|
+# Section
+-}
+b = 1
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "[link](./Exposed2#section)" } packageProject)
+                        rule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = "Link in public documentation points to non-exposed section"
+                            , details = [ "Users will not be able to follow the link." ]
+                            , under = "./Exposed2#section"
+                            }
+                        ]
+        , test "should not report links from README to non-exposed sections in non-package projects" <|
+            \() ->
+                """module Exposed2 exposing (a)
+a = 1
+{-|
+# Section
+-}
+b = 1
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "[link](./Exposed2#section)" } Project.new)
+                        rule
+                    |> Review.Test.expectNoErrors
         ]
 
 
