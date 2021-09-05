@@ -541,20 +541,20 @@ findSectionsAndLinksForDeclaration currentModuleName exposedElements declaration
                 name =
                     nameOfDeclaration declaration
                         |> Maybe.withDefault ""
+
+                isExposed : Bool
+                isExposed =
+                    Set.member name exposedElements
             in
-            findSectionsAndLinks currentModuleName exposedElements name doc
+            findSectionsAndLinks currentModuleName isExposed doc
 
         Nothing ->
             { titleSections = [], links = [] }
 
 
-findSectionsAndLinks : ModuleName -> Set String -> String -> Node String -> { titleSections : List Section, links : List MaybeExposedLink }
-findSectionsAndLinks currentModuleName exposedElements name doc =
+findSectionsAndLinks : ModuleName -> Bool -> Node String -> { titleSections : List Section, links : List MaybeExposedLink }
+findSectionsAndLinks currentModuleName isExposed doc =
     let
-        isExposed : Bool
-        isExposed =
-            Set.member name exposedElements
-
         titleSections : List Section
         titleSections =
             extractSlugsFromHeadings (Node.value doc)
