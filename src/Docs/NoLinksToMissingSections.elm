@@ -372,7 +372,7 @@ declarationListVisitor declarations context =
         sectionsAndLinks : List { titleSections : List Section, links : List MaybeExposedLink }
         sectionsAndLinks =
             List.map
-                (findSectionsAndLinks
+                (findSectionsAndLinksForDeclaration
                     context.moduleName
                     (if context.isModuleExposed then
                         exposedElements
@@ -532,43 +532,49 @@ docOfDeclaration declaration =
             Nothing
 
 
-findSectionsAndLinks : ModuleName -> Set String -> Node Declaration -> { titleSections : List Section, links : List MaybeExposedLink }
-findSectionsAndLinks currentModuleName exposedElements declaration =
+findSectionsAndLinksForDeclaration : ModuleName -> Set String -> Node Declaration -> { titleSections : List Section, links : List MaybeExposedLink }
+findSectionsAndLinksForDeclaration currentModuleName exposedElements declaration =
     case docOfDeclaration (Node.value declaration) of
         Just doc ->
             let
-                isExposed : Bool
-                isExposed =
-                    Set.member name exposedElements
-
-                titleSections : List Section
-                titleSections =
-                    extractSlugsFromHeadings (Node.value doc)
-                        |> List.map (\slug -> { slug = slug, isExposed = isExposed })
-
                 name : String
                 name =
                     nameOfDeclaration declaration
                         |> Maybe.withDefault ""
-
-                links : List MaybeExposedLink
-                links =
-                    linksIn currentModuleName (Node.range doc).start (Node.value doc)
-                        |> List.map
-                            (\link ->
-                                MaybeExposedLink
-                                    { link = Node.value link
-                                    , linkRange = Node.range link
-                                    , isExposed = isExposed
-                                    }
-                            )
             in
-            { titleSections = titleSections
-            , links = links
-            }
+            findSectionsAndLinks currentModuleName exposedElements name doc
 
         Nothing ->
             { titleSections = [], links = [] }
+
+
+findSectionsAndLinks : ModuleName -> Set String -> String -> Node String -> { titleSections : List Section, links : List MaybeExposedLink }
+findSectionsAndLinks currentModuleName exposedElements name doc =
+    let
+        isExposed : Bool
+        isExposed =
+            Set.member name exposedElements
+
+        titleSections : List Section
+        titleSections =
+            extractSlugsFromHeadings (Node.value doc)
+                |> List.map (\slug -> { slug = slug, isExposed = isExposed })
+
+        links : List MaybeExposedLink
+        links =
+            linksIn currentModuleName (Node.range doc).start (Node.value doc)
+                |> List.map
+                    (\link ->
+                        MaybeExposedLink
+                            { link = Node.value link
+                            , linkRange = Node.range link
+                            , isExposed = isExposed
+                            }
+                    )
+    in
+    { titleSections = titleSections
+    , links = links
+    }
 
 
 linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
