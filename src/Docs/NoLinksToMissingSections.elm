@@ -255,24 +255,27 @@ readmeVisitor maybeReadmeInfo projectContext =
                 isReadmeExposed : Bool
                 isReadmeExposed =
                     Set.member [] projectContext.exposedModules
+
+                sectionsAndLinks : { titleSections : List Section, links : List MaybeExposedLink }
+                sectionsAndLinks =
+                    findSectionsAndLinks
+                        []
+                        isReadmeExposed
+                        (Node
+                            { start = { row = 1, column = 1 }
+
+                            {- We'll only care about start location, we don't care about the end location. -}
+                            , end = { row = 1, column = 1 }
+                            }
+                            content
+                        )
             in
             ( []
             , { fileLinksAndSections =
                     { moduleName = []
                     , fileKey = ReadmeKey readmeKey
-                    , sections =
-                        extractSlugsFromHeadings content
-                            |> List.map (\slug -> { slug = slug, isExposed = isReadmeExposed })
-                    , links =
-                        linksIn [] { row = 1, column = 1 } content
-                            |> List.map
-                                (\link ->
-                                    MaybeExposedLink
-                                        { link = Node.value link
-                                        , linkRange = Node.range link
-                                        , isExposed = isReadmeExposed
-                                        }
-                                )
+                    , sections = sectionsAndLinks.titleSections
+                    , links = sectionsAndLinks.links
                     }
                         :: projectContext.fileLinksAndSections
               , exposedModules = projectContext.exposedModules
