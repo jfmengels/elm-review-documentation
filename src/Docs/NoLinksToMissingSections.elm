@@ -326,30 +326,21 @@ commentsVisitor comments context =
         docs =
             List.filter (Node.value >> String.startsWith "{-|") comments
 
-        titleSections : List Section
-        titleSections =
-            List.concatMap (Node.value >> extractSlugsFromHeadings) docs
-                |> List.map (\slug -> { slug = slug, isExposed = context.isModuleExposed })
-
-        links : List MaybeExposedLink
-        links =
-            docs
-                |> List.concatMap (\doc -> linksIn context.moduleName (Node.range doc).start (Node.value doc))
-                |> List.map
-                    (\link ->
-                        MaybeExposedLink
-                            { link = Node.value link
-                            , linkRange = Node.range link
-                            , isExposed = context.isModuleExposed
-                            }
-                    )
+        sectionsAndLinks : List { titleSections : List Section, links : List MaybeExposedLink }
+        sectionsAndLinks =
+            List.map
+                (findSectionsAndLinks
+                    context.moduleName
+                    context.isModuleExposed
+                )
+                docs
     in
     ( []
     , { isModuleExposed = context.isModuleExposed
       , exposedElements = context.exposedElements
       , moduleName = context.moduleName
-      , sections = List.append titleSections context.sections
-      , links = List.append links context.links
+      , sections = List.append (List.concatMap .titleSections sectionsAndLinks) context.sections
+      , links = List.append (List.concatMap .links sectionsAndLinks) context.links
       }
     )
 
