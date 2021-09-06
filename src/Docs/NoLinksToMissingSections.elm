@@ -7,6 +7,7 @@ module Docs.NoLinksToMissingSections exposing (rule)
 -}
 
 import Dict exposing (Dict)
+import Docs.Utils.ParserExtra as ParserExtra
 import Docs.Utils.Slug as Slug
 import Elm.Module
 import Elm.Project
@@ -17,7 +18,6 @@ import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
-import ParserExtra
 import Regex exposing (Regex)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)

@@ -5,11 +5,11 @@ module SyntaxHelp exposing
     , linkParser
     )
 
+import Docs.Utils.ParserExtra as ParserExtra
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
-import ParserExtra
 
 
 addOffset : Location -> Int -> Range -> Range

@@ -1,4 +1,4 @@
-module ParserExtra exposing (find, manySeparated)
+module Docs.Utils.ParserExtra exposing (find, manySeparated)
 
 import Parser exposing ((|.), (|=), Parser)
 
