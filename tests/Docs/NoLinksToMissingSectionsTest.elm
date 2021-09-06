@@ -285,20 +285,26 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
-        , Test.skip <|
-            test "should slugify complex headings" <|
-                \() ->
-                    """module A exposing (..)
+        , test "should slugify complex headings" <|
+            \() ->
+                """module A exposing (..)
 {-|
-# Section with spaces and_ $things   [`links`](foo)
+# Section *with* ~some~ _spaces_ and\\_ $thi.ngs . [`links`](foo)
+
+### `section`
+### question?
+
 -}
 b = 1
-{-| [link](#section-with-spaces-and_-$things-links)
+{-|
+[1](#section-_with_-some-_spaces_-and-_-thi-ngs-links-foo-)
+[2](#-section-)
+[3](#question-)
 -}
 a = 2
 """
-                        |> Review.Test.run rule
-                        |> Review.Test.expectNoErrors
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         , test "should report links to unknown modules" <|
             \() ->
                 """module A exposing (..)
