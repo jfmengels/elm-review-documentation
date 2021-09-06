@@ -13,6 +13,7 @@ when inside the directory containing this file.
 
 import CognitiveComplexity
 import Docs.ReadmeLinksPointToCurrentVersion
+import Docs.ReviewLinksAndSections
 import NoDebug.Log
 import NoDebug.TodoOrToString
 import NoExposingEverything
@@ -38,6 +39,8 @@ import Simplify
 config : List Rule
 config =
     [ Docs.ReadmeLinksPointToCurrentVersion.rule
+    , Docs.ReviewLinksAndSections.rule
+        |> Rule.ignoreErrorsForFiles [ "src/Docs/ReviewLinksAndSections.elm" ]
     , NoDebug.Log.rule
     , NoDebug.TodoOrToString.rule
         |> Rule.ignoreErrorsForDirectories [ "tests/" ]
