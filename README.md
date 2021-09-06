@@ -5,7 +5,7 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 
 ## Provided rules
 
-- [`Docs.NoLinksToMissingSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoLinksToMissingSections) - Reports problems with links and sections in Elm projects.
+- [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections) - Reports problems with links and sections in Elm projects.
 - [🔧 `Docs.ReadmeLinksPointToCurrentVersion`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReadmeLinksPointToCurrentVersion "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
 
 ## Configuration
@@ -13,14 +13,14 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ```elm
 module ReviewConfig exposing (config)
 
-import Docs.NoLinksToMissingSections
+import Docs.ReviewLinksAndSections
 import Docs.ReadmeLinksPointToCurrentVersion
 import Review.Rule exposing (Rule)
 
 config : List Rule
 config =
     [ Docs.ReadmeLinksPointToCurrentVersion.rule
-    , Docs.NoLinksToMissingSections.rule
+    , Docs.ReviewLinksAndSections.rule
     ]
 ```
 
@@ -45,4 +45,4 @@ elm-review --template jfmengels/elm-review-documentation/example
 
 ## Thanks
 
-Thanks to @lue-bird for helping out with [`Docs.NoLinksToMissingSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoLinksToMissingSections).
+Thanks to @lue-bird for helping out with [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections).

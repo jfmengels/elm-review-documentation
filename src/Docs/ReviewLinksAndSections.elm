@@ -1,4 +1,4 @@
-module Docs.NoLinksToMissingSections exposing (rule)
+module Docs.ReviewLinksAndSections exposing (rule)
 
 {-|
 
@@ -27,7 +27,7 @@ import Set exposing (Set)
 {-| Reports problems with links and sections in Elm projects.
 
     config =
-        [ Docs.NoLinksToMissingSections.rule
+        [ Docs.ReviewLinksAndSections.rule
         ]
 
 
@@ -88,7 +88,7 @@ package-like documentation.
 You can try this rule out by running the following command:
 
 ```bash
-elm-review --template jfmengels/elm-review-documentation/example --rules Docs.NoLinksToMissingSections
+elm-review --template jfmengels/elm-review-documentation/example --rules Docs.ReviewLinksAndSections
 ```
 
 
@@ -99,7 +99,7 @@ Thanks to @lue-bird for helping out with this rule.
 -}
 rule : Rule
 rule =
-    Rule.newProjectRuleSchema "Docs.NoLinksToMissingSections" initialProjectContext
+    Rule.newProjectRuleSchema "Docs.ReviewLinksAndSections" initialProjectContext
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.withModuleVisitor moduleVisitor

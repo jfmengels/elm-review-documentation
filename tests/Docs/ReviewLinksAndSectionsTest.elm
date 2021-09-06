@@ -1,6 +1,6 @@
-module Docs.NoLinksToMissingSectionsTest exposing (all)
+module Docs.ReviewLinksAndSectionsTest exposing (all)
 
-import Docs.NoLinksToMissingSections exposing (rule)
+import Docs.ReviewLinksAndSections exposing (rule)
 import Elm.Project
 import Json.Decode
 import Review.Project as Project exposing (Project)
@@ -20,7 +20,7 @@ import Test exposing (Test, describe, test)
 
 all : Test
 all =
-    describe "Docs.NoLinksToMissingSections"
+    describe "Docs.ReviewLinksAndSections"
         [ test "should not report link to an existing sibling section from declaration documentation" <|
             \() ->
                 """module A exposing (a, b)
