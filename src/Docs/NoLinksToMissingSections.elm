@@ -91,6 +91,11 @@ You can try this rule out by running the following command:
 elm-review --template jfmengels/elm-review-documentation/example --rules Docs.NoLinksToMissingSections
 ```
 
+
+## Thanks
+
+Thanks to @lue-bird for helping out with this rule.
+
 -}
 rule : Rule
 rule =

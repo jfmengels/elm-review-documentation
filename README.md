@@ -42,3 +42,7 @@ You can try the example configuration above out by running the following command
 ```bash
 elm-review --template jfmengels/elm-review-documentation/example
 ```
+
+## Thanks
+
+Thanks to @lue-bird for helping out with [`Docs.NoLinksToMissingSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoLinksToMissingSections).
