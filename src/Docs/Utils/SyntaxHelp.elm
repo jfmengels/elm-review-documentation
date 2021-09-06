@@ -1,4 +1,4 @@
-module SyntaxHelp exposing
+module Docs.Utils.SyntaxHelp exposing
     ( FileTarget(..)
     , Link
     , addOffset

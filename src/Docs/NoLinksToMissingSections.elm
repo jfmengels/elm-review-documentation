@@ -9,6 +9,7 @@ module Docs.NoLinksToMissingSections exposing (rule)
 import Dict exposing (Dict)
 import Docs.Utils.ParserExtra as ParserExtra
 import Docs.Utils.Slug as Slug
+import Docs.Utils.SyntaxHelp as SyntaxHelp
 import Elm.Module
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
@@ -21,7 +22,6 @@ import Elm.Syntax.Range exposing (Location, Range)
 import Regex exposing (Regex)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
-import SyntaxHelp
 
 
 {-| Reports problems with links and sections in Elm projects.
