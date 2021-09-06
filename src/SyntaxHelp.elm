@@ -12,17 +12,17 @@ import Parser exposing ((|.), (|=), Parser)
 import ParserExtra
 
 
-addLocation : Location -> Location -> Location
-addLocation aRange bRange =
-    { row = aRange.row + bRange.row
-    , column = aRange.column + bRange.column
+addOffset : Location -> Int -> Range -> Range
+addOffset offset lineNumber { start, end } =
+    { start = addLocation lineNumber offset start
+    , end = addLocation lineNumber offset end
     }
 
 
-addOffset : Location -> Range -> Range
-addOffset offset { start, end } =
-    { start = addLocation offset start
-    , end = addLocation offset end
+addLocation : Int -> Location -> Location -> Location
+addLocation lineNumber aRange bRange =
+    { row = lineNumber + aRange.row + bRange.row
+    , column = aRange.column + bRange.column
     }
 
 

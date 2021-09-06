@@ -574,9 +574,15 @@ findSectionsAndLinks currentModuleName isExposed doc =
 linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
 linksIn currentModuleName offset documentation =
     documentation
-        |> ParserExtra.find SyntaxHelp.linkParser
-        |> List.filterMap identity
-        |> List.map (normalizeModuleName currentModuleName >> addOffset offset)
+        |> String.lines
+        |> List.indexedMap Tuple.pair
+        |> List.map
+            (\( lineNumber, lineContent ) ->
+                ( lineNumber
+                , List.filterMap identity (ParserExtra.find SyntaxHelp.linkParser lineContent)
+                )
+            )
+        |> List.concatMap (\( lineNumber, links ) -> List.map (normalizeModuleName currentModuleName >> addOffset offset lineNumber) links)
 
 
 normalizeModuleName : ModuleName -> Node SyntaxHelp.Link -> Node SyntaxHelp.Link
@@ -592,9 +598,9 @@ normalizeModuleName currentModuleName ((Node range link) as node) =
             node
 
 
-addOffset : Location -> Node a -> Node a
-addOffset offset (Node range a) =
-    Node (SyntaxHelp.addOffset offset range) a
+addOffset : Location -> Int -> Node a -> Node a
+addOffset offset lineNumber (Node range a) =
+    Node (SyntaxHelp.addOffset offset lineNumber range) a
 
 
 
