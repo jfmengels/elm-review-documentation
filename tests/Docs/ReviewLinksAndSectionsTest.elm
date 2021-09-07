@@ -11,7 +11,6 @@ import Test exposing (Test, describe, test)
 
 -- TODO Report links to dependencies?
 -- TODO Force links to dependencies to be for the minimal version?
--- TODO Report when duplicate sections are found? Check if case sensitivity is important for ids.
 -- TODO Report links to `#` or `Foo#` which are not useful?
 -- TODO Report unused `[foo]: #b` links?
 -- TODO Report images that are relative (in packages and in exposed sections). They should be linking to images hosted on GitHub for instance.
@@ -666,6 +665,79 @@ b = 1
                         (Project.addReadme { path = "README.md", content = "[link](./Exposed2#section)" } Project.new)
                         rule
                     |> Review.Test.expectNoErrors
+        , test "should report duplicate sections (declaration doc comment)" <|
+            \() ->
+                """module Exposed2 exposing (error, exposed)
+{-|
+# Error
+-}
+exposed = 1
+
+error = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Duplicate section"
+                            , details = [ "There are multiple sections that will result in the same id, meaning that links may point towards the wrong element." ]
+                            , under = "# Error"
+                            }
+                        ]
+        , test "should report duplicate sections (module doc comment)" <|
+            \() ->
+                """module Exposed2 exposing (error)
+{-|
+# Error
+-}
+
+error = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Duplicate section"
+                            , details = [ "There are multiple sections that will result in the same id, meaning that links may point towards the wrong element." ]
+                            , under = "# Error"
+                            }
+                        ]
+        , test "should report duplicate sections (all in declaration doc comments)" <|
+            \() ->
+                """module Exposed2 exposing (error)
+{-|
+# Some section
+
+# Some Section
+-}
+
+error = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Duplicate section"
+                            , details = [ "There are multiple sections that will result in the same id, meaning that links may point towards the wrong element." ]
+                            , under = "# Some Section"
+                            }
+                        ]
+        , test "should report duplicate sections in README" <|
+            \() ->
+                """module Exposed2 exposing (a)
+a = 1
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = """
+# Some section
+
+# Some Section
+""" } packageProject)
+                        rule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = "Duplicate section"
+                            , details = [ "There are multiple sections that will result in the same id, meaning that links may point towards the wrong element." ]
+                            , under = "# Some Section"
+                            }
+                        ]
         ]
 
 

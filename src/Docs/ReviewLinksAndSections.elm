@@ -18,7 +18,7 @@ import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range exposing (Location, Range)
+import Elm.Syntax.Range as Range exposing (Location, Range)
 import Regex exposing (Regex)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
@@ -54,6 +54,27 @@ In packages, links that would appear in the public documentation and that link t
     {-| Link to [internal details](Internal#section).
     -}
     a =
+        1
+
+Sections that would have the same generated id are reported,
+so that links don't inadvertently point to the wrong location.
+
+    module A exposing (element, section)
+
+    {-|
+
+
+    # Section
+
+    The above conflicts with the id generated
+    for the `section` value.
+
+    -}
+
+    element =
+        1
+
+    section =
         1
 
 
@@ -142,6 +163,7 @@ type alias ModuleContext =
     { isModuleExposed : Bool
     , exposedElements : Set String
     , moduleName : ModuleName
+    , commentSections : List SectionWithRange
     , sections : List Section
     , links : List MaybeExposedLink
     }
@@ -173,6 +195,7 @@ fromProjectToModule =
             { isModuleExposed = Set.member moduleName projectContext.exposedModules
             , exposedElements = Set.empty
             , moduleName = moduleName
+            , commentSections = []
             , sections = []
             , links = []
             }
@@ -251,7 +274,7 @@ exposedModulesFromPackageAsList exposed =
 -- README VISITOR
 
 
-readmeVisitor : Maybe { readmeKey : Rule.ReadmeKey, content : String } -> ProjectContext -> ( List nothing, ProjectContext )
+readmeVisitor : Maybe { readmeKey : Rule.ReadmeKey, content : String } -> ProjectContext -> ( List (Rule.Error { useErrorForModule : () }), ProjectContext )
 readmeVisitor maybeReadmeInfo projectContext =
     case maybeReadmeInfo of
         Just { readmeKey, content } ->
@@ -260,25 +283,21 @@ readmeVisitor maybeReadmeInfo projectContext =
                 isReadmeExposed =
                     Set.member [] projectContext.exposedModules
 
-                sectionsAndLinks : { titleSections : List Section, links : List MaybeExposedLink }
+                sectionsAndLinks : { titleSections : List SectionWithRange, links : List MaybeExposedLink }
                 sectionsAndLinks =
                     findSectionsAndLinks
                         []
                         isReadmeExposed
-                        (Node
-                            { start = { row = 1, column = 1 }
-
-                            {- We'll only care about start location, we don't care about the end location. -}
-                            , end = { row = 1, column = 1 }
-                            }
-                            content
-                        )
+                        { content = content
+                        , startLocation = { row = 1, column = 1 }
+                        }
             in
-            ( []
+            ( duplicateSectionErrors Set.empty sectionsAndLinks.titleSections
+                |> List.map (Rule.errorForReadme readmeKey duplicateSectionErrorDetails)
             , { fileLinksAndSections =
                     { moduleName = []
                     , fileKey = ReadmeKey readmeKey
-                    , sections = sectionsAndLinks.titleSections
+                    , sections = List.map removeRangeFromSection sectionsAndLinks.titleSections
                     , links = sectionsAndLinks.links
                     }
                         :: projectContext.fileLinksAndSections
@@ -333,12 +352,14 @@ commentsVisitor comments context =
         docs =
             List.filter (Node.value >> String.startsWith "{-|") comments
 
-        sectionsAndLinks : List { titleSections : List Section, links : List MaybeExposedLink }
+        sectionsAndLinks : List { titleSections : List SectionWithRange, links : List MaybeExposedLink }
         sectionsAndLinks =
             List.map
-                (findSectionsAndLinks
-                    context.moduleName
-                    context.isModuleExposed
+                (\doc ->
+                    findSectionsAndLinks
+                        context.moduleName
+                        context.isModuleExposed
+                        { content = Node.value doc, startLocation = (Node.range doc).start }
                 )
                 docs
     in
@@ -346,7 +367,11 @@ commentsVisitor comments context =
     , { isModuleExposed = context.isModuleExposed
       , exposedElements = context.exposedElements
       , moduleName = context.moduleName
-      , sections = List.append (List.concatMap .titleSections sectionsAndLinks) context.sections
+      , commentSections = List.concatMap .titleSections sectionsAndLinks
+      , sections =
+            List.append
+                (List.concatMap (.titleSections >> List.map removeRangeFromSection) sectionsAndLinks)
+                context.sections
       , links = List.append (List.concatMap .links sectionsAndLinks) context.links
       }
     )
@@ -356,7 +381,7 @@ commentsVisitor comments context =
 -- DECLARATION VISITOR
 
 
-declarationListVisitor : List (Node Declaration) -> ModuleContext -> ( List nothing, ModuleContext )
+declarationListVisitor : List (Node Declaration) -> ModuleContext -> ( List (Rule.Error {}), ModuleContext )
 declarationListVisitor declarations context =
     let
         exposedElements : Set String
@@ -367,7 +392,19 @@ declarationListVisitor declarations context =
             else
                 context.exposedElements
 
-        sectionsAndLinks : List { titleSections : List Section, links : List MaybeExposedLink }
+        knownSections : List { slug : String, isExposed : Bool }
+        knownSections =
+            List.append
+                (List.map (\slug -> { slug = slug, isExposed = True }) (Set.toList exposedElements))
+                context.sections
+
+        knownSectionSlugs : Set String
+        knownSectionSlugs =
+            knownSections
+                |> List.map .slug
+                |> Set.fromList
+
+        sectionsAndLinks : List { titleSections : List SectionWithRange, links : List MaybeExposedLink }
         sectionsAndLinks =
             List.map
                 (findSectionsAndLinksForDeclaration
@@ -380,30 +417,71 @@ declarationListVisitor declarations context =
                     )
                 )
                 declarations
+
+        titleSections : List SectionWithRange
+        titleSections =
+            List.concatMap .titleSections sectionsAndLinks
     in
-    ( []
+    ( duplicateSectionErrors exposedElements (List.append titleSections context.commentSections)
+        |> List.map (Rule.error duplicateSectionErrorDetails)
     , { isModuleExposed = context.isModuleExposed
-      , exposedElements = context.exposedElements
+      , exposedElements = exposedElements
       , moduleName = context.moduleName
-      , sections =
-            List.concat
-                [ List.concatMap .titleSections sectionsAndLinks
-                , List.map (\slug -> { slug = slug, isExposed = True }) (Set.toList exposedElements)
-                , context.sections
-                ]
+      , commentSections = context.commentSections
+      , sections = List.append (List.map removeRangeFromSection titleSections) knownSections
       , links = List.append (List.concatMap .links sectionsAndLinks) context.links
       }
     )
 
 
-extractSlugsFromHeadings : String -> List String
-extractSlugsFromHeadings string =
-    string
+duplicateSectionErrors : Set String -> List SectionWithRange -> List Range
+duplicateSectionErrors exposedElements sections =
+    List.foldl
+        (\{ slug, range } { errors, knownSections } ->
+            if Set.member slug knownSections then
+                { errors = range :: errors
+                , knownSections = knownSections
+                }
+
+            else
+                { errors = errors
+                , knownSections = Set.insert slug knownSections
+                }
+        )
+        { errors = [], knownSections = exposedElements }
+        sections
+        |> .errors
+
+
+extractSlugsFromHeadings : { content : String, startLocation : Location } -> List (Node String)
+extractSlugsFromHeadings doc =
+    let
+        lineNumberOffset : Int
+        lineNumberOffset =
+            doc.startLocation.row
+    in
+    doc.content
         |> String.lines
-        |> List.concatMap (Regex.find specialsToHash)
-        |> List.concatMap .submatches
-        |> List.filterMap identity
-        |> List.map Slug.toSlug
+        |> List.indexedMap
+            (\lineNumber line ->
+                Regex.find specialsToHash line
+                    |> List.concatMap .submatches
+                    |> List.filterMap identity
+                    |> List.map
+                        (\slug ->
+                            Node
+                                { start = { row = lineNumber + lineNumberOffset, column = 1 }
+                                , end = { row = lineNumber + lineNumberOffset, column = String.length line + 1 }
+                                }
+                                (Slug.toSlug slug)
+                        )
+            )
+        |> List.concat
+
+
+findPositionOfMatch : Regex.Match -> Range
+findPositionOfMatch match =
+    Range.emptyRange
 
 
 specialsToHash : Regex
@@ -461,7 +539,7 @@ docOfDeclaration declaration =
             Nothing
 
 
-findSectionsAndLinksForDeclaration : ModuleName -> Set String -> Node Declaration -> { titleSections : List Section, links : List MaybeExposedLink }
+findSectionsAndLinksForDeclaration : ModuleName -> Set String -> Node Declaration -> { titleSections : List SectionWithRange, links : List MaybeExposedLink }
 findSectionsAndLinksForDeclaration currentModuleName exposedElements declaration =
     case docOfDeclaration (Node.value declaration) of
         Just doc ->
@@ -475,23 +553,46 @@ findSectionsAndLinksForDeclaration currentModuleName exposedElements declaration
                 isExposed =
                     Set.member name exposedElements
             in
-            findSectionsAndLinks currentModuleName isExposed doc
+            findSectionsAndLinks
+                currentModuleName
+                isExposed
+                { content = Node.value doc, startLocation = (Node.range doc).start }
 
         Nothing ->
             { titleSections = [], links = [] }
 
 
-findSectionsAndLinks : ModuleName -> Bool -> Node String -> { titleSections : List Section, links : List MaybeExposedLink }
+type alias SectionWithRange =
+    { slug : String
+    , range : Range
+    , isExposed : Bool
+    }
+
+
+removeRangeFromSection : SectionWithRange -> Section
+removeRangeFromSection { slug, isExposed } =
+    { slug = slug
+    , isExposed = isExposed
+    }
+
+
+findSectionsAndLinks : ModuleName -> Bool -> { content : String, startLocation : Location } -> { titleSections : List SectionWithRange, links : List MaybeExposedLink }
 findSectionsAndLinks currentModuleName isExposed doc =
     let
-        titleSections : List Section
+        titleSections : List SectionWithRange
         titleSections =
-            extractSlugsFromHeadings (Node.value doc)
-                |> List.map (\slug -> { slug = slug, isExposed = isExposed })
+            extractSlugsFromHeadings doc
+                |> List.map
+                    (\slug ->
+                        { slug = Node.value slug
+                        , range = Node.range slug
+                        , isExposed = isExposed
+                        }
+                    )
 
         links : List MaybeExposedLink
         links =
-            linksIn currentModuleName (Node.range doc).start (Node.value doc)
+            linksIn currentModuleName doc.startLocation doc.content
                 |> List.map
                     (\link ->
                         MaybeExposedLink
@@ -647,6 +748,13 @@ reportLinkToMissingReadme fileKey range =
         , details = [ "elm-review only looks for a 'README.md' located next to your 'elm.json'. Maybe it's positioned elsewhere or named differently?" ]
         }
         range
+
+
+duplicateSectionErrorDetails : { message : String, details : List String }
+duplicateSectionErrorDetails =
+    { message = "Duplicate section"
+    , details = [ "There are multiple sections that will result in the same id, meaning that links may point towards the wrong element." ]
+    }
 
 
 reportForFile : FileKey -> { message : String, details : List String } -> Range -> Rule.Error scope
