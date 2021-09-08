@@ -18,7 +18,7 @@ import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range as Range exposing (Location, Range)
+import Elm.Syntax.Range exposing (Location, Range)
 import Regex exposing (Regex)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
@@ -403,12 +403,6 @@ declarationListVisitor declarations context =
                 (List.map (\slug -> { slug = slug, isExposed = True }) (Set.toList exposedElements))
                 context.sections
 
-        knownSectionSlugs : Set String
-        knownSectionSlugs =
-            knownSections
-                |> List.map .slug
-                |> Set.fromList
-
         sectionsAndLinks : List { titleSections : List SectionWithRange, links : List MaybeExposedLink }
         sectionsAndLinks =
             List.map
@@ -482,11 +476,6 @@ extractSlugsFromHeadings doc =
                         )
             )
         |> List.concat
-
-
-findPositionOfMatch : Regex.Match -> Range
-findPositionOfMatch match =
-    Range.emptyRange
 
 
 specialsToHash : Regex
