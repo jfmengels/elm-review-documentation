@@ -13,9 +13,7 @@ import Test exposing (Test, describe, test)
 -- TODO Force links to dependencies to be for the minimal version?
 -- TODO Report links to `#` or `Foo#` which are not useful?
 -- TODO Report unused `[foo]: #b` links?
--- TODO Report images that are relative (in packages and in exposed sections). They should be linking to images hosted on GitHub for instance.
 -- TODO Enforce that the readme uses links that link to GitHub. Only for packages.
--- TODO Report links like "www.google.com"
 
 
 all : Test
@@ -290,7 +288,7 @@ a = 2
             \() ->
                 """module A exposing (..)
 {-|
-# Section *with* ~some~ _spaces_ and\\_ $thi.ngs . [`links`](foo)
+# Section *with* ~some~ _spaces_ and\\_ $thi.ngs . links
 
 ### `section`
 ### question?
@@ -298,7 +296,7 @@ a = 2
 -}
 b = 1
 {-|
-[1](#section-_with_-some-_spaces_-and-_-thi-ngs-links-foo-)
+[1](#section-_with_-some-_spaces_-and-_-thi-ngs-links)
 [2](#-section-)
 [3](#question-)
 -}
@@ -763,17 +761,66 @@ a = 1
 externalResourcesTests : Test
 externalResourcesTests =
     describe "External resources"
-        [ test "should not report links to unknown external resources" <|
+        [ test "should not report links to external resources with a protocol" <|
             \() ->
                 """module A exposing (..)
 {-|
 [link](https://foo.com)
-[link](./image.png)
 -}
 a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should report links to an external resource without a protocol" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](foo.com)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link to unknown resource without a protocol"
+                            , details =
+                                [ "I have trouble figuring out what kind of resource is linked here."
+                                , "If it should link to a module, then they should be in the form 'Some-Module-Name'."
+                                , "If it's a link to an external resource, they should start with a protocol, like `https://www.fruits.com`, otherwise the link will point to an unknown resource on package.elm-lang.org."
+                                ]
+                            , under = "foo.com"
+                            }
+                        ]
+        , test "should not report links to images with a protocol" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](https://www.image.com/image.png)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links to images without a protocol" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](./image.png)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link to unknown resource without a protocol"
+                            , details =
+                                [ "I have trouble figuring out what kind of resource is linked here."
+                                , "If it should link to a module, then they should be in the form 'Some-Module-Name'."
+                                , "If it's a link to an external resource, they should start with a protocol, like `https://www.fruits.com`, otherwise the link will point to an unknown resource on package.elm-lang.org."
+                                ]
+                            , under = "./image.png"
+                            }
+                        ]
         ]
 
 

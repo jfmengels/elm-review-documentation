@@ -35,6 +35,7 @@ type alias Link =
 type FileTarget
     = ModuleTarget ModuleName
     | ReadmeTarget
+    | External String
 
 
 idParser : Char -> Parser String
@@ -44,8 +45,23 @@ idParser endChar =
         |> Parser.getChompedString
 
 
-moduleNameParser : Parser String
+onlyModuleNameParser : Parser ModuleName
+onlyModuleNameParser =
+    Parser.succeed identity
+        |= moduleNameParser
+        |. Parser.end
+
+
+moduleNameParser : Parser ModuleName
 moduleNameParser =
+    ParserExtra.manySeparated
+        { by = "-"
+        , item = moduleNameSegmentParser
+        }
+
+
+moduleNameSegmentParser : Parser String
+moduleNameSegmentParser =
     Parser.succeed ()
         |. Parser.chompIf (\c -> Char.isUpper c)
         |. Parser.chompWhile (\c -> Char.isAlphaNum c)
@@ -131,10 +147,7 @@ pathParser endChar =
             )
             |. Parser.symbol "#"
             |= idParser endChar
-        , Parser.succeed
-            (\file slug ->
-                { file = file, slug = slug }
-            )
+        , Parser.succeed Link
             |. ignoreDotSlash
             |= parseModuleName
             |= optionalSectionParser endChar
@@ -153,17 +166,21 @@ optionalSectionParser endChar =
 
 parseModuleName : Parser FileTarget
 parseModuleName =
-    ParserExtra.manySeparated
-        { by = "-"
-        , item = moduleNameParser
-        }
+    Parser.succeed ()
+        |. Parser.chompWhile (\c -> c /= '#' && c /= ')')
+        |> Parser.getChompedString
         |> Parser.map
-            (\moduleName ->
-                if List.isEmpty moduleName then
+            (\linkTarget ->
+                if linkTarget == "" then
                     ReadmeTarget
 
                 else
-                    ModuleTarget moduleName
+                    case Parser.run onlyModuleNameParser linkTarget of
+                        Ok moduleName ->
+                            ModuleTarget moduleName
+
+                        Err _ ->
+                            External linkTarget
             )
 
 

@@ -633,6 +633,9 @@ normalizeModuleName currentModuleName ((Node range link) as node) =
         SyntaxHelp.ReadmeTarget ->
             node
 
+        SyntaxHelp.External _ ->
+            node
+
 
 addOffset : Location -> Int -> Node a -> Node a
 addOffset offset lineNumber (Node range a) =
@@ -658,12 +661,12 @@ finalEvaluation projectContext =
 errorsForFile : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> List (Rule.Error scope)
 errorsForFile exposedModules sectionsPerModule fileLinksAndSections =
     List.filterMap
-        (isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections)
+        (errorForFile exposedModules sectionsPerModule fileLinksAndSections)
         fileLinksAndSections.links
 
 
-isLinkToMissingSection : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
-isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
+errorForFile : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
+errorForFile exposedModules sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
@@ -684,6 +687,13 @@ isLinkToMissingSection exposedModules sectionsPerModule fileLinksAndSections (Ma
 
                 Nothing ->
                     Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
+
+        SyntaxHelp.External target ->
+            if String.contains "://" target then
+                Nothing
+
+            else
+                Just (reportLinkToExternalResourceWithoutProtocol fileLinksAndSections.fileKey linkRange)
 
 
 reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
@@ -746,6 +756,19 @@ reportLinkToMissingReadme fileKey range =
     reportForFile fileKey
         { message = "Link points to missing README"
         , details = [ "elm-review only looks for a 'README.md' located next to your 'elm.json'. Maybe it's positioned elsewhere or named differently?" ]
+        }
+        range
+
+
+reportLinkToExternalResourceWithoutProtocol : FileKey -> Range -> Rule.Error scope
+reportLinkToExternalResourceWithoutProtocol fileKey range =
+    reportForFile fileKey
+        { message = "Link to unknown resource without a protocol"
+        , details =
+            [ "I have trouble figuring out what kind of resource is linked here."
+            , "If it should link to a module, then they should be in the form 'Some-Module-Name'."
+            , "If it's a link to an external resource, they should start with a protocol, like `https://www.fruits.com`, otherwise the link will point to an unknown resource on package.elm-lang.org."
+            ]
         }
         range
 
