@@ -135,6 +135,7 @@ rule =
 
 type alias ProjectContext =
     { fileLinksAndSections : List FileLinksAndSections
+    , isApplication : Bool
     , exposedModules : Set ModuleName
     }
 
@@ -142,6 +143,7 @@ type alias ProjectContext =
 initialProjectContext : ProjectContext
 initialProjectContext =
     { fileLinksAndSections = []
+    , isApplication = True
     , exposedModules = Set.empty
     }
 
@@ -214,6 +216,7 @@ fromModuleToProject =
                   , links = moduleContext.links
                   }
                 ]
+            , isApplication = True
             , exposedModules = Set.empty
             }
         )
@@ -223,6 +226,7 @@ fromModuleToProject =
 foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
     { fileLinksAndSections = List.append newContext.fileLinksAndSections previousContext.fileLinksAndSections
+    , isApplication = previousContext.isApplication
     , exposedModules = previousContext.exposedModules
     }
 
@@ -243,7 +247,7 @@ elmJsonVisitor : Maybe { a | project : Elm.Project.Project } -> ProjectContext -
 elmJsonVisitor maybeElmJson projectContext =
     case Maybe.map .project maybeElmJson of
         Just (Elm.Project.Package { exposed }) ->
-            ( [], { projectContext | exposedModules = listExposedModules exposed } )
+            ( [], { projectContext | isApplication = False, exposedModules = listExposedModules exposed } )
 
         _ ->
             ( [], projectContext )
@@ -301,6 +305,7 @@ readmeVisitor maybeReadmeInfo projectContext =
                     , links = sectionsAndLinks.links
                     }
                         :: projectContext.fileLinksAndSections
+              , isApplication = projectContext.isApplication
               , exposedModules = projectContext.exposedModules
               }
             )
@@ -655,23 +660,23 @@ finalEvaluation projectContext =
                 |> List.map (\module_ -> ( module_.moduleName, module_.sections ))
                 |> Dict.fromList
     in
-    List.concatMap (errorsForFile projectContext.exposedModules sectionsPerModule) projectContext.fileLinksAndSections
+    List.concatMap (errorsForFile projectContext sectionsPerModule) projectContext.fileLinksAndSections
 
 
-errorsForFile : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> List (Rule.Error scope)
-errorsForFile exposedModules sectionsPerModule fileLinksAndSections =
+errorsForFile : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> List (Rule.Error scope)
+errorsForFile projectContext sectionsPerModule fileLinksAndSections =
     List.filterMap
-        (errorForFile exposedModules sectionsPerModule fileLinksAndSections)
+        (errorForFile projectContext sectionsPerModule fileLinksAndSections)
         fileLinksAndSections.links
 
 
-errorForFile : Set ModuleName -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
-errorForFile exposedModules sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
+errorForFile : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
+errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
                 Just existingSections ->
-                    if Set.member fileLinksAndSections.moduleName exposedModules && not (Set.member moduleName exposedModules) then
+                    if Set.member fileLinksAndSections.moduleName projectContext.exposedModules && not (Set.member moduleName projectContext.exposedModules) then
                         Just (reportLinkToNonExposedModule fileLinksAndSections.fileKey linkRange)
 
                     else
@@ -689,7 +694,7 @@ errorForFile exposedModules sectionsPerModule fileLinksAndSections (MaybeExposed
                     Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
 
         SyntaxHelp.External target ->
-            if String.contains "://" target then
+            if projectContext.isApplication || String.contains "://" target then
                 Nothing
 
             else

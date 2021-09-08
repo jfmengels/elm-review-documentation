@@ -761,7 +761,18 @@ a = 1
 externalResourcesTests : Test
 externalResourcesTests =
     describe "External resources"
-        [ test "should not report links to external resources with a protocol" <|
+        [ test "should not report links to external resources without a protocol when the project is not a package" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](www.google.com)
+![](./image.png)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report links to external resources with a protocol" <|
             \() ->
                 """module A exposing (..)
 {-|
@@ -769,7 +780,7 @@ externalResourcesTests =
 -}
 a = 2
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
                     |> Review.Test.expectNoErrors
         , test "should report links to an external resource without a protocol" <|
             \() ->
@@ -779,7 +790,7 @@ a = 2
 -}
 a = 2
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "Link to unknown resource without a protocol"
@@ -799,7 +810,7 @@ a = 2
 -}
 a = 2
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
                     |> Review.Test.expectNoErrors
         , test "should report links to images without a protocol" <|
             \() ->
@@ -809,7 +820,7 @@ a = 2
 -}
 a = 2
 """
-                    |> Review.Test.run rule
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "Link to unknown resource without a protocol"
@@ -826,6 +837,13 @@ a = 2
 
 packageProject : Project
 packageProject =
+    Project.addModule
+        { path = "src/Exposed", source = "module Exposed exposing (exposed)\nexposed = 1" }
+        packageProjectWithoutFiles
+
+
+packageProjectWithoutFiles : Project
+packageProjectWithoutFiles =
     case Json.Decode.decodeString Elm.Project.decoder elmJson of
         Ok project ->
             Project.new
@@ -834,7 +852,6 @@ packageProject =
                     , raw = elmJson
                     , project = project
                     }
-                |> Project.addModule { path = "src/Exposed", source = "module Exposed exposing (exposed)\nexposed = 1" }
 
         Err err ->
             Debug.todo ("Invalid elm.json supplied to test: " ++ Debug.toString err)
