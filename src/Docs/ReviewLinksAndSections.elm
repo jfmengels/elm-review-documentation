@@ -694,11 +694,16 @@ errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposed
                     Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
 
         SyntaxHelp.External target ->
-            if projectContext.isApplication || String.contains "://" target then
-                Nothing
+            reportErrorsForExternalTarget projectContext.isApplication fileLinksAndSections.fileKey linkRange target
 
-            else
-                Just (reportLinkToExternalResourceWithoutProtocol fileLinksAndSections.fileKey linkRange)
+
+reportErrorsForExternalTarget : Bool -> FileKey -> Range -> String -> Maybe (Rule.Error scope)
+reportErrorsForExternalTarget isApplication fileKey linkRange target =
+    if isApplication || String.contains "://" target then
+        Nothing
+
+    else
+        Just (reportLinkToExternalResourceWithoutProtocol fileKey linkRange)
 
 
 reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
