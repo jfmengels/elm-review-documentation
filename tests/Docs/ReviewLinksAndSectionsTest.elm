@@ -21,6 +21,17 @@ import Test exposing (Test, describe, test)
 all : Test
 all =
     describe "Docs.ReviewLinksAndSections"
+        [ localLinkTests
+        , linksToOtherFilesTest
+        , linksDependingOnExposition
+        , duplicateSectionsTests
+        , externalResourcesTests
+        ]
+
+
+localLinkTests : Test
+localLinkTests =
+    describe "Local links"
         [ test "should not report link to an existing sibling section from declaration documentation" <|
             \() ->
                 """module A exposing (a, b)
@@ -157,17 +168,6 @@ a = 2
                             , under = "#b"
                             }
                         ]
-        , test "should not report links to unknown external resources" <|
-            \() ->
-                """module A exposing (..)
-{-|
-[link](https://foo.com)
-[link](./image.png)
--}
-a = 2
-"""
-                    |> Review.Test.run rule
-                    |> Review.Test.expectNoErrors
         , test "should consider an exposed type alias to be an existing section" <|
             \() ->
                 """module A exposing (..)
@@ -321,7 +321,13 @@ a = 2
                             , under = "B-C"
                             }
                         ]
-        , test "should report links to sections in unknown modules" <|
+        ]
+
+
+linksToOtherFilesTest : Test
+linksToOtherFilesTest =
+    describe "Links to other files"
+        [ test "should report links to sections in unknown modules" <|
             \() ->
                 """module A exposing (..)
 {-| [link](B#b)
@@ -500,7 +506,13 @@ a = 2
                             , under = "./#b"
                             }
                         ]
-        , test "should not report links from non-exposed modules to non-exposed modules" <|
+        ]
+
+
+linksDependingOnExposition : Test
+linksDependingOnExposition =
+    describe "Links depending on exposition"
+        [ test "should not report links from non-exposed modules to non-exposed modules" <|
             \() ->
                 [ """module NotExposed exposing (a)
 {-| [link](./AlsoNotExposed)
@@ -666,7 +678,13 @@ b = 1
                         (Project.addReadme { path = "README.md", content = "[link](./Exposed2#section)" } Project.new)
                         rule
                     |> Review.Test.expectNoErrors
-        , test "should report duplicate sections (declaration doc comment)" <|
+        ]
+
+
+duplicateSectionsTests : Test
+duplicateSectionsTests =
+    describe "Duplicate sections"
+        [ test "should report duplicate sections (declaration doc comment)" <|
             \() ->
                 """module Exposed2 exposing (error, exposed)
 {-|
@@ -739,6 +757,23 @@ a = 1
                             , under = "# Some Section"
                             }
                         ]
+        ]
+
+
+externalResourcesTests : Test
+externalResourcesTests =
+    describe "External resources"
+        [ test "should not report links to unknown external resources" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](https://foo.com)
+[link](./image.png)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
 
 
