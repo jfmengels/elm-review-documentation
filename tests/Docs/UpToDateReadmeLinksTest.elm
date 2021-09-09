@@ -142,14 +142,14 @@ all =
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "Module-Name" }
+                    |> Project.addReadme { path = "README.md", content = readmeWithLink "Some-Module-Name" }
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
                             { message = message
                             , details = details
-                            , under = "https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/Module-Name"
+                            , under = "Some-Module-Name"
                             }
-                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Module-Name")
+                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Some-Module-Name")
                         ]
         ]
