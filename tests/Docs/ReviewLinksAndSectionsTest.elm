@@ -11,6 +11,7 @@ import Test exposing (Test, describe, test)
 
 -- TODO Report links to dependencies?
 -- TODO Force links to dependencies to be for the minimal version?
+-- TODO Report unmatched `[foo]`?
 -- TODO Report unused `[foo]: #b` links?
 -- TODO Enforce that the readme uses links that link to GitHub. Only for packages.
 
