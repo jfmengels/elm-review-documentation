@@ -138,4 +138,18 @@ all =
                             }
                             |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Module-Name")
                         ]
+        , test "should report an error if the link is relative" <|
+            \() ->
+                Project.new
+                    |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
+                    |> Project.addReadme { path = "README.md", content = readmeWithLink "Module-Name" }
+                    |> testRule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = message
+                            , details = details
+                            , under = "https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/Module-Name"
+                            }
+                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Module-Name")
+                        ]
         ]
