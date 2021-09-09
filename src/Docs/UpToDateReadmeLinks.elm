@@ -136,7 +136,13 @@ reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Ra
 reportError context readmeKey range link =
     case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
-            []
+            [ Rule.errorForReadmeWithFix readmeKey
+                { message = "Link does not point to the current version of the package"
+                , details = [ "I suggest to run elm-review --fix to get the correct links." ]
+                }
+                range
+                [ Fix.replaceRangeBy range <| "https://package.elm-lang.org/packages/" ++ context.projectName ++ "/" ++ context.version ++ "/" ++ String.join "-" moduleName ++ formatSlug link.slug ]
+            ]
 
         SyntaxHelp.ReadmeTarget ->
             []
@@ -144,6 +150,16 @@ reportError context readmeKey range link =
         SyntaxHelp.External target ->
             Regex.find linkRegex target
                 |> List.filterMap (notAMatch context readmeKey range)
+
+
+formatSlug : Maybe String -> String
+formatSlug maybeSlug =
+    case maybeSlug of
+        Just slug ->
+            "#" ++ slug
+
+        Nothing ->
+            ""
 
 
 notAMatch : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Regex.Match -> Maybe (Error scope)
