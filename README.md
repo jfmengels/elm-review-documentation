@@ -6,7 +6,7 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ## Provided rules
 
 - [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections) - Reports problems with links and sections in Elm projects.
-- [🔧 `Docs.ReadmeLinksPointToCurrentVersion`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReadmeLinksPointToCurrentVersion "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
+- [🔧 `Docs.UpToDateReadmeLinks`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-UpToDateReadmeLinks "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
 
 ## Configuration
 
@@ -14,12 +14,12 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 module ReviewConfig exposing (config)
 
 import Docs.ReviewLinksAndSections
-import Docs.ReadmeLinksPointToCurrentVersion
+import Docs.UpToDateReadmeLinks
 import Review.Rule exposing (Rule)
 
 config : List Rule
 config =
-    [ Docs.ReadmeLinksPointToCurrentVersion.rule
+    [ Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
     ]
 ```

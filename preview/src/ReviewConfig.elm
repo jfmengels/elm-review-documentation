@@ -12,12 +12,12 @@ when inside the directory containing this file.
 -}
 
 import Docs.ReviewLinksAndSections
-import Docs.ReadmeLinksPointToCurrentVersion
+import Docs.UpToDateReadmeLinks
 import Review.Rule exposing (Rule)
 
 
 config : List Rule
 config =
-    [ Docs.ReadmeLinksPointToCurrentVersion.rule
+    [ Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
     ]

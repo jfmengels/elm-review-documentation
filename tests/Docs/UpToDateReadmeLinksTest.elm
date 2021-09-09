@@ -1,6 +1,6 @@
-module Docs.ReadmeLinksPointToCurrentVersionTest exposing (all)
+module Docs.UpToDateReadmeLinksTest exposing (all)
 
-import Docs.ReadmeLinksPointToCurrentVersion exposing (rule)
+import Docs.UpToDateReadmeLinks exposing (rule)
 import Elm.Project
 import Json.Decode as Decode
 import Review.Project as Project exposing (Project)
@@ -76,7 +76,7 @@ Don't report:
 
 all : Test
 all =
-    describe "Docs.ReadmeLinksPointToCurrentVersion"
+    describe "Docs.UpToDateReadmeLinks"
         [ test "should not report an error if there is no elm.json file" <|
             \() ->
                 Project.new

@@ -12,8 +12,8 @@ when inside the directory containing this file.
 -}
 
 import CognitiveComplexity
-import Docs.ReadmeLinksPointToCurrentVersion
 import Docs.ReviewLinksAndSections
+import Docs.UpToDateReadmeLinks
 import NoDebug.Log
 import NoDebug.TodoOrToString
 import NoExposingEverything
@@ -38,7 +38,7 @@ import Simplify
 
 config : List Rule
 config =
-    [ Docs.ReadmeLinksPointToCurrentVersion.rule
+    [ Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
         |> Rule.ignoreErrorsForFiles [ "src/Docs/ReviewLinksAndSections.elm" ]
     , NoDebug.Log.rule

@@ -1,4 +1,4 @@
-module Docs.ReadmeLinksPointToCurrentVersion exposing (rule)
+module Docs.UpToDateReadmeLinks exposing (rule)
 
 {-|
 
@@ -21,7 +21,7 @@ where the version is set to `latest` or a different version than the current ver
 🔧 Running with `--fix` will automatically remove all the reported errors.
 
     config =
-        [ Docs.ReadmeLinksPointToCurrentVersion.rule
+        [ Docs.UpToDateReadmeLinks.rule
         ]
 
 The problem with linking to `latest` is that if you release a new version later,
@@ -45,13 +45,13 @@ and publishing the package. Otherwise the link for a given version could link to
 You can try this rule out by running the following command:
 
 ```bash
-elm-review --template jfmengels/elm-review-documentation/example --rules Docs.ReadmeLinksPointToCurrentVersion
+elm-review --template jfmengels/elm-review-documentation/example --rules Docs.UpToDateReadmeLinks
 ```
 
 -}
 rule : Rule
 rule =
-    Rule.newProjectRuleSchema "Docs.ReadmeLinksPointToCurrentVersion" initialProjectContext
+    Rule.newProjectRuleSchema "Docs.UpToDateReadmeLinks" initialProjectContext
         |> Rule.withElmJsonProjectVisitor elmJsonVisitor
         |> Rule.withReadmeProjectVisitor readmeVisitor
         |> Rule.fromProjectRuleSchema
