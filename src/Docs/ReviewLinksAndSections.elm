@@ -698,6 +698,9 @@ reportErrorsForExternalTarget isApplication fileKey linkRange target =
 reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
 reportIfMissingSection fileKey existingSectionsForTargetFile isExposed linkRange link =
     case link.slug of
+        Just "" ->
+            Just (reportLinkWithEmptySlug fileKey linkRange)
+
         Just slug ->
             case find (\section -> section.slug == slug) existingSectionsForTargetFile of
                 Just section ->
@@ -737,6 +740,15 @@ reportLinkToNonExposedSection fileKey range =
     reportForFile fileKey
         { message = "Link in public documentation points to non-exposed section"
         , details = [ "Users will not be able to follow the link." ]
+        }
+        range
+
+
+reportLinkWithEmptySlug : FileKey -> Range -> Rule.Error scope
+reportLinkWithEmptySlug fileKey range =
+    reportForFile fileKey
+        { message = "Link to empty section is unnecessary"
+        , details = [ "Links to # not followed by an id don't provide any value to the user. I suggest to either strip the # or remove the link." ]
         }
         range
 

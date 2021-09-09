@@ -11,7 +11,6 @@ import Test exposing (Test, describe, test)
 
 -- TODO Report links to dependencies?
 -- TODO Force links to dependencies to be for the minimal version?
--- TODO Report links to `#` or `Foo#` which are not useful?
 -- TODO Report unused `[foo]: #b` links?
 -- TODO Enforce that the readme uses links that link to GitHub. Only for packages.
 
@@ -23,6 +22,7 @@ all =
         , linksToOtherFilesTest
         , linksDependingOnExposition
         , duplicateSectionsTests
+        , unnecessaryLinksTests
         , externalResourcesTests
         ]
 
@@ -753,6 +753,44 @@ a = 1
                             { message = "Duplicate section"
                             , details = [ "There are multiple sections that will result in the same id, meaning that links may point towards the wrong element." ]
                             , under = "# Some Section"
+                            }
+                        ]
+        ]
+
+
+unnecessaryLinksTests : Test
+unnecessaryLinksTests =
+    describe "Unnecessary links"
+        [ test "should report links to #" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](#)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link to empty section is unnecessary"
+                            , details = [ "Links to # not followed by an id don't provide any value to the user. I suggest to either strip the # or remove the link." ]
+                            , under = "#"
+                            }
+                        ]
+        , test "should report links to a module with #" <|
+            \() ->
+                """module A exposing (..)
+{-|
+[link](A#)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link to empty section is unnecessary"
+                            , details = [ "Links to # not followed by an id don't provide any value to the user. I suggest to either strip the # or remove the link." ]
+                            , under = "A#"
                             }
                         ]
         ]
