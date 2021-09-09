@@ -7,7 +7,7 @@ module Docs.UpToDateReadmeLinks exposing (rule)
 -}
 
 import Docs.Utils.ParserExtra as ParserExtra
-import Docs.Utils.SyntaxHelp as SyntaxHelp exposing (FileTarget)
+import Docs.Utils.SyntaxHelp as SyntaxHelp exposing (FileTarget, Link)
 import Elm.Package
 import Elm.Project
 import Elm.Syntax.Node as Node exposing (Node(..))
@@ -127,22 +127,22 @@ findRangeForSubstring context readmeKey content =
                                 context
                                 readmeKey
                                 { start = { row = row + 1, column = start.column + 1 }, end = { row = row + 1, column = end.column + 1 } }
-                                link.file
+                                link
                         )
             )
 
 
-reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> FileTarget -> List (Error scope)
-reportError context readmeKey range fileTarget =
-    case fileTarget of
+reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Link -> List (Error scope)
+reportError context readmeKey range link =
+    case link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             []
 
         SyntaxHelp.ReadmeTarget ->
             []
 
-        SyntaxHelp.External link ->
-            Regex.find linkRegex link
+        SyntaxHelp.External target ->
+            Regex.find linkRegex target
                 |> List.filterMap (notAMatch context readmeKey range)
 
 
