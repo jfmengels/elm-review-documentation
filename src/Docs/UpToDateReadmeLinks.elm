@@ -6,8 +6,11 @@ module Docs.UpToDateReadmeLinks exposing (rule)
 
 -}
 
+import Docs.Utils.ParserExtra as ParserExtra
+import Docs.Utils.SyntaxHelp as SyntaxHelp exposing (FileTarget)
 import Elm.Package
 import Elm.Project
+import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Range)
 import Elm.Version
 import Regex exposing (Regex)
@@ -104,7 +107,7 @@ readmeVisitor maybeReadme maybeContext =
 
 linkRegex : Regex
 linkRegex =
-    Regex.fromString "]\\(https://package\\.elm-lang\\.org/packages/([\\w-]+/[\\w-]+)/(\\w+(\\.\\w+\\.\\w+)?)(.*)\\)"
+    Regex.fromString "https://package\\.elm-lang\\.org/packages/([\\w-]+/[\\w-]+)/(\\w+(\\.\\w+\\.\\w+)?)(.*)"
         |> Maybe.withDefault Regex.never
 
 
@@ -114,30 +117,40 @@ findRangeForSubstring context readmeKey content =
         |> String.lines
         |> List.indexedMap Tuple.pair
         |> List.concatMap
-            (\( row, line ) ->
-                Regex.find linkRegex line
-                    |> List.filterMap (notAMatch context readmeKey row)
+            (\( row, lineContent ) ->
+                lineContent
+                    |> ParserExtra.find SyntaxHelp.linkParser
+                    |> List.filterMap identity
+                    |> List.concatMap
+                        (\(Node { start, end } link) ->
+                            reportError
+                                context
+                                readmeKey
+                                { start = { row = row + 1, column = start.column + 1 }, end = { row = row + 1, column = end.column + 1 } }
+                                link.file
+                        )
             )
 
 
-notAMatch : { projectName : String, version : String } -> Rule.ReadmeKey -> Int -> Regex.Match -> Maybe (Error scope)
-notAMatch { projectName, version } readmeKey row match =
+reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> FileTarget -> List (Error scope)
+reportError context readmeKey range fileTarget =
+    case fileTarget of
+        SyntaxHelp.ModuleTarget moduleName ->
+            []
+
+        SyntaxHelp.ReadmeTarget ->
+            []
+
+        SyntaxHelp.External link ->
+            Regex.find linkRegex link
+                |> List.filterMap (notAMatch context readmeKey range)
+
+
+notAMatch : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Regex.Match -> Maybe (Error scope)
+notAMatch { projectName, version } readmeKey range match =
     case match.submatches of
         (Just authorAndPackage) :: (Just linkVersion) :: _ :: rest :: [] ->
             if authorAndPackage == projectName && linkVersion /= version then
-                let
-                    range : Range
-                    range =
-                        { start =
-                            { row = row + 1
-                            , column = match.index + 3
-                            }
-                        , end =
-                            { row = row + 1
-                            , column = match.index + String.length match.match
-                            }
-                        }
-                in
                 Rule.errorForReadmeWithFix readmeKey
                     { message = "Link does not point to the current version of the package"
                     , details = [ "I suggest to run elm-review --fix to get the correct links." ]
