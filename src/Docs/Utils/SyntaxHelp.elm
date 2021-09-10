@@ -68,8 +68,8 @@ moduleNameSegmentParser =
         |> Parser.getChompedString
 
 
-linkParser : Parser (Maybe (Node Link))
-linkParser =
+linkParser : ModuleName -> Parser (Maybe (Node Link))
+linkParser moduleName =
     Parser.succeed identity
         |= Parser.getCol
         |. bracketsParser
@@ -90,6 +90,32 @@ linkParser =
                         , Parser.succeed Nothing
                         ]
             )
+        |> Parser.map (Maybe.map (normalizeModuleName moduleName))
+
+
+normalizeModuleName : ModuleName -> Node Link -> Node Link
+normalizeModuleName currentModuleName ((Node range link) as node) =
+    case link.file of
+        ModuleTarget [] ->
+            let
+                file : FileTarget
+                file =
+                    if List.isEmpty currentModuleName then
+                        ReadmeTarget
+
+                    else
+                        ModuleTarget currentModuleName
+            in
+            Node range { link | file = file }
+
+        ModuleTarget _ ->
+            node
+
+        ReadmeTarget ->
+            node
+
+        External _ ->
+            node
 
 
 {-| Parses things like:

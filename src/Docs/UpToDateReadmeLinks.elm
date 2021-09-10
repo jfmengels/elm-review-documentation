@@ -7,10 +7,10 @@ module Docs.UpToDateReadmeLinks exposing (rule)
 -}
 
 import Docs.Utils.ParserExtra as ParserExtra
-import Docs.Utils.SyntaxHelp as SyntaxHelp exposing (FileTarget, Link)
+import Docs.Utils.SyntaxHelp as SyntaxHelp exposing (Link)
 import Elm.Package
 import Elm.Project
-import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Range)
 import Elm.Version
 import Regex exposing (Regex)
@@ -119,7 +119,7 @@ findRangeForSubstring context readmeKey content =
         |> List.concatMap
             (\( row, lineContent ) ->
                 lineContent
-                    |> ParserExtra.find SyntaxHelp.linkParser
+                    |> ParserExtra.find (SyntaxHelp.linkParser [])
                     |> List.filterMap identity
                     |> List.concatMap
                         (\(Node { start, end } link) ->
