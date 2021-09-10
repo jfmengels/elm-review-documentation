@@ -1,13 +1,11 @@
-module Docs.Utils.SyntaxHelp exposing
+module Docs.Utils.Link exposing
     ( FileTarget(..)
     , Link
-    , addOffset
-    , linkParser
+    , findLinks
     )
 
-import Docs.Utils.ParserExtra as ParserExtra
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
 
@@ -55,7 +53,7 @@ onlyModuleNameParser =
 
 moduleNameParser : Parser ModuleName
 moduleNameParser =
-    ParserExtra.manySeparated
+    manySeparated
         { by = "-"
         , item = moduleNameSegmentParser
         }
@@ -67,6 +65,22 @@ moduleNameSegmentParser =
         |. Parser.chompIf (\c -> Char.isUpper c)
         |. Parser.chompWhile (\c -> Char.isAlphaNum c)
         |> Parser.getChompedString
+
+
+findLinks : Int -> ModuleName -> String -> List (Node Link)
+findLinks row moduleName string =
+    string
+        |> Parser.run (findParser (linkParser row moduleName))
+        |> Result.withDefault []
+        |> List.filterMap identity
+        |> List.indexedMap
+            (\index (Node { start, end } link) ->
+                Node
+                    { start = { row = start.row, column = start.column - index }
+                    , end = { row = end.row, column = end.column - index }
+                    }
+                    link
+            )
 
 
 linkParser : Int -> ModuleName -> Parser (Maybe (Node Link))
@@ -234,3 +248,38 @@ bracketsParser =
         |= Parser.chompUntil "]"
         |. Parser.spaces
         |. Parser.symbol "]"
+
+
+findParser : Parser a -> Parser (List a)
+findParser parser =
+    Parser.loop []
+        (\parsed ->
+            Parser.oneOf
+                [ Parser.succeed (\p -> p :: parsed)
+                    |= parser
+                    |> Parser.map Parser.Loop
+                , Parser.succeed parsed
+                    |. Parser.chompIf (\_ -> True)
+                    |> Parser.map Parser.Loop
+                , Parser.end
+                    |> Parser.map (\() -> Parser.Done (List.reverse parsed))
+                ]
+        )
+
+
+{-| 0 or more things directly separated by a string like "go-gi-ga".
+-}
+manySeparated :
+    { by : String
+    , item : Parser between
+    }
+    -> Parser (List between)
+manySeparated { by, item } =
+    Parser.sequence
+        { start = ""
+        , separator = by
+        , end = ""
+        , spaces = Parser.symbol ""
+        , item = item
+        , trailing = Parser.Forbidden
+        }

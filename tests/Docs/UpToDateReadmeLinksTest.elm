@@ -110,6 +110,32 @@ all =
                             }
                             |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name")
                         ]
+        , test "should report errors for multiple links on the same line" <|
+            \() ->
+                Project.new
+                    |> Project.addElmJson (createElmJson <| packageElmJson "author/package")
+                    |> Project.addReadme { path = "README.md", content = """
+[link1](https://package.elm-lang.org/packages/author/package/1.2.4/A) [link2](https://package.elm-lang.org/packages/author/package/1.2.4/B)
+""" }
+                    |> testRule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = message
+                            , details = details
+                            , under = "https://package.elm-lang.org/packages/author/package/1.2.4/A"
+                            }
+                            |> Review.Test.whenFixed """
+[link1](https://package.elm-lang.org/packages/author/package/1.2.3/A) [link2](https://package.elm-lang.org/packages/author/package/1.2.4/B)
+"""
+                        , Review.Test.error
+                            { message = message
+                            , details = details
+                            , under = "https://package.elm-lang.org/packages/author/package/1.2.4/B"
+                            }
+                            |> Review.Test.whenFixed """
+[link1](https://package.elm-lang.org/packages/author/package/1.2.4/A) [link2](https://package.elm-lang.org/packages/author/package/1.2.3/B)
+"""
+                        ]
         , test "should report an error if a link points to latest" <|
             \() ->
                 Project.new

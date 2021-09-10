@@ -6,8 +6,7 @@ module Docs.UpToDateReadmeLinks exposing (rule)
 
 -}
 
-import Docs.Utils.ParserExtra as ParserExtra
-import Docs.Utils.SyntaxHelp as SyntaxHelp exposing (Link)
+import Docs.Utils.Link as Link exposing (Link)
 import Elm.Package
 import Elm.Project
 import Elm.Syntax.Node exposing (Node(..))
@@ -115,12 +114,10 @@ findRangeForSubstring : { projectName : String, version : String } -> Rule.Readm
 findRangeForSubstring context readmeKey content =
     content
         |> String.lines
-        |> List.indexedMap Tuple.pair
-        |> List.concatMap
-            (\( row, lineContent ) ->
+        |> List.indexedMap
+            (\row lineContent ->
                 lineContent
-                    |> ParserExtra.find (SyntaxHelp.linkParser row [])
-                    |> List.filterMap identity
+                    |> Link.findLinks row []
                     |> List.concatMap
                         (\(Node range link) ->
                             reportError
@@ -130,12 +127,13 @@ findRangeForSubstring context readmeKey content =
                                 link
                         )
             )
+        |> List.concat
 
 
 reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Link -> List (Error scope)
 reportError context readmeKey range link =
     case link.file of
-        SyntaxHelp.ModuleTarget moduleName ->
+        Link.ModuleTarget moduleName ->
             [ Rule.errorForReadmeWithFix readmeKey
                 { message = "Link does not point to the current version of the package"
                 , details = [ "I suggest to run elm-review --fix to get the correct links." ]
@@ -144,7 +142,7 @@ reportError context readmeKey range link =
                 [ Fix.replaceRangeBy range <| "https://package.elm-lang.org/packages/" ++ context.projectName ++ "/" ++ context.version ++ "/" ++ String.join "-" moduleName ++ formatSlug link.slug ]
             ]
 
-        SyntaxHelp.ReadmeTarget ->
+        Link.ReadmeTarget ->
             if link.startsWithDotSlash then
                 [ Rule.errorForReadmeWithFix readmeKey
                     { message = "Link does not point to the current version of the package"
@@ -163,7 +161,7 @@ reportError context readmeKey range link =
             else
                 []
 
-        SyntaxHelp.External target ->
+        Link.External target ->
             Regex.find linkRegex target
                 |> List.filterMap (notAMatch context readmeKey range)
 

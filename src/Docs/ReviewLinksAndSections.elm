@@ -7,9 +7,8 @@ module Docs.ReviewLinksAndSections exposing (rule)
 -}
 
 import Dict exposing (Dict)
-import Docs.Utils.ParserExtra as ParserExtra
+import Docs.Utils.Link as Link
 import Docs.Utils.Slug as Slug
-import Docs.Utils.SyntaxHelp as SyntaxHelp
 import Elm.Module
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
@@ -18,7 +17,7 @@ import Elm.Syntax.Exposing as Exposing
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range exposing (Location, Range)
+import Elm.Syntax.Range exposing (Range)
 import Regex exposing (Regex)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
@@ -179,7 +178,7 @@ type alias Section =
 
 type MaybeExposedLink
     = MaybeExposedLink
-        { link : SyntaxHelp.Link
+        { link : Link.Link
         , linkRange : Range
         , isExposed : Bool
         }
@@ -596,21 +595,15 @@ findSectionsAndLinks currentModuleName isExposed doc =
     }
 
 
-linksIn : ModuleName -> Int -> Documentation -> List (Node SyntaxHelp.Link)
+linksIn : ModuleName -> Int -> Documentation -> List (Node Link.Link)
 linksIn currentModuleName startRow documentation =
     documentation
         |> String.lines
-        |> List.indexedMap Tuple.pair
-        |> List.concatMap
-            (\( lineNumber, lineContent ) ->
-                ParserExtra.find (SyntaxHelp.linkParser (startRow + lineNumber - 1) currentModuleName) lineContent
+        |> List.indexedMap
+            (\lineNumber lineContent ->
+                Link.findLinks (startRow + lineNumber - 1) currentModuleName lineContent
             )
-        |> List.filterMap identity
-
-
-addOffset : Int -> Node a -> Node a
-addOffset lineNumber (Node range a) =
-    Node (SyntaxHelp.addOffset lineNumber range) a
+        |> List.concat
 
 
 
@@ -639,7 +632,7 @@ errorsForFile projectContext sectionsPerModule fileLinksAndSections =
 errorForFile : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
 errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
     case link.file of
-        SyntaxHelp.ModuleTarget moduleName ->
+        Link.ModuleTarget moduleName ->
             case Dict.get moduleName sectionsPerModule of
                 Just existingSections ->
                     if Set.member fileLinksAndSections.moduleName projectContext.exposedModules && not (Set.member moduleName projectContext.exposedModules) then
@@ -651,7 +644,7 @@ errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposed
                 Nothing ->
                     Just (reportUnknownModule fileLinksAndSections.fileKey moduleName linkRange)
 
-        SyntaxHelp.ReadmeTarget ->
+        Link.ReadmeTarget ->
             case Dict.get [] sectionsPerModule of
                 Just existingSections ->
                     reportIfMissingSection fileLinksAndSections.fileKey existingSections isExposed linkRange link
@@ -659,7 +652,7 @@ errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposed
                 Nothing ->
                     Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
 
-        SyntaxHelp.External target ->
+        Link.External target ->
             reportErrorsForExternalTarget projectContext.isApplication fileLinksAndSections.fileKey linkRange target
 
 
@@ -672,7 +665,7 @@ reportErrorsForExternalTarget isApplication fileKey linkRange target =
         Just (reportLinkToExternalResourceWithoutProtocol fileKey linkRange)
 
 
-reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> SyntaxHelp.Link -> Maybe (Rule.Error scope)
+reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> Link.Link -> Maybe (Rule.Error scope)
 reportIfMissingSection fileKey existingSectionsForTargetFile isExposed linkRange link =
     case link.slug of
         Just "" ->

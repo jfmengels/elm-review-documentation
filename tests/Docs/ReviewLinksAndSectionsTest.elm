@@ -320,6 +320,26 @@ a = 2
                             , under = "B-C"
                             }
                         ]
+        , test "should report multiple links on the same line" <|
+            \() ->
+                """module A exposing (a)
+{-| [link](#b) [link](#c)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#b"
+                            }
+                        , Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#c"
+                            }
+                        ]
         ]
 
 
