@@ -8,6 +8,8 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 - [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections) - Reports problems with links and sections in Elm projects.
 - [🔧 `Docs.UpToDateReadmeLinks`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-UpToDateReadmeLinks "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
 
+[config](#configuration)
+
 ## Configuration
 
 ```elm
