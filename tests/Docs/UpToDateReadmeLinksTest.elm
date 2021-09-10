@@ -57,7 +57,7 @@ message =
 
 details : List String
 details =
-    [ "I suggest to run elm-review --fix to get the correct links." ]
+    [ "I suggest to run elm-review --fix to get the correct link." ]
 
 
 readmeWithLink : String -> String
@@ -172,8 +172,11 @@ all =
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
-                            { message = message
-                            , details = details
+                            { message = "Found relative link to a module in README"
+                            , details =
+                                [ "Relative links to other modules from the README don't work when looking at the docs from GitHub or the likes."
+                                , "I suggest to run elm-review --fix to change the link to an absolute link."
+                                ]
                             , under = "Some-Module-Name"
                             }
                             |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Some-Module-Name")
@@ -186,8 +189,11 @@ all =
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
-                            { message = message
-                            , details = details
+                            { message = "Found relative link to a module in README"
+                            , details =
+                                [ "Relative links to other modules from the README don't work when looking at the docs from GitHub or the likes."
+                                , "I suggest to run elm-review --fix to change the link to an absolute link."
+                                ]
                             , under = "Some-Module-Name#section"
                             }
                             |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Some-Module-Name#section")
@@ -207,8 +213,11 @@ all =
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
-                            { message = message
-                            , details = details
+                            { message = "Found relative link from and to README"
+                            , details =
+                                [ "Links from and to README that start with \"./\" will not work on all places on GitHub or the likes."
+                                , "I suggest to remove the leading \"./\"."
+                                ]
                             , under = "./#section"
                             }
                             |> Review.Test.whenFixed (readmeWithLink "#section")
@@ -221,8 +230,11 @@ all =
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
-                            { message = message
-                            , details = details
+                            { message = "Found relative link from and to README"
+                            , details =
+                                [ "Links from and to README that start with \"./\" will not work on all places on GitHub or the likes."
+                                , "I suggest to remove the leading \"./\"."
+                                ]
                             , under = "./"
                             }
                         ]

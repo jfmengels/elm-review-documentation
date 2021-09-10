@@ -135,8 +135,11 @@ reportError context readmeKey range link =
     case link.file of
         Link.ModuleTarget moduleName ->
             [ Rule.errorForReadmeWithFix readmeKey
-                { message = "Link does not point to the current version of the package"
-                , details = [ "I suggest to run elm-review --fix to get the correct links." ]
+                { message = "Found relative link to a module in README"
+                , details =
+                    [ "Relative links to other modules from the README don't work when looking at the docs from GitHub or the likes."
+                    , "I suggest to run elm-review --fix to change the link to an absolute link."
+                    ]
                 }
                 range
                 [ Fix.replaceRangeBy range <| "https://package.elm-lang.org/packages/" ++ context.projectName ++ "/" ++ context.version ++ "/" ++ String.join "-" moduleName ++ formatSlug link.slug ]
@@ -145,8 +148,11 @@ reportError context readmeKey range link =
         Link.ReadmeTarget ->
             if link.startsWithDotSlash then
                 [ Rule.errorForReadmeWithFix readmeKey
-                    { message = "Link does not point to the current version of the package"
-                    , details = [ "I suggest to run elm-review --fix to get the correct links." ]
+                    { message = "Found relative link from and to README"
+                    , details =
+                        [ "Links from and to README that start with \"./\" will not work on all places on GitHub or the likes."
+                        , "I suggest to remove the leading \"./\"."
+                        ]
                     }
                     range
                     (case link.slug of
@@ -183,7 +189,7 @@ notAMatch { projectName, version } readmeKey range match =
             if authorAndPackage == projectName && linkVersion /= version then
                 Rule.errorForReadmeWithFix readmeKey
                     { message = "Link does not point to the current version of the package"
-                    , details = [ "I suggest to run elm-review --fix to get the correct links." ]
+                    , details = [ "I suggest to run elm-review --fix to get the correct link." ]
                     }
                     range
                     [ Fix.replaceRangeBy range <| "https://package.elm-lang.org/packages/" ++ projectName ++ "/" ++ version ++ Maybe.withDefault "" rest ]
