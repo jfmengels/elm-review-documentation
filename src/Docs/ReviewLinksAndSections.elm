@@ -293,7 +293,7 @@ readmeVisitor maybeReadmeInfo projectContext =
                         []
                         isReadmeExposed
                         { content = content
-                        , startLocation = { row = 1, column = 1 }
+                        , startRow = 1
                         }
             in
             ( duplicateSectionErrors Set.empty sectionsAndLinks.titleSections
@@ -364,7 +364,7 @@ commentsVisitor comments context =
                     findSectionsAndLinks
                         context.moduleName
                         context.isModuleExposed
-                        { content = Node.value doc, startLocation = (Node.range doc).start }
+                        { content = Node.value doc, startRow = (Node.range doc).start.row }
                 )
                 docs
     in
@@ -452,13 +452,8 @@ duplicateSectionErrors exposedElements sections =
         |> .errors
 
 
-extractSlugsFromHeadings : { content : String, startLocation : Location } -> List (Node String)
+extractSlugsFromHeadings : { content : String, startRow : Int } -> List (Node String)
 extractSlugsFromHeadings doc =
-    let
-        lineNumberOffset : Int
-        lineNumberOffset =
-            doc.startLocation.row
-    in
     doc.content
         |> String.lines
         |> List.indexedMap
@@ -469,8 +464,8 @@ extractSlugsFromHeadings doc =
                     |> List.map
                         (\slug ->
                             Node
-                                { start = { row = lineNumber + lineNumberOffset, column = 1 }
-                                , end = { row = lineNumber + lineNumberOffset, column = String.length line + 1 }
+                                { start = { row = lineNumber + doc.startRow, column = 1 }
+                                , end = { row = lineNumber + doc.startRow, column = String.length line + 1 }
                                 }
                                 (Slug.toSlug slug)
                         )
@@ -550,7 +545,7 @@ findSectionsAndLinksForDeclaration currentModuleName exposedElements declaration
             findSectionsAndLinks
                 currentModuleName
                 isExposed
-                { content = Node.value doc, startLocation = (Node.range doc).start }
+                { content = Node.value doc, startRow = (Node.range doc).start.row }
 
         Nothing ->
             { titleSections = [], links = [] }
@@ -570,7 +565,7 @@ removeRangeFromSection { slug, isExposed } =
     }
 
 
-findSectionsAndLinks : ModuleName -> Bool -> { content : String, startLocation : Location } -> { titleSections : List SectionWithRange, links : List MaybeExposedLink }
+findSectionsAndLinks : ModuleName -> Bool -> { content : String, startRow : Int } -> { titleSections : List SectionWithRange, links : List MaybeExposedLink }
 findSectionsAndLinks currentModuleName isExposed doc =
     let
         titleSections : List SectionWithRange
@@ -586,7 +581,7 @@ findSectionsAndLinks currentModuleName isExposed doc =
 
         links : List MaybeExposedLink
         links =
-            linksIn currentModuleName doc.startLocation doc.content
+            linksIn currentModuleName doc.startRow doc.content
                 |> List.map
                     (\link ->
                         MaybeExposedLink
@@ -601,23 +596,21 @@ findSectionsAndLinks currentModuleName isExposed doc =
     }
 
 
-linksIn : ModuleName -> Location -> Documentation -> List (Node SyntaxHelp.Link)
-linksIn currentModuleName offset documentation =
+linksIn : ModuleName -> Int -> Documentation -> List (Node SyntaxHelp.Link)
+linksIn currentModuleName startRow documentation =
     documentation
         |> String.lines
         |> List.indexedMap Tuple.pair
-        |> List.map
+        |> List.concatMap
             (\( lineNumber, lineContent ) ->
-                ( lineNumber
-                , List.filterMap identity (ParserExtra.find (SyntaxHelp.linkParser currentModuleName) lineContent)
-                )
+                ParserExtra.find (SyntaxHelp.linkParser (startRow + lineNumber - 1) currentModuleName) lineContent
             )
-        |> List.concatMap (\( lineNumber, links ) -> List.map (addOffset offset lineNumber) links)
+        |> List.filterMap identity
 
 
-addOffset : Location -> Int -> Node a -> Node a
-addOffset offset lineNumber (Node range a) =
-    Node (SyntaxHelp.addOffset offset lineNumber range) a
+addOffset : Int -> Node a -> Node a
+addOffset lineNumber (Node range a) =
+    Node (SyntaxHelp.addOffset lineNumber range) a
 
 
 

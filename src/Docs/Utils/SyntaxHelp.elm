@@ -7,22 +7,22 @@ module Docs.Utils.SyntaxHelp exposing
 
 import Docs.Utils.ParserExtra as ParserExtra
 import Elm.Syntax.ModuleName exposing (ModuleName)
-import Elm.Syntax.Node exposing (Node(..))
+import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
 
 
-addOffset : Location -> Int -> Range -> Range
-addOffset offset lineNumber { start, end } =
-    { start = addLocation lineNumber offset start
-    , end = addLocation lineNumber offset end
+addOffset : Int -> Range -> Range
+addOffset lineNumber { start, end } =
+    { start = addLineNumber lineNumber start
+    , end = addLineNumber lineNumber end
     }
 
 
-addLocation : Int -> Location -> Location -> Location
-addLocation lineNumber aRange bRange =
-    { row = lineNumber + aRange.row + bRange.row
-    , column = aRange.column + bRange.column
+addLineNumber : Int -> Location -> Location
+addLineNumber lineNumber { row, column } =
+    { row = lineNumber + row
+    , column = column + 1
     }
 
 
@@ -69,8 +69,8 @@ moduleNameSegmentParser =
         |> Parser.getChompedString
 
 
-linkParser : ModuleName -> Parser (Maybe (Node Link))
-linkParser moduleName =
+linkParser : Int -> ModuleName -> Parser (Maybe (Node Link))
+linkParser row moduleName =
     Parser.succeed identity
         |= Parser.getCol
         |. bracketsParser
@@ -91,11 +91,16 @@ linkParser moduleName =
                         , Parser.succeed Nothing
                         ]
             )
-        |> Parser.map (Maybe.map (normalizeModuleName moduleName))
+        |> Parser.map
+            (Maybe.map
+                (\(Node range link) ->
+                    Node (addOffset row range) (normalizeModuleName moduleName link)
+                )
+            )
 
 
-normalizeModuleName : ModuleName -> Node Link -> Node Link
-normalizeModuleName currentModuleName ((Node range link) as node) =
+normalizeModuleName : ModuleName -> Link -> Link
+normalizeModuleName currentModuleName link =
     case link.file of
         ModuleTarget [] ->
             let
@@ -107,16 +112,16 @@ normalizeModuleName currentModuleName ((Node range link) as node) =
                     else
                         ModuleTarget currentModuleName
             in
-            Node range { link | file = file }
+            { link | file = file }
 
         ModuleTarget _ ->
-            node
+            link
 
         ReadmeTarget ->
-            node
+            link
 
         External _ ->
-            node
+            link
 
 
 {-| Parses things like:
@@ -129,8 +134,8 @@ inlineLinkParser =
     Parser.succeed
         (\( startRow, startCol ) link ( endRow, endCol ) ->
             Node
-                { start = { row = startRow - 1, column = startCol - 2 }
-                , end = { row = endRow - 1, column = endCol - 2 }
+                { start = { row = startRow, column = startCol - 2 }
+                , end = { row = endRow, column = endCol - 2 }
                 }
                 link
         )
@@ -153,8 +158,8 @@ shortcutLinkParser =
     Parser.succeed
         (\( startRow, startCol ) link ( endRow, endCol ) ->
             Node
-                { start = { row = startRow - 1, column = startCol - 2 }
-                , end = { row = endRow - 1, column = endCol - 2 }
+                { start = { row = startRow, column = startCol - 2 }
+                , end = { row = endRow, column = endCol - 2 }
                 }
                 link
         )

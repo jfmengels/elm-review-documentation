@@ -119,14 +119,14 @@ findRangeForSubstring context readmeKey content =
         |> List.concatMap
             (\( row, lineContent ) ->
                 lineContent
-                    |> ParserExtra.find (SyntaxHelp.linkParser [])
+                    |> ParserExtra.find (SyntaxHelp.linkParser row [])
                     |> List.filterMap identity
                     |> List.concatMap
-                        (\(Node { start, end } link) ->
+                        (\(Node range link) ->
                             reportError
                                 context
                                 readmeKey
-                                { start = { row = row + 1, column = start.column + 1 }, end = { row = row + 1, column = end.column + 1 } }
+                                range
                                 link
                         )
             )

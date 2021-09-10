@@ -3,8 +3,6 @@ module Docs.Utils.ParserExtra exposing (find, manySeparated)
 import Parser exposing ((|.), (|=), Parser)
 
 
-{-| `range` is relative to the string start (so 0,0).
--}
 find : Parser a -> String -> List a
 find parser string =
     string

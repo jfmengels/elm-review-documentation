@@ -151,7 +151,7 @@ a = 2
                     |> Review.Test.expectNoErrors
         , test "should report link shortcuts that link to missing sections" <|
             \() ->
-                """module A exposing ()
+                """module A exposing (..)
 {-| this is a [link] shortcut?
 
 [link]: #b
