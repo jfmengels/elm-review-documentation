@@ -108,7 +108,7 @@ all =
                             , details = details
                             , under = "https://package.elm-lang.org/packages/author/package/1.2.4/Module-Name"
                             }
-                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name")
+                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name/")
                         ]
         , test "should report errors for multiple links on the same line" <|
             \() ->
@@ -125,7 +125,7 @@ all =
                             , under = "https://package.elm-lang.org/packages/author/package/1.2.4/A"
                             }
                             |> Review.Test.whenFixed """
-[link1](https://package.elm-lang.org/packages/author/package/1.2.3/A) [link2](https://package.elm-lang.org/packages/author/package/1.2.4/B)
+[link1](https://package.elm-lang.org/packages/author/package/1.2.3/A/) [link2](https://package.elm-lang.org/packages/author/package/1.2.4/B)
 """
                         , Review.Test.error
                             { message = message
@@ -133,7 +133,7 @@ all =
                             , under = "https://package.elm-lang.org/packages/author/package/1.2.4/B"
                             }
                             |> Review.Test.whenFixed """
-[link1](https://package.elm-lang.org/packages/author/package/1.2.4/A) [link2](https://package.elm-lang.org/packages/author/package/1.2.3/B)
+[link1](https://package.elm-lang.org/packages/author/package/1.2.4/A) [link2](https://package.elm-lang.org/packages/author/package/1.2.3/B/)
 """
                         ]
         , test "should report an error if a link points to latest" <|
@@ -148,7 +148,7 @@ all =
                             , details = details
                             , under = "https://package.elm-lang.org/packages/author/package/latest/Module-Name"
                             }
-                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name")
+                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name/")
                         ]
         , test "should report an error even if the author or package name contains a dash or digit" <|
             \() ->
@@ -162,7 +162,7 @@ all =
                             , details = details
                             , under = "https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/Module-Name"
                             }
-                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Module-Name")
+                            |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Module-Name/")
                         ]
         , test "should report an error if the link is relative" <|
             \() ->

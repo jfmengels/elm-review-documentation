@@ -21,6 +21,7 @@ all =
         [ localLinkTests
         , linksToOtherFilesTest
         , linksDependingOnExposition
+        , linksThroughPackageRegistryTest
         , duplicateSectionsTests
         , unnecessaryLinksTests
         , externalResourcesTests
@@ -524,6 +525,88 @@ a = 2
                             , under = "./#b"
                             }
                         ]
+        ]
+
+
+linksThroughPackageRegistryTest : Test
+linksThroughPackageRegistryTest =
+    describe "Links through the package registry"
+        [ test "should report links to unknown modules for the current version" <|
+            \() ->
+                [ """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/1.0.0/Unknown)
+-}
+a = 2
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "https://package.elm-lang.org/packages/author/package/1.0.0/Unknown"
+                            }
+                        ]
+        , test "should report links to unknown modules for latest" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/latest/Unknown)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "https://package.elm-lang.org/packages/author/package/latest/Unknown"
+                            }
+                        ]
+        , test "should not report links for different version of the package" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/2.3.4/Unknown)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectNoErrors
+        , test "should report links to unknown section of README" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/1.0.0/#unknown)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "# A" } packageProjectWithoutFiles)
+                        rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "https://package.elm-lang.org/packages/author/package/1.0.0/#unknown"
+                            }
+                        ]
+        , test "should not report links to known sections of README" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/2.3.4/#a)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData
+                        (Project.addReadme { path = "README.md", content = "# A" } packageProjectWithoutFiles)
+                        rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report links for different packages" <|
+            \() ->
+                """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/other-author/package/latest/Unknown/)
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectNoErrors
         ]
 
 

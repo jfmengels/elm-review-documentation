@@ -167,9 +167,31 @@ reportError context readmeKey range link =
             else
                 []
 
-        Link.External target ->
-            Regex.find linkRegex target
-                |> List.filterMap (notAMatch context readmeKey range)
+        Link.PackagesTarget { name, version } subTarget ->
+            if context.projectName == name && context.version /= version then
+                [ Rule.errorForReadmeWithFix readmeKey
+                    { message = "Link does not point to the current version of the package"
+                    , details = [ "I suggest to run elm-review --fix to get the correct link." ]
+                    }
+                    range
+                    [ Fix.replaceRangeBy range <| "https://package.elm-lang.org/packages/" ++ name ++ "/" ++ context.version ++ "/" ++ formatSubTarget subTarget ++ formatSlug link.slug ]
+                ]
+
+            else
+                []
+
+        Link.External _ ->
+            []
+
+
+formatSubTarget : Link.SubTarget -> String
+formatSubTarget subTarget =
+    case subTarget of
+        Link.ModuleSubTarget moduleName ->
+            String.join "-" moduleName ++ "/"
+
+        Link.ReadmeSubTarget ->
+            ""
 
 
 formatSlug : Maybe String -> String
@@ -180,23 +202,3 @@ formatSlug maybeSlug =
 
         Nothing ->
             ""
-
-
-notAMatch : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Regex.Match -> Maybe (Error scope)
-notAMatch { projectName, version } readmeKey range match =
-    case match.submatches of
-        (Just authorAndPackage) :: (Just linkVersion) :: _ :: rest :: [] ->
-            if authorAndPackage == projectName && linkVersion /= version then
-                Rule.errorForReadmeWithFix readmeKey
-                    { message = "Link does not point to the current version of the package"
-                    , details = [ "I suggest to run elm-review --fix to get the correct link." ]
-                    }
-                    range
-                    [ Fix.replaceRangeBy range <| "https://package.elm-lang.org/packages/" ++ projectName ++ "/" ++ version ++ Maybe.withDefault "" rest ]
-                    |> Just
-
-            else
-                Nothing
-
-        _ ->
-            Nothing

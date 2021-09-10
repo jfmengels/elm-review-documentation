@@ -1,6 +1,7 @@
 module Docs.Utils.Link exposing
     ( FileTarget(..)
     , Link
+    , SubTarget(..)
     , findLinks
     )
 
@@ -8,6 +9,7 @@ import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
+import Regex exposing (Regex)
 
 
 addOffset : Int -> Range -> Range
@@ -34,7 +36,13 @@ type alias Link =
 type FileTarget
     = ModuleTarget ModuleName
     | ReadmeTarget
+    | PackagesTarget { name : String, version : String } SubTarget
     | External String
+
+
+type SubTarget
+    = ModuleSubTarget ModuleName
+    | ReadmeSubTarget
 
 
 idParser : Char -> Parser String
@@ -134,6 +142,9 @@ normalizeModuleName currentModuleName link =
         ReadmeTarget ->
             link
 
+        PackagesTarget _ _ ->
+            link
+
         External _ ->
             link
 
@@ -226,8 +237,39 @@ parseModuleName =
                             ModuleTarget moduleName
 
                         Err _ ->
-                            External linkTarget
+                            case Regex.find linkRegex linkTarget |> List.head |> Maybe.andThen parseSubTarget of
+                                Just fileTarget ->
+                                    fileTarget
+
+                                Nothing ->
+                                    External linkTarget
             )
+
+
+parseSubTarget : Regex.Match -> Maybe FileTarget
+parseSubTarget match =
+    case match.submatches of
+        (Just authorAndPackage) :: (Just linkVersion) :: _ :: rest :: [] ->
+            let
+                subTarget : SubTarget
+                subTarget =
+                    case rest of
+                        Just nonemptyModuleName ->
+                            ModuleSubTarget (String.split "-" nonemptyModuleName)
+
+                        Nothing ->
+                            ReadmeSubTarget
+            in
+            Just (PackagesTarget { name = authorAndPackage, version = linkVersion } subTarget)
+
+        _ ->
+            Nothing
+
+
+linkRegex : Regex
+linkRegex =
+    Regex.fromString "https://package\\.elm-lang\\.org/packages/([\\w-]+/[\\w-]+)/(latest|\\w+\\.\\w+\\.\\w+)(/(.*))?"
+        |> Maybe.withDefault Regex.never
 
 
 ignoreDotSlash : Parser Bool

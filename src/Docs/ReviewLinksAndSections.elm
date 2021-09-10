@@ -10,6 +10,7 @@ import Dict exposing (Dict)
 import Docs.Utils.Link as Link
 import Docs.Utils.Slug as Slug
 import Elm.Module
+import Elm.Package
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Documentation exposing (Documentation)
@@ -18,6 +19,7 @@ import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range exposing (Range)
+import Elm.Version
 import Regex exposing (Regex)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
@@ -134,7 +136,7 @@ rule =
 
 type alias ProjectContext =
     { fileLinksAndSections : List FileLinksAndSections
-    , isApplication : Bool
+    , packageNameAndVersion : Maybe { name : String, version : String }
     , exposedModules : Set ModuleName
     }
 
@@ -142,7 +144,7 @@ type alias ProjectContext =
 initialProjectContext : ProjectContext
 initialProjectContext =
     { fileLinksAndSections = []
-    , isApplication = True
+    , packageNameAndVersion = Nothing
     , exposedModules = Set.empty
     }
 
@@ -177,11 +179,14 @@ type alias Section =
 
 
 type MaybeExposedLink
-    = MaybeExposedLink
-        { link : Link.Link
-        , linkRange : Range
-        , isExposed : Bool
-        }
+    = MaybeExposedLink MaybeExposedLinkData
+
+
+type alias MaybeExposedLinkData =
+    { link : Link.Link
+    , linkRange : Range
+    , isExposed : Bool
+    }
 
 
 fromProjectToModule : Rule.ContextCreator ProjectContext ModuleContext
@@ -215,7 +220,7 @@ fromModuleToProject =
                   , links = moduleContext.links
                   }
                 ]
-            , isApplication = True
+            , packageNameAndVersion = Nothing
             , exposedModules = Set.empty
             }
         )
@@ -225,7 +230,7 @@ fromModuleToProject =
 foldProjectContexts : ProjectContext -> ProjectContext -> ProjectContext
 foldProjectContexts newContext previousContext =
     { fileLinksAndSections = List.append newContext.fileLinksAndSections previousContext.fileLinksAndSections
-    , isApplication = previousContext.isApplication
+    , packageNameAndVersion = previousContext.packageNameAndVersion
     , exposedModules = previousContext.exposedModules
     }
 
@@ -245,8 +250,13 @@ moduleVisitor schema =
 elmJsonVisitor : Maybe { a | project : Elm.Project.Project } -> ProjectContext -> ( List nothing, ProjectContext )
 elmJsonVisitor maybeElmJson projectContext =
     case Maybe.map .project maybeElmJson of
-        Just (Elm.Project.Package { exposed }) ->
-            ( [], { projectContext | isApplication = False, exposedModules = listExposedModules exposed } )
+        Just (Elm.Project.Package { name, version, exposed }) ->
+            ( []
+            , { projectContext
+                | packageNameAndVersion = Just { name = Elm.Package.toString name, version = Elm.Version.toString version }
+                , exposedModules = listExposedModules exposed
+              }
+            )
 
         _ ->
             ( [], projectContext )
@@ -304,7 +314,7 @@ readmeVisitor maybeReadmeInfo projectContext =
                     , links = sectionsAndLinks.links
                     }
                         :: projectContext.fileLinksAndSections
-              , isApplication = projectContext.isApplication
+              , packageNameAndVersion = projectContext.packageNameAndVersion
               , exposedModules = projectContext.exposedModules
               }
             )
@@ -630,30 +640,62 @@ errorsForFile projectContext sectionsPerModule fileLinksAndSections =
 
 
 errorForFile : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLink -> Maybe (Rule.Error scope)
-errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposedLink { link, linkRange, isExposed }) =
-    case link.file of
+errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposedLink maybeExposedLink) =
+    case maybeExposedLink.link.file of
         Link.ModuleTarget moduleName ->
-            case Dict.get moduleName sectionsPerModule of
-                Just existingSections ->
-                    if Set.member fileLinksAndSections.moduleName projectContext.exposedModules && not (Set.member moduleName projectContext.exposedModules) then
-                        Just (reportLinkToNonExposedModule fileLinksAndSections.fileKey linkRange)
-
-                    else
-                        reportIfMissingSection fileLinksAndSections.fileKey existingSections isExposed linkRange link
-
-                Nothing ->
-                    Just (reportUnknownModule fileLinksAndSections.fileKey moduleName linkRange)
+            reportErrorForModule projectContext sectionsPerModule fileLinksAndSections maybeExposedLink moduleName
 
         Link.ReadmeTarget ->
-            case Dict.get [] sectionsPerModule of
-                Just existingSections ->
-                    reportIfMissingSection fileLinksAndSections.fileKey existingSections isExposed linkRange link
+            reportErrorForReadme sectionsPerModule fileLinksAndSections.fileKey maybeExposedLink
+
+        Link.PackagesTarget { name, version } subTarget ->
+            case projectContext.packageNameAndVersion of
+                Just currentPackage ->
+                    if name == currentPackage.name && (version == "latest" || version == currentPackage.version) then
+                        reportErrorForCurrentPackageSubTarget projectContext sectionsPerModule fileLinksAndSections maybeExposedLink subTarget
+
+                    else
+                        Nothing
 
                 Nothing ->
-                    Just (reportLinkToMissingReadme fileLinksAndSections.fileKey linkRange)
+                    Nothing
 
         Link.External target ->
-            reportErrorsForExternalTarget projectContext.isApplication fileLinksAndSections.fileKey linkRange target
+            reportErrorsForExternalTarget (projectContext.packageNameAndVersion == Nothing) fileLinksAndSections.fileKey maybeExposedLink.linkRange target
+
+
+reportErrorForCurrentPackageSubTarget : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLinkData -> Link.SubTarget -> Maybe (Rule.Error scope)
+reportErrorForCurrentPackageSubTarget projectContext sectionsPerModule fileLinksAndSections maybeExposedLink subTarget =
+    case subTarget of
+        Link.ModuleSubTarget moduleName ->
+            reportErrorForModule projectContext sectionsPerModule fileLinksAndSections maybeExposedLink moduleName
+
+        Link.ReadmeSubTarget ->
+            reportErrorForReadme sectionsPerModule fileLinksAndSections.fileKey maybeExposedLink
+
+
+reportErrorForModule : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLinkData -> ModuleName -> Maybe (Rule.Error scope)
+reportErrorForModule projectContext sectionsPerModule fileLinksAndSections maybeExposedLink moduleName =
+    case Dict.get moduleName sectionsPerModule of
+        Just existingSections ->
+            if Set.member fileLinksAndSections.moduleName projectContext.exposedModules && not (Set.member moduleName projectContext.exposedModules) then
+                Just (reportLinkToNonExposedModule fileLinksAndSections.fileKey maybeExposedLink.linkRange)
+
+            else
+                reportIfMissingSection fileLinksAndSections.fileKey existingSections maybeExposedLink
+
+        Nothing ->
+            Just (reportUnknownModule fileLinksAndSections.fileKey moduleName maybeExposedLink.linkRange)
+
+
+reportErrorForReadme : Dict (List comparable) (List Section) -> FileKey -> MaybeExposedLinkData -> Maybe (Rule.Error scope)
+reportErrorForReadme sectionsPerModule fileKey maybeExposedLink =
+    case Dict.get [] sectionsPerModule of
+        Just existingSections ->
+            reportIfMissingSection fileKey existingSections maybeExposedLink
+
+        Nothing ->
+            Just (reportLinkToMissingReadme fileKey maybeExposedLink.linkRange)
 
 
 reportErrorsForExternalTarget : Bool -> FileKey -> Range -> String -> Maybe (Rule.Error scope)
@@ -665,8 +707,8 @@ reportErrorsForExternalTarget isApplication fileKey linkRange target =
         Just (reportLinkToExternalResourceWithoutProtocol fileKey linkRange)
 
 
-reportIfMissingSection : FileKey -> List Section -> Bool -> Range -> Link.Link -> Maybe (Rule.Error scope)
-reportIfMissingSection fileKey existingSectionsForTargetFile isExposed linkRange link =
+reportIfMissingSection : FileKey -> List Section -> MaybeExposedLinkData -> Maybe (Rule.Error scope)
+reportIfMissingSection fileKey existingSectionsForTargetFile { isExposed, linkRange, link } =
     case link.slug of
         Just "" ->
             Just (reportLinkWithEmptySlug fileKey linkRange)
