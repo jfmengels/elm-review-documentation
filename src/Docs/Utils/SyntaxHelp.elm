@@ -28,6 +28,7 @@ addLocation lineNumber aRange bRange =
 
 type alias Link =
     { file : FileTarget
+    , startsWithDotSlash : Bool
     , slug : Maybe String
     }
 
@@ -169,12 +170,12 @@ pathParser endChar =
     Parser.oneOf
         [ Parser.succeed
             (\section ->
-                { file = ModuleTarget [], slug = Just section }
+                { file = ModuleTarget [], startsWithDotSlash = False, slug = Just section }
             )
             |. Parser.symbol "#"
             |= idParser endChar
-        , Parser.succeed Link
-            |. ignoreDotSlash
+        , Parser.succeed (\startsWithDotSlash file slug -> { file = file, startsWithDotSlash = startsWithDotSlash, slug = slug })
+            |= ignoreDotSlash
             |= parseModuleName
             |= optionalSectionParser endChar
         ]
@@ -210,12 +211,13 @@ parseModuleName =
             )
 
 
-ignoreDotSlash : Parser ()
+ignoreDotSlash : Parser Bool
 ignoreDotSlash =
     Parser.oneOf
         [ Parser.symbol "."
             |. Parser.symbol "/"
-        , Parser.succeed ()
+            |> Parser.map (\_ -> True)
+        , Parser.succeed False
         ]
 
 

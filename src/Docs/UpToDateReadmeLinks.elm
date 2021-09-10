@@ -145,7 +145,23 @@ reportError context readmeKey range link =
             ]
 
         SyntaxHelp.ReadmeTarget ->
-            []
+            if link.startsWithDotSlash then
+                [ Rule.errorForReadmeWithFix readmeKey
+                    { message = "Link does not point to the current version of the package"
+                    , details = [ "I suggest to run elm-review --fix to get the correct links." ]
+                    }
+                    range
+                    (case link.slug of
+                        Just slug ->
+                            [ Fix.replaceRangeBy range ("#" ++ slug) ]
+
+                        Nothing ->
+                            []
+                    )
+                ]
+
+            else
+                []
 
         SyntaxHelp.External target ->
             Regex.find linkRegex target

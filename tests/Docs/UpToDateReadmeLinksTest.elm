@@ -173,6 +173,33 @@ all =
                     |> addReadme "#section"
                     |> testRule
                     |> Review.Test.expectNoErrors
+        , test "should report an error if the link is relative to the README but starts with ./" <|
+            \() ->
+                Project.new
+                    |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
+                    |> addReadme "./#section"
+                    |> testRule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = message
+                            , details = details
+                            , under = "./#section"
+                            }
+                            |> Review.Test.whenFixed (readmeWithLink "#section")
+                        ]
+        , test "should report an error but not provide a fix if the link is exactly ./" <|
+            \() ->
+                Project.new
+                    |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
+                    |> addReadme "./"
+                    |> testRule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = message
+                            , details = details
+                            , under = "./"
+                            }
+                        ]
         ]
 
 
