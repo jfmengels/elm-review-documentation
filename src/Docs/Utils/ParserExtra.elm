@@ -23,9 +23,8 @@ findParser parser =
                 , Parser.succeed parsed
                     |. Parser.chompIf (\_ -> True)
                     |> Parser.map Parser.Loop
-                , Parser.succeed (List.reverse parsed)
-                    |. Parser.end
-                    |> Parser.map Parser.Done
+                , Parser.end
+                    |> Parser.map (\() -> Parser.Done (List.reverse parsed))
                 ]
         )
 
