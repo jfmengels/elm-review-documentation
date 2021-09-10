@@ -1,6 +1,6 @@
-module Documentation.NoMissingTest exposing (all)
+module Docs.NoMissingTest exposing (all)
 
-import Documentation.NoMissing exposing (rule)
+import Docs.NoMissing exposing (rule)
 import Elm.Project
 import Json.Decode as Decode
 import Review.Project as Project exposing (Project)
@@ -21,7 +21,7 @@ missingModuleDetails =
 
 all : Test
 all =
-    describe "Documentation.NoMissing"
+    describe "Docs.NoMissing"
         [ everythingEverywhereTests
         , everythingFromExposedModulesTests
         , onlyExposedFromExposedModulesTests
@@ -31,10 +31,10 @@ all =
 everythingEverywhereTests : Test
 everythingEverywhereTests =
     let
-        config : { document : Documentation.NoMissing.What, from : Documentation.NoMissing.From }
+        config : { document : Docs.NoMissing.What, from : Docs.NoMissing.From }
         config =
-            { document = Documentation.NoMissing.everything
-            , from = Documentation.NoMissing.allModules
+            { document = Docs.NoMissing.everything
+            , from = Docs.NoMissing.allModules
             }
     in
     describe "document everything - from everywhere"
@@ -205,10 +205,10 @@ import Thing
 everythingFromExposedModulesTests : Test
 everythingFromExposedModulesTests =
     let
-        config : { document : Documentation.NoMissing.What, from : Documentation.NoMissing.From }
+        config : { document : Docs.NoMissing.What, from : Docs.NoMissing.From }
         config =
-            { document = Documentation.NoMissing.everything
-            , from = Documentation.NoMissing.exposedModules
+            { document = Docs.NoMissing.everything
+            , from = Docs.NoMissing.exposedModules
             }
     in
     describe "document everything - from exposed modules"
@@ -238,10 +238,10 @@ import Thing
 onlyExposedFromExposedModulesTests : Test
 onlyExposedFromExposedModulesTests =
     let
-        config : { document : Documentation.NoMissing.What, from : Documentation.NoMissing.From }
+        config : { document : Docs.NoMissing.What, from : Docs.NoMissing.From }
         config =
-            { document = Documentation.NoMissing.onlyExposed
-            , from = Documentation.NoMissing.exposedModules
+            { document = Docs.NoMissing.onlyExposed
+            , from = Docs.NoMissing.exposedModules
             }
     in
     describe "document only exposed - from exposed modules"

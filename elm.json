@@ -5,7 +5,7 @@
     "license": "BSD-3-Clause",
     "version": "1.0.3",
     "exposed-modules": [
-        "Documentation.NoMissing",
+        "Docs.NoMissing",
         "Docs.ReviewLinksAndSections",
         "Docs.UpToDateReadmeLinks"
     ],

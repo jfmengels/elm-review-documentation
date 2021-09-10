@@ -1,4 +1,4 @@
-module Documentation.NoMissing exposing
+module Docs.NoMissing exposing
     ( rule
     , What, everything, onlyExposed
     , From, allModules, exposedModules
@@ -22,7 +22,7 @@ It is also useful when you write Elm packages, in order to know about missing do
 You can try this rule out by running the following command:
 
 ```bash
-elm-review --template jfmengels/elm-review-documentation/example --rules Documentation.NoMissing
+elm-review --template jfmengels/elm-review-documentation/example --rules Docs.NoMissing
 ```
 
 -}
@@ -40,10 +40,10 @@ import Set exposing (Set)
 
 {-| Reports missing documentation for functions and types
 
-    import Documentation.NoMissing exposing (exposedModules, onlyExposed)
+    import Docs.NoMissing exposing (exposedModules, onlyExposed)
 
     config =
-        [ Documentation.NoMissing.rule
+        [ Docs.NoMissing.rule
             { document = onlyExposed
             , from = exposedModules
             }
@@ -70,7 +70,7 @@ import Set exposing (Set)
 -}
 rule : { document : What, from : From } -> Rule
 rule configuration =
-    Rule.newModuleRuleSchema "Documentation.NoMissing" initialContext
+    Rule.newModuleRuleSchema "Docs.NoMissing" initialContext
         |> Rule.withElmJsonModuleVisitor elmJsonVisitor
         |> Rule.withModuleDefinitionVisitor (moduleDefinitionVisitor configuration.from)
         |> Rule.withCommentsVisitor commentsVisitor
