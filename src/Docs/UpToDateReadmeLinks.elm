@@ -119,7 +119,7 @@ findRangeForSubstring context readmeKey content =
         |> List.concatMap
             (\( row, lineContent ) ->
                 lineContent
-                    |> ParserExtra.find SyntaxHelp.linkParser
+                    |> ParserExtra.find (SyntaxHelp.linkParser [])
                     |> List.filterMap identity
                     |> List.concatMap
                         (\(Node { start, end } link) ->
@@ -134,7 +134,7 @@ findRangeForSubstring context readmeKey content =
 
 reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Link -> List (Error scope)
 reportError context readmeKey range link =
-    case link.file of
+    case Debug.log "file" link.file of
         SyntaxHelp.ModuleTarget moduleName ->
             [ Rule.errorForReadmeWithFix readmeKey
                 { message = "Link does not point to the current version of the package"

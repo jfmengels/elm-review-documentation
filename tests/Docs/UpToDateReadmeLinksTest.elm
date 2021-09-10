@@ -80,7 +80,7 @@ all =
         [ test "should not report an error if there is no elm.json file" <|
             \() ->
                 Project.new
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.4/Module-Name" }
+                    |> addReadme "https://package.elm-lang.org/packages/author/package/1.2.4/Module-Name"
                     |> testRule
                     |> Review.Test.expectNoErrors
         , test "should not report an error if there is no README file" <|
@@ -93,14 +93,14 @@ all =
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "author/package")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name" }
+                    |> addReadme "https://package.elm-lang.org/packages/author/package/1.2.3/Module-Name"
                     |> testRule
                     |> Review.Test.expectNoErrors
         , test "should report an error if a link points to a different version" <|
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "author/package")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "https://package.elm-lang.org/packages/author/package/1.2.4/Module-Name" }
+                    |> addReadme "https://package.elm-lang.org/packages/author/package/1.2.4/Module-Name"
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
@@ -114,7 +114,7 @@ all =
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "author/package")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "https://package.elm-lang.org/packages/author/package/latest/Module-Name" }
+                    |> addReadme "https://package.elm-lang.org/packages/author/package/latest/Module-Name"
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
@@ -128,7 +128,7 @@ all =
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/Module-Name" }
+                    |> addReadme "https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/Module-Name"
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
@@ -142,7 +142,7 @@ all =
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "Some-Module-Name" }
+                    |> addReadme "Some-Module-Name"
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
@@ -156,7 +156,7 @@ all =
             \() ->
                 Project.new
                     |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
-                    |> Project.addReadme { path = "README.md", content = readmeWithLink "Some-Module-Name#section" }
+                    |> addReadme "Some-Module-Name#section"
                     |> testRule
                     |> Review.Test.expectErrorsForReadme
                         [ Review.Test.error
@@ -166,4 +166,17 @@ all =
                             }
                             |> Review.Test.whenFixed (readmeWithLink "https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/Some-Module-Name#section")
                         ]
+        , Test.only <|
+            test "should not report an error if the link is relative to the README" <|
+                \() ->
+                    Project.new
+                        |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
+                        |> addReadme "#section"
+                        |> testRule
+                        |> Review.Test.expectNoErrors
         ]
+
+
+addReadme : String -> Project -> Project
+addReadme contents =
+    Project.addReadme { path = "README.md", content = readmeWithLink contents }

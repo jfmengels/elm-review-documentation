@@ -609,10 +609,10 @@ linksIn currentModuleName offset documentation =
         |> List.map
             (\( lineNumber, lineContent ) ->
                 ( lineNumber
-                , List.filterMap identity (ParserExtra.find SyntaxHelp.linkParser lineContent)
+                , List.filterMap identity (ParserExtra.find (SyntaxHelp.linkParser currentModuleName) lineContent)
                 )
             )
-        |> List.concatMap (\( lineNumber, links ) -> List.map (normalizeModuleName currentModuleName >> addOffset offset lineNumber) links)
+        |> List.concatMap (\( lineNumber, links ) -> List.map (addOffset offset lineNumber) links)
 
 
 normalizeModuleName : ModuleName -> Node SyntaxHelp.Link -> Node SyntaxHelp.Link
