@@ -995,7 +995,7 @@ linksWithAltTextTests =
                 """module A exposing (a, b)
 b = 1
 
-{-| [link](Unknown#section Alt text)
+{-| [link](Unknown#section "alt-text")
 -}
 a = 2
 """
@@ -1007,17 +1007,68 @@ a = 2
                             , under = "Unknown#section"
                             }
                         ]
-        , test "should ignore alt text in links with slug" <|
+        , test "should ignore alt text in links with a slug" <|
             \() ->
                 """module A exposing (a, b)
 b = 1
 
-{-| [link](#b Alt text)
+{-| [link](#b "alt-text")
 -}
 a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
+        , test "should report links to unknown modules in links with alt text without a slug" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+
+{-| [link](Unknown "alt-text")
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "Unknown"
+                            }
+                        ]
+        , test "should report absolute links to unknown modules in links with alt text with a slug" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+
+{-| [link](https://package.elm-lang.org/packages/author/package/1.0.0/Unknown "alt-text")
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "https://package.elm-lang.org/packages/author/package/1.0.0/Unknown"
+                            }
+                        ]
+        , test "should report absolute links to unknown modules in links with alt text without a slug" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+
+{-| [link](https://package.elm-lang.org/packages/author/package/1.0.0/Unknown#section "alt-text")
+-}
+a = 2
+"""
+                    |> Review.Test.runWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "https://package.elm-lang.org/packages/author/package/1.0.0/Unknown#section"
+                            }
+                        ]
         ]
 
 

@@ -229,7 +229,7 @@ optionalSectionParser endChar =
 parseModuleName : Parser FileTarget
 parseModuleName =
     Parser.succeed ()
-        |. Parser.chompWhile (\c -> c /= '#' && c /= ')')
+        |. Parser.chompWhile (\c -> c /= '#' && c /= ')' && c /= ' ')
         |> Parser.getChompedString
         |> Parser.map
             (\linkTarget ->
