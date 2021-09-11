@@ -98,40 +98,21 @@ readmeVisitor : Maybe { readmeKey : Rule.ReadmeKey, content : String } -> Projec
 readmeVisitor maybeReadme maybeContext =
     case ( maybeReadme, maybeContext ) of
         ( Just { readmeKey, content }, Just context ) ->
-            ( findRangeForSubstring context readmeKey content, maybeContext )
+            ( reportErrorsForReadme context readmeKey content, maybeContext )
 
         _ ->
             ( [], maybeContext )
 
 
-linkRegex : Regex
-linkRegex =
-    Regex.fromString "https://package\\.elm-lang\\.org/packages/([\\w-]+/[\\w-]+)/(\\w+(\\.\\w+\\.\\w+)?)(.*)"
-        |> Maybe.withDefault Regex.never
-
-
-findRangeForSubstring : { projectName : String, version : String } -> Rule.ReadmeKey -> String -> List (Error scope)
-findRangeForSubstring context readmeKey content =
+reportErrorsForReadme : { projectName : String, version : String } -> Rule.ReadmeKey -> String -> List (Error scope)
+reportErrorsForReadme context readmeKey content =
     content
-        |> String.lines
-        |> List.indexedMap
-            (\row lineContent ->
-                lineContent
-                    |> Link.findLinks row []
-                    |> List.concatMap
-                        (\(Node range link) ->
-                            reportError
-                                context
-                                readmeKey
-                                range
-                                link
-                        )
-            )
-        |> List.concat
+        |> Link.findLinks 0 []
+        |> List.concatMap (reportError context readmeKey)
 
 
-reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Range -> Link -> List (Error scope)
-reportError context readmeKey range link =
+reportError : { projectName : String, version : String } -> Rule.ReadmeKey -> Node Link -> List (Error scope)
+reportError context readmeKey (Node range link) =
     case link.file of
         Link.ModuleTarget moduleName ->
             [ Rule.errorForReadmeWithFix readmeKey

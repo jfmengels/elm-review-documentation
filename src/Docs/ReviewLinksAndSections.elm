@@ -590,7 +590,7 @@ findSectionsAndLinks currentModuleName isExposed doc =
 
         links : List MaybeExposedLink
         links =
-            linksIn currentModuleName doc.startRow doc.content
+            Link.findLinks (doc.startRow - 1) currentModuleName doc.content
                 |> List.map
                     (\link ->
                         MaybeExposedLink
@@ -603,17 +603,6 @@ findSectionsAndLinks currentModuleName isExposed doc =
     { titleSections = titleSections
     , links = links
     }
-
-
-linksIn : ModuleName -> Int -> Documentation -> List (Node Link.Link)
-linksIn currentModuleName startRow documentation =
-    documentation
-        |> String.lines
-        |> List.indexedMap
-            (\lineNumber lineContent ->
-                Link.findLinks (startRow + lineNumber - 1) currentModuleName lineContent
-            )
-        |> List.concat
 
 
 

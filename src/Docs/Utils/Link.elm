@@ -78,17 +78,23 @@ moduleNameSegmentParser =
 findLinks : Int -> ModuleName -> String -> List (Node Link)
 findLinks row moduleName string =
     string
-        |> Parser.run (findParser (linkParser row moduleName))
-        |> Result.withDefault []
-        |> List.filterMap identity
+        |> String.lines
         |> List.indexedMap
-            (\index (Node { start, end } link) ->
-                Node
-                    { start = { row = start.row, column = start.column - index }
-                    , end = { row = end.row, column = end.column - index }
-                    }
-                    link
+            (\lineNumber lineContent ->
+                lineContent
+                    |> Parser.run (findParser (linkParser (lineNumber + row) moduleName))
+                    |> Result.withDefault []
+                    |> List.filterMap identity
+                    |> List.indexedMap
+                        (\index (Node { start, end } link) ->
+                            Node
+                                { start = { row = start.row, column = start.column - index }
+                                , end = { row = end.row, column = end.column - index }
+                                }
+                                link
+                        )
             )
+        |> List.concat
 
 
 linkParser : Int -> ModuleName -> Parser (Maybe (Node Link))
