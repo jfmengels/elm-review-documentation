@@ -25,6 +25,7 @@ all =
         , duplicateSectionsTests
         , unnecessaryLinksTests
         , externalResourcesTests
+        , linksWithAltTextTests
         ]
 
 
@@ -323,7 +324,7 @@ a = 2
         , test "should report multiple links on the same line" <|
             \() ->
                 """module A exposing (a)
-{-| [link](#b) [link](#c)
+{-| [link](#b) [link](#c) [link](#d) [link](#e)
 -}
 a = 2
 """
@@ -338,6 +339,16 @@ a = 2
                             { message = "Link points to a non-existing section or element"
                             , details = [ "This is a dead link." ]
                             , under = "#c"
+                            }
+                        , Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#d"
+                            }
+                        , Review.Test.error
+                            { message = "Link points to a non-existing section or element"
+                            , details = [ "This is a dead link." ]
+                            , under = "#e"
                             }
                         ]
         ]
@@ -973,6 +984,40 @@ a = 2
                             , under = "./image.png"
                             }
                         ]
+        ]
+
+
+linksWithAltTextTests : Test
+linksWithAltTextTests =
+    describe "Alt text in links"
+        [ test "should report links to unknown modules in links with alt text after a slug" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+
+{-| [link](Unknown#section Alt text)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "Unknown#section"
+                            }
+                        ]
+        , test "should ignore alt text in links with slug" <|
+            \() ->
+                """module A exposing (a, b)
+b = 1
+
+{-| [link](#b Alt text)
+-}
+a = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
 
 

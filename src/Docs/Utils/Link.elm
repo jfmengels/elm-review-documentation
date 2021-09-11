@@ -48,7 +48,7 @@ type SubTarget
 idParser : Char -> Parser String
 idParser endChar =
     Parser.succeed ()
-        |. Parser.chompWhile (\c -> c /= endChar)
+        |. Parser.chompWhile (\c -> c /= endChar && c /= ' ')
         |> Parser.getChompedString
 
 
@@ -88,8 +88,8 @@ findLinks row moduleName string =
                     |> List.indexedMap
                         (\index (Node { start, end } link) ->
                             Node
-                                { start = { row = start.row, column = start.column - index }
-                                , end = { row = end.row, column = end.column - index }
+                                { start = { row = start.row, column = start.column - (index * 2) }
+                                , end = { row = end.row, column = end.column - (index * 2) }
                                 }
                                 link
                         )
@@ -174,12 +174,11 @@ inlineLinkParser =
         |= Parser.getPosition
         |= pathParser ')'
         |= Parser.getPosition
-        |. Parser.token ")"
+        |. Parser.chompUntil ")"
+        |. Parser.symbol ")"
 
 
 {-| Parses things like:
-
-    This is a [link].
 
     [link]: #Link
 
