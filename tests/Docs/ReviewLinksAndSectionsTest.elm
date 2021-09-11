@@ -138,11 +138,11 @@ a = 2
                             , under = "#b"
                             }
                         ]
-        , test "should not report link shortcuts that link to existing sections" <|
+        , test "should not report link references that target existing sections" <|
             \() ->
                 """module A exposing (a, b)
 b = 1
-{-| this is a [link] shortcut?
+{-| this is a [link] reference
 
 [link]: #b
 -}
@@ -150,10 +150,10 @@ a = 2
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
-        , test "should report link shortcuts that link to missing sections" <|
+        , test "should report link references that link to missing sections" <|
             \() ->
                 """module A exposing (..)
-{-| this is a [link] shortcut?
+{-| this is a [link] reference
 
 [link]: #b
 

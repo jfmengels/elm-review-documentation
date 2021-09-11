@@ -108,7 +108,7 @@ linkParser row moduleName =
                     Parser.oneOf
                         [ inlineLinkParser
                             |> Parser.map Just
-                        , shortcutLinkParser
+                        , referenceLinkParser
                             |> Parser.map Just
                         , Parser.succeed Nothing
                         ]
@@ -183,8 +183,8 @@ inlineLinkParser =
     [link]: #Link
 
 -}
-shortcutLinkParser : Parser (Node Link)
-shortcutLinkParser =
+referenceLinkParser : Parser (Node Link)
+referenceLinkParser =
     Parser.succeed
         (\( startRow, startCol ) link ( endRow, endCol ) ->
             Node
