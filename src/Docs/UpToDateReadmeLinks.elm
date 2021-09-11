@@ -146,7 +146,7 @@ reportError context readmeKey (Node range link) =
             else
                 []
 
-        Link.PackagesTarget { name, version } subTarget ->
+        Link.PackagesTarget { name, version, subTarget } ->
             if context.projectName == name && context.version /= version then
                 [ Rule.errorForReadmeWithFix readmeKey
                     { message = "Link does not point to the current version of the package"

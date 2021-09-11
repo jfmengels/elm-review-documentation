@@ -36,7 +36,7 @@ type alias Link =
 type FileTarget
     = ModuleTarget ModuleName
     | ReadmeTarget
-    | PackagesTarget { name : String, version : String } SubTarget
+    | PackagesTarget { name : String, version : String, subTarget : SubTarget }
     | External String
 
 
@@ -148,7 +148,7 @@ normalizeModuleName currentModuleName link =
         ReadmeTarget ->
             link
 
-        PackagesTarget _ _ ->
+        PackagesTarget _ ->
             link
 
         External _ ->
@@ -265,7 +265,7 @@ parseSubTarget match =
                         Nothing ->
                             ReadmeSubTarget
             in
-            Just (PackagesTarget { name = authorAndPackage, version = linkVersion } subTarget)
+            Just (PackagesTarget { name = authorAndPackage, version = linkVersion, subTarget = subTarget })
 
         _ ->
             Nothing

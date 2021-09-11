@@ -637,7 +637,7 @@ errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposed
         Link.ReadmeTarget ->
             reportErrorForReadme sectionsPerModule fileLinksAndSections.fileKey maybeExposedLink
 
-        Link.PackagesTarget { name, version } subTarget ->
+        Link.PackagesTarget { name, version, subTarget } ->
             case projectContext.packageNameAndVersion of
                 Just currentPackage ->
                     if name == currentPackage.name && (version == "latest" || version == currentPackage.version) then
