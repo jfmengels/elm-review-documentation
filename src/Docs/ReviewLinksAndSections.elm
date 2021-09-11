@@ -637,20 +637,25 @@ errorForFile projectContext sectionsPerModule fileLinksAndSections (MaybeExposed
         Link.ReadmeTarget ->
             reportErrorForReadme sectionsPerModule fileLinksAndSections.fileKey maybeExposedLink
 
-        Link.PackagesTarget { name, version, subTarget } ->
-            case projectContext.packageNameAndVersion of
-                Just currentPackage ->
-                    if name == currentPackage.name && (version == "latest" || version == currentPackage.version) then
-                        reportErrorForCurrentPackageSubTarget projectContext sectionsPerModule fileLinksAndSections maybeExposedLink subTarget
-
-                    else
-                        Nothing
-
-                Nothing ->
-                    Nothing
+        Link.PackagesTarget packageTarget ->
+            reportErrorsForPackagesTarget projectContext sectionsPerModule fileLinksAndSections maybeExposedLink packageTarget
 
         Link.External target ->
             reportErrorsForExternalTarget (projectContext.packageNameAndVersion == Nothing) fileLinksAndSections.fileKey maybeExposedLink.linkRange target
+
+
+reportErrorsForPackagesTarget : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLinkData -> { name : String, version : String, subTarget : Link.SubTarget } -> Maybe (Rule.Error scope)
+reportErrorsForPackagesTarget projectContext sectionsPerModule fileLinksAndSections maybeExposedLink { name, version, subTarget } =
+    case projectContext.packageNameAndVersion of
+        Just currentPackage ->
+            if name == currentPackage.name && (version == "latest" || version == currentPackage.version) then
+                reportErrorForCurrentPackageSubTarget projectContext sectionsPerModule fileLinksAndSections maybeExposedLink subTarget
+
+            else
+                Nothing
+
+        Nothing ->
+            Nothing
 
 
 reportErrorForCurrentPackageSubTarget : ProjectContext -> Dict ModuleName (List Section) -> FileLinksAndSections -> MaybeExposedLinkData -> Link.SubTarget -> Maybe (Rule.Error scope)
