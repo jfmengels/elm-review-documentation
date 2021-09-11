@@ -10,9 +10,7 @@ import Docs.Utils.Link as Link exposing (Link)
 import Elm.Package
 import Elm.Project
 import Elm.Syntax.Node exposing (Node(..))
-import Elm.Syntax.Range exposing (Range)
 import Elm.Version
-import Regex exposing (Regex)
 import Review.Fix as Fix
 import Review.Rule as Rule exposing (Error, Rule)
 
