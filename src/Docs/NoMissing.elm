@@ -7,13 +7,17 @@ module Docs.NoMissing exposing
 {-|
 
 @docs rule
+
+
+## Configuration
+
 @docs What, everything, onlyExposed
 @docs From, allModules, exposedModules
 
 
 ## When (not) to enable this rule
 
-This rule is useful when you care about having a thoroughly documented project.
+This rule is useful when you care about having a thoroughly or increasingly documented project.
 It is also useful when you write Elm packages, in order to know about missing documentation before you publish.
 
 
@@ -38,7 +42,7 @@ import Review.Rule as Rule exposing (Error, Rule)
 import Set exposing (Set)
 
 
-{-| Reports missing documentation for functions and types
+{-| Reports missing or empty documentation for functions and types.
 
     import Docs.NoMissing exposing (exposedModules, onlyExposed)
 
@@ -52,12 +56,39 @@ import Set exposing (Set)
 
 ## Fail
 
+The rule will report when documentation is missing
+
     someFunction =
         great Things
+
+or when documentation is present but empty.
 
     {-| -}
     someOtherFunction =
         other (great Things)
+
+The reasoning for not allowing empty documentation is because of how people consume documentation can vary, and for some
+of those ways, empty documentation doesn't lead to a nice experience. For instance, if you are looking at Elm code in
+your IDE and want to lookup the definition of a function, an empty documentation will give you no information beyond the
+type annotation.
+
+When I write documentation for a module, I try to tell a story or somehow phrase it as a tutorial, so that people can
+learn the easier concepts first, and gradually as they read more and learn more about the ideas and concepts, I will
+assume that they read most of the documentation above.
+
+But for every function or type, I also imagine that they'll be read on their own from an IDE for instance, and therefore
+try to make the documentation as light as possible while giving a helpful description and an example, without relying
+too much on the assumption that the user has read the rest of the module.
+
+A common case where people don't give an example is when exposing functions such as `map2`, `map3`, `map4`, etc., usually
+documented in that order and next to each other. While `map2` is usually properly documented, the following ones would
+have empty documentation, which I believe would be because the author assumes that the user went through the documentation on
+the package registry and has read the documentation for `map2`. But if someone unfamiliar with Elm or an API looks up
+`map3`, they may have trouble finding the information they were looking for.
+
+I would recommend to make the documentation for each element as understandable out of context as possible. At the very least,
+I would advise to say something like "This function is like `map2` but with X arguments" with a link to `map2`, so that
+relevant information _can_ be found without too much effort.
 
 
 ## Success
@@ -100,14 +131,15 @@ type Exposed
     | ExplicitList (Set String)
 
 
-{-| Which elements from a module should be documented.
+{-| Which elements from a module should be documented. Possible options are [`everything`](#everything) in a module or
+only the exposed elements of a module ([`onlyExposed`](#onlyExposed)).
 -}
 type What
     = Everything
     | OnlyExposed
 
 
-{-| Everything function and type from a module should be documented. The module definition should also be documented.
+{-| Every function and type from a module should be documented. The module definition should also be documented.
 -}
 everything : What
 everything =
@@ -121,7 +153,8 @@ onlyExposed =
     OnlyExposed
 
 
-{-| Which modules should be documented.
+{-| Which modules should be documented. Possible options are [`allModules`](#allModules) of a project or
+only the [`exposedModules`](#exposedModules) (only for packages).
 -}
 type From
     = AllModules
@@ -129,24 +162,21 @@ type From
 
 
 {-| All modules from the project should be documented.
-
-You might want to use [`ignoreErrorsForDirectories`](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/Review-Rule#ignoreErrorsForDirectories) to ignore the source directories.
-
 -}
 allModules : From
 allModules =
     AllModules
 
 
-{-| Only exposed modules from the project should be documented.
+{-| Only exposed modules from the project will need to be documented.
 
-If your project is an application, you should not use this option. An application does not expose modules which would mean there are not modules to report.
-
-You might want to use [`ignoreErrorsForDirectories`](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/Review-Rule#ignoreErrorsForDirectories) to ignore the source directories.
+If your project is an application, you should not use this option. An application does not expose modules which would
+mean there isn't any module to report errors for.
 
 -}
 exposedModules : From
 exposedModules =
+    -- TODO Report a global error if used inside an application
     ExposedModules
 
 
