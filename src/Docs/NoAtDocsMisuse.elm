@@ -13,6 +13,9 @@ import Review.Rule as Rule exposing (Rule)
 
 
 -- TODO Rename to Docs.ReviewAtDocs?
+-- TODO Report errors for @docs references on the first line
+-- TODO Report errors for @docs references that don't begin at the beginning of a line
+-- TODO Report errors for @docs references in declaration comments
 
 
 {-| Reports... REPLACEME
@@ -83,11 +86,27 @@ commentsVisitor nodes context =
     case find (Node.value >> String.startsWith "{-|") nodes of
         Just moduleDocs ->
             ( []
-            , context
+            , { context
+                | docsReferences =
+                    moduleDocs
+                        |> Node.value
+                        |> String.lines
+                        |> List.drop 1
+                        |> indexedConcatMap collectDocStatements
+              }
             )
 
         Nothing ->
             ( [], context )
+
+
+collectDocStatements : Int -> String -> List (Node String)
+collectDocStatements lineNumber string =
+    if String.startsWith "@docs " string then
+        []
+
+    else
+        []
 
 
 
