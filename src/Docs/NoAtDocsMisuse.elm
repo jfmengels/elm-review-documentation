@@ -6,6 +6,7 @@ module Docs.NoAtDocsMisuse exposing (rule)
 
 -}
 
+import Elm.Syntax.Declaration exposing (Declaration)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Review.Rule as Rule exposing (Rule)
 
@@ -52,6 +53,7 @@ rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoAtDocsMisuse" initialContext
         |> Rule.withCommentsVisitor commentsVisitor
+        |> Rule.withDeclarationListVisitor declarationListVisitor
         |> Rule.fromModuleRuleSchema
 
 
@@ -72,6 +74,10 @@ initialContext =
     }
 
 
+
+-- COMMENTS VISITOR
+
+
 commentsVisitor : List (Node String) -> Context -> ( List (Rule.Error {}), Context )
 commentsVisitor nodes context =
     case find (Node.value >> String.startsWith "{-|") nodes of
@@ -89,6 +95,15 @@ commentsVisitor nodes context =
 
         Nothing ->
             ( [], context )
+
+
+
+-- DECLARATION LIST VISITOR
+
+
+declarationListVisitor : List (Node Declaration) -> Context -> ( List (Rule.Error {}), Context )
+declarationListVisitor nodes context =
+    ( [], context )
 
 
 find : (a -> Bool) -> List a -> Maybe a
