@@ -12,7 +12,7 @@ import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range as Range
 import Parser exposing ((|.), (|=), Parser)
 import Review.Rule as Rule exposing (Rule)
-import Set
+import Set exposing (Set)
 
 
 
@@ -153,7 +153,13 @@ docsItemParser row =
 
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
+    let
+        exposed : Set String
+        exposed =
+            Set.fromList []
+    in
     context.docsReferences
+        |> List.filter (\(Node _ name) -> not (Set.member name exposed))
         |> List.map
             (\(Node range name) ->
                 Rule.error
