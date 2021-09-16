@@ -8,6 +8,7 @@ module Docs.NoAtDocsMisuse exposing (rule)
 
 import Elm.Syntax.Declaration exposing (Declaration)
 import Elm.Syntax.Exposing as Exposing exposing (Exposing)
+import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.Node as Node exposing (Node(..))
 import Elm.Syntax.Range as Range
 import Parser exposing ((|.), (|=), Parser)
@@ -60,6 +61,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoAtDocsMisuse" initialContext
+        |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withDeclarationListVisitor (\nodes context -> ( declarationListVisitor nodes context, context ))
         |> Rule.fromModuleRuleSchema
@@ -76,6 +78,15 @@ initialContext =
     { exposed = Exposing.All Range.emptyRange
     , docsReferences = []
     }
+
+
+
+-- MODULE DEFINITION VISITOR
+
+
+moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
+moduleDefinitionVisitor node context =
+    ( [], { context | exposed = Module.exposingList (Node.value node) } )
 
 
 
