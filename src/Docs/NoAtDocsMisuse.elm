@@ -96,14 +96,18 @@ commentsVisitor nodes context =
 
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
-    [ Rule.error
-        { message = "Found @docs reference for non-exposed `unknown`"
-        , details = [ "REPLACEME" ]
-        }
-        { start = { row = 4, column = 13 }
-        , end = { row = 4, column = 20 }
-        }
+    [ { start = { row = 4, column = 13 }
+      , end = { row = 4, column = 20 }
+      }
     ]
+        |> List.map
+            (\range ->
+                Rule.error
+                    { message = "Found @docs reference for non-exposed `unknown`"
+                    , details = [ "REPLACEME" ]
+                    }
+                    range
+            )
 
 
 find : (a -> Bool) -> List a -> Maybe a
