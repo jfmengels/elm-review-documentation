@@ -85,15 +85,14 @@ initialContext =
 commentsVisitor : List (Node String) -> Context -> ( List nothing, Context )
 commentsVisitor nodes context =
     case find (Node.value >> String.startsWith "{-|") nodes of
-        Just moduleDocs ->
+        Just (Node range comment) ->
             ( []
             , { context
                 | docsReferences =
-                    moduleDocs
-                        |> Node.value
+                    comment
                         |> String.lines
                         |> List.drop 1
-                        |> indexedConcatMap collectDocStatements
+                        |> indexedConcatMap (\index -> collectDocStatements (index + range.start.row))
               }
             )
 
