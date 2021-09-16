@@ -8,7 +8,9 @@ module Docs.NoAtDocsMisuse exposing (rule)
 
 import Elm.Syntax.Declaration exposing (Declaration)
 import Elm.Syntax.Node as Node exposing (Node(..))
+import Parser exposing ((|.), (|=), Parser)
 import Review.Rule as Rule exposing (Rule)
+import Set
 
 
 
@@ -108,6 +110,28 @@ collectDocStatements lineNumber string =
 
     else
         []
+
+
+docsParser startRow =
+    Parser.succeed identity
+        |. Parser.keyword "@docs"
+        |. Parser.spaces
+        |= Parser.sequence
+            { start = ""
+            , separator = ","
+            , end = ""
+            , spaces = Parser.spaces
+            , item = docsItemParser
+            , trailing = Parser.Forbidden
+            }
+
+
+docsItemParser =
+    Parser.variable
+        { start = Char.isAlpha
+        , inner = \c -> Char.isAlphaNum c || c == '_'
+        , reserved = Set.empty
+        }
 
 
 
