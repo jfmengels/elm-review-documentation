@@ -16,6 +16,7 @@ import Review.Rule as Rule exposing (Rule)
 -- TODO Report errors for @docs references on the first line
 -- TODO Report errors for @docs references that don't begin at the beginning of a line
 -- TODO Report errors for @docs references in declaration comments
+-- TODO Report errors for duplicate @docs references
 
 
 {-| Reports... REPLACEME
