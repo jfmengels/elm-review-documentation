@@ -7,7 +7,9 @@ module Docs.NoAtDocsMisuse exposing (rule)
 -}
 
 import Elm.Syntax.Declaration exposing (Declaration)
+import Elm.Syntax.Exposing as Exposing exposing (Exposing)
 import Elm.Syntax.Node as Node exposing (Node(..))
+import Elm.Syntax.Range as Range
 import Parser exposing ((|.), (|=), Parser)
 import Review.Rule as Rule exposing (Rule)
 import Set
@@ -64,13 +66,15 @@ rule =
 
 
 type alias Context =
-    { docsReferences : List (Node String)
+    { exposed : Exposing
+    , docsReferences : List (Node String)
     }
 
 
 initialContext : Context
 initialContext =
-    { docsReferences =
+    { exposed = Exposing.All Range.emptyRange
+    , docsReferences =
         [ Node
             { start = { row = 4, column = 13 }
             , end = { row = 4, column = 23 }
