@@ -50,13 +50,20 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 -}
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "Docs.NoAtDocsMisuse" ()
+    Rule.newModuleRuleSchema "Docs.NoAtDocsMisuse" initialContext
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.fromModuleRuleSchema
 
 
 type alias Context =
-    ()
+    { docsReferences : List (Node String)
+    }
+
+
+initialContext : Context
+initialContext =
+    { docsReferences = []
+    }
 
 
 commentsVisitor : List (Node String) -> Context -> ( List (Rule.Error {}), Context )
