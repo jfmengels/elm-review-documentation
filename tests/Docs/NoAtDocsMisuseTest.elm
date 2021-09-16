@@ -10,12 +10,12 @@ all =
     describe "Docs.NoAtDocsMisuse"
         [ test "should not report an error when all @docs are correct" <|
             \() ->
-                """module A exposing (D, T, a, b, d)
+                """module A exposing (D, T, a, b, c)
 
 {-| Bla bla
 
 @docs T, a, b
-@docs d, D
+@docs c, D
 -}
 import B
 a = 1
