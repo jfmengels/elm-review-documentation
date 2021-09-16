@@ -6,7 +6,7 @@ module Docs.NoAtDocsMisuse exposing (rule)
 
 -}
 
-import Elm.Syntax.Node as Node exposing (Node)
+import Elm.Syntax.Node as Node exposing (Node(..))
 import Review.Rule as Rule exposing (Rule)
 
 
@@ -62,7 +62,13 @@ type alias Context =
 
 initialContext : Context
 initialContext =
-    { docsReferences = []
+    { docsReferences =
+        [ Node
+            { start = { row = 4, column = 13 }
+            , end = { row = 4, column = 20 }
+            }
+            "unknown"
+        ]
     }
 
 
