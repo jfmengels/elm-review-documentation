@@ -112,6 +112,7 @@ collectDocStatements lineNumber string =
         []
 
 
+docsParser : Int -> Parser (List (Node String))
 docsParser startRow =
     Parser.succeed identity
         |. Parser.keyword "@docs"
@@ -121,17 +122,28 @@ docsParser startRow =
             , separator = ","
             , end = ""
             , spaces = Parser.spaces
-            , item = docsItemParser
+            , item = docsItemParser startRow
             , trailing = Parser.Forbidden
             }
 
 
-docsItemParser =
-    Parser.variable
-        { start = Char.isAlpha
-        , inner = \c -> Char.isAlphaNum c || c == '_'
-        , reserved = Set.empty
-        }
+docsItemParser : Int -> Parser (Node String)
+docsItemParser row =
+    Parser.succeed
+        (\startColumn name endColumn ->
+            Node
+                { start = { row = row, column = startColumn }
+                , end = { row = row, column = endColumn }
+                }
+                name
+        )
+        |= Parser.getCol
+        |= Parser.variable
+            { start = Char.isAlpha
+            , inner = \c -> Char.isAlphaNum c || c == '_'
+            , reserved = Set.empty
+            }
+        |= Parser.getCol
 
 
 
