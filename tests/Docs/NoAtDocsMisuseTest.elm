@@ -64,4 +64,38 @@ type NotExposed = NotExposed
                             }
                             |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 23 } }
                         ]
+        , test "should not report an error when an element has a @docs reference and is exposed with exposing (..)" <|
+            \() ->
+                """module A exposing (..)
+
+{-| Bla bla
+@docs a, b, Exposed
+-}
+import B
+a = 1
+b = 2
+type Exposed = Exposed
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report an error when an unknown element has a @docs reference, with exposing (..)" <|
+            \() ->
+                """module A exposing (..)
+
+{-| Bla bla
+@docs a, b, Exposed
+-}
+import B
+a = 1
+b = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found @docs reference for non-exposed `Exposed`"
+                            , details = [ "REPLACEME" ]
+                            , under = "Exposed"
+                            }
+                            |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 20 } }
+                        ]
         ]
