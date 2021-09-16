@@ -119,3 +119,12 @@ find predicate list =
 
             else
                 find predicate rest
+
+
+indexedConcatMap : (Int -> a -> List b) -> List a -> List b
+indexedConcatMap function list =
+    List.foldr
+        (\a ( index, acc ) -> ( index + 1, List.append (function index a) acc ))
+        ( 0, [] )
+        list
+        |> Tuple.second
