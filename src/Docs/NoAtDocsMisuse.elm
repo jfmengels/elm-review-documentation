@@ -6,7 +6,7 @@ module Docs.NoAtDocsMisuse exposing (rule)
 
 -}
 
-import Elm.Syntax.Declaration exposing (Declaration)
+import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Exposing as Exposing exposing (Exposing)
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.Node as Node exposing (Node(..))
@@ -162,7 +162,8 @@ declarationListVisitor nodes context =
         exposed =
             case context.exposed of
                 Exposing.All _ ->
-                    Set.fromList [ "a", "b", "d", "T", "D" ]
+                    List.filterMap declarationName nodes
+                        |> Set.fromList
 
                 Exposing.Explicit explicit ->
                     List.map topLevelExposeName explicit
@@ -178,6 +179,28 @@ declarationListVisitor nodes context =
                     }
                     range
             )
+
+
+declarationName : Node Declaration -> Maybe String
+declarationName node =
+    case Node.value node of
+        Declaration.FunctionDeclaration function ->
+            function.declaration |> Node.value |> .name |> Node.value |> Just
+
+        Declaration.AliasDeclaration typeAlias ->
+            Just (Node.value typeAlias.name)
+
+        Declaration.CustomTypeDeclaration type_ ->
+            Just (Node.value type_.name)
+
+        Declaration.PortDeclaration signature ->
+            signature.name |> Node.value |> Just
+
+        Declaration.InfixDeclaration { operator } ->
+            Just (Node.value operator)
+
+        Declaration.Destructuring _ _ ->
+            Nothing
 
 
 topLevelExposeName : Node Exposing.TopLevelExpose -> String
