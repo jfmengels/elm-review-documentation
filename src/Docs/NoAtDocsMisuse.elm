@@ -78,18 +78,11 @@ initialContext =
 -- COMMENTS VISITOR
 
 
-commentsVisitor : List (Node String) -> Context -> ( List (Rule.Error {}), Context )
+commentsVisitor : List (Node String) -> Context -> ( List nothing, Context )
 commentsVisitor nodes context =
     case find (Node.value >> String.startsWith "{-|") nodes of
         Just moduleDocs ->
-            ( [ Rule.error
-                    { message = "Found @docs reference for non-exposed `unknown`"
-                    , details = [ "REPLACEME" ]
-                    }
-                    { start = { row = 4, column = 13 }
-                    , end = { row = 4, column = 20 }
-                    }
-              ]
+            ( []
             , context
             )
 
@@ -103,7 +96,14 @@ commentsVisitor nodes context =
 
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
-    []
+    [ Rule.error
+        { message = "Found @docs reference for non-exposed `unknown`"
+        , details = [ "REPLACEME" ]
+        }
+        { start = { row = 4, column = 13 }
+        , end = { row = 4, column = 20 }
+        }
+    ]
 
 
 find : (a -> Bool) -> List a -> Maybe a
