@@ -53,7 +53,7 @@ rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.NoAtDocsMisuse" initialContext
         |> Rule.withCommentsVisitor commentsVisitor
-        |> Rule.withDeclarationListVisitor declarationListVisitor
+        |> Rule.withDeclarationListVisitor (\nodes context -> ( declarationListVisitor nodes context, context ))
         |> Rule.fromModuleRuleSchema
 
 
@@ -101,9 +101,9 @@ commentsVisitor nodes context =
 -- DECLARATION LIST VISITOR
 
 
-declarationListVisitor : List (Node Declaration) -> Context -> ( List (Rule.Error {}), Context )
+declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
-    ( [], context )
+    []
 
 
 find : (a -> Bool) -> List a -> Maybe a
