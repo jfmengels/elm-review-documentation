@@ -74,13 +74,7 @@ type alias Context =
 initialContext : Context
 initialContext =
     { exposed = Exposing.All Range.emptyRange
-    , docsReferences =
-        [ Node
-            { start = { row = 4, column = 13 }
-            , end = { row = 4, column = 23 }
-            }
-            "notExposed"
-        ]
+    , docsReferences = []
     }
 
 
