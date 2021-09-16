@@ -105,11 +105,8 @@ commentsVisitor nodes context =
 
 collectDocStatements : Int -> String -> List (Node String)
 collectDocStatements lineNumber string =
-    if String.startsWith "@docs " string then
-        []
-
-    else
-        []
+    Parser.run (docsParser lineNumber) string
+        |> Result.withDefault []
 
 
 docsParser : Int -> Parser (List (Node String))
