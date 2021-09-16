@@ -67,9 +67,9 @@ initialContext =
     { docsReferences =
         [ Node
             { start = { row = 4, column = 13 }
-            , end = { row = 4, column = 20 }
+            , end = { row = 4, column = 23 }
             }
-            "unknown"
+            "notExposed"
         ]
     }
 
@@ -100,7 +100,7 @@ declarationListVisitor nodes context =
         |> List.map
             (\(Node range name) ->
                 Rule.error
-                    { message = "Found @docs reference for non-exposed `unknown`"
+                    { message = "Found @docs reference for non-exposed `" ++ name ++ "`"
                     , details = [ "REPLACEME" ]
                     }
                     range

@@ -39,8 +39,9 @@ notExposed = 3
                         [ Review.Test.error
                             { message = "Found @docs reference for non-exposed `notExposed`"
                             , details = [ "REPLACEME" ]
-                            , under = "unknown"
+                            , under = "notExposed"
                             }
+                            |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 23 } }
                         ]
         , test "should report an error when an element has a @docs reference but type is not exposed" <|
             \() ->
