@@ -156,7 +156,7 @@ declarationListVisitor nodes context =
     let
         exposed : Set String
         exposed =
-            Set.fromList []
+            Set.fromList [ "a", "b", "d", "T", "D" ]
     in
     context.docsReferences
         |> List.filter (\(Node _ name) -> not (Set.member name exposed))
