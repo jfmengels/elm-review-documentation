@@ -165,7 +165,8 @@ declarationListVisitor nodes context =
                     Set.fromList [ "a", "b", "d", "T", "D" ]
 
                 Exposing.Explicit explicit ->
-                    Set.fromList [ "a", "b", "d", "T", "D" ]
+                    List.map topLevelExposeName explicit
+                        |> Set.fromList
     in
     context.docsReferences
         |> List.filter (\(Node _ name) -> not (Set.member name exposed))
@@ -177,6 +178,22 @@ declarationListVisitor nodes context =
                     }
                     range
             )
+
+
+topLevelExposeName : Node Exposing.TopLevelExpose -> String
+topLevelExposeName node =
+    case Node.value node of
+        Exposing.InfixExpose name ->
+            name
+
+        Exposing.FunctionExpose name ->
+            name
+
+        Exposing.TypeOrAliasExpose name ->
+            name
+
+        Exposing.TypeExpose { name } ->
+            name
 
 
 find : (a -> Bool) -> List a -> Maybe a
