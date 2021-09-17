@@ -11,7 +11,7 @@ when inside the directory containing this file.
 
 -}
 
-import Docs.NoAtDocsMisuse
+import Docs.ReviewAtDocs
 import Docs.NoMissing exposing (exposedModules, onlyExposed)
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
@@ -21,7 +21,7 @@ import Review.Rule exposing (Rule)
 config : List Rule
 config =
     [ Docs.NoMissing.rule
-    , Docs.NoAtDocsMisuse.rule
+    , Docs.ReviewAtDocs.rule
         { document = onlyExposed
         , from = exposedModules
         }

@@ -1,13 +1,13 @@
-module Docs.NoAtDocsMisuseTest exposing (all)
+module Docs.ReviewAtDocsTest exposing (all)
 
-import Docs.NoAtDocsMisuse exposing (rule)
+import Docs.ReviewAtDocs exposing (rule)
 import Review.Test
 import Test exposing (Test, describe, test)
 
 
 all : Test
 all =
-    describe "Docs.NoAtDocsMisuse"
+    describe "Docs.ReviewAtDocs"
         [ test "should not report an error when all @docs are correct" <|
             \() ->
                 """module A exposing (D, T, a, b, c)

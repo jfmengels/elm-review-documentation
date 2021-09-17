@@ -5,7 +5,7 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 
 ## Provided rules
 
-- [`Docs.NoAtDocsMisuse`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoAtDocsMisuse) - Reports REPLACEME.
+- [`Docs.ReviewAtDocs`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewAtDocs) - Reports REPLACEME.
 - [`Docs.NoMissing`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoMissing) - Reports missing documentation for functions and types.
 - [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections) - Reports problems with links and sections in Elm projects.
 - [🔧 `Docs.UpToDateReadmeLinks`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-UpToDateReadmeLinks "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
@@ -15,8 +15,8 @@ Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-revi
 ```elm
 module ReviewConfig exposing (config)
 
-import Docs.NoAtDocsMisuse
 import Docs.NoMissing exposing (exposedModules, onlyExposed)
+import Docs.ReviewAtDocs
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
 import Review.Rule exposing (Rule)
@@ -25,12 +25,12 @@ import Review.Rule exposing (Rule)
 config : List Rule
 config =
     [ Docs.NoMissing.rule
-    , Docs.NoAtDocsMisuse.rule
         { document = onlyExposed
         , from = exposedModules
         }
-    , Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
+    , Docs.ReviewAtDocs.rule
+    , Docs.UpToDateReadmeLinks.rule
     ]
 ```
 

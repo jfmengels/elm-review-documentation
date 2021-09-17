@@ -1,4 +1,4 @@
-module Docs.NoAtDocsMisuse exposing (rule)
+module Docs.ReviewAtDocs exposing (rule)
 
 {-|
 
@@ -17,7 +17,6 @@ import Set exposing (Set)
 
 
 
--- TODO Rename to Docs.ReviewAtDocs?
 -- TODO Report errors for @docs references on the first line
 -- TODO Report errors for @docs references that don't begin at the beginning of a line
 -- TODO Report errors for @docs references in declaration comments
@@ -27,7 +26,7 @@ import Set exposing (Set)
 {-| Reports... REPLACEME
 
     config =
-        [ Docs.NoAtDocsMisuse.rule
+        [ Docs.ReviewAtDocs.rule
         ]
 
 
@@ -54,13 +53,13 @@ This rule is not useful when REPLACEME.
 You can try this rule out by running the following command:
 
 ```bash
-elm-review --template jfmengels/elm-review-documentation/example --rules Docs.NoAtDocsMisuse
+elm-review --template jfmengels/elm-review-documentation/example --rules Docs.ReviewAtDocs
 ```
 
 -}
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "Docs.NoAtDocsMisuse" initialContext
+    Rule.newModuleRuleSchema "Docs.ReviewAtDocs" initialContext
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withDeclarationListVisitor (\nodes context -> ( declarationListVisitor nodes context, context ))
