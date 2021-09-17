@@ -132,4 +132,22 @@ a = 1
                             , under = "@docs"
                             }
                         ]
+        , test "should report an error when encountering indented @docs" <|
+            \() ->
+                """module A exposing (a)
+
+{-|
+    @docs a
+-}
+import B
+a = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found indented @docs"
+                            , details = [ "@docs need to be at the beginning of a line, otherwise they can lead to broken documentation once published. on the first line will make for a broken documentation once published. Please remove the leading spaces" ]
+                            , under = "@docs"
+                            }
+                        ]
         ]

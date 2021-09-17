@@ -17,7 +17,6 @@ import Set exposing (Set)
 
 
 
--- TODO Report errors for @docs references that don't begin at the beginning of a line
 -- TODO Report errors for @docs references in declaration comments
 -- TODO Report errors for duplicate @docs references
 
@@ -97,8 +96,16 @@ commentsVisitor nodes context =
         Just (Node range comment) ->
             case String.lines comment of
                 firstLine :: restOfLines ->
-                    ( reportDocsOnFirstLine range.start.row firstLine
-                    , { context | docsReferences = indexedConcatMap (\index -> collectDocStatements (index + range.start.row)) restOfLines }
+                    let
+                        ( linesThatStartWithAtDocs, linesThatDontStartWithAtDocs ) =
+                            restOfLines
+                                |> List.indexedMap (\index line -> ( index + range.start.row + 1, line ))
+                                |> List.partition (Tuple.second >> String.startsWith "@docs ")
+                    in
+                    ( List.append
+                        (reportDocsOnFirstLine range.start.row firstLine)
+                        (List.concatMap reportIndentedDocs linesThatDontStartWithAtDocs)
+                    , { context | docsReferences = List.concatMap collectDocStatements linesThatStartWithAtDocs }
                     )
 
                 [] ->
@@ -110,7 +117,7 @@ commentsVisitor nodes context =
 
 reportDocsOnFirstLine : Int -> String -> List (Rule.Error {})
 reportDocsOnFirstLine lineNumber line =
-    Parser.run (docsOnFirstLineParser lineNumber) line
+    Parser.run (Parser.succeed identity |. Parser.keyword "{-|" |= docsWithSpacesParser lineNumber) line
         |> Result.map
             (\range ->
                 [ Rule.error
@@ -123,27 +130,41 @@ reportDocsOnFirstLine lineNumber line =
         |> Result.withDefault []
 
 
-collectDocStatements : Int -> String -> List (Node String)
-collectDocStatements lineNumber string =
-    Parser.run (docsParser lineNumber) string
+reportIndentedDocs : ( Int, String ) -> List (Rule.Error {})
+reportIndentedDocs ( lineNumber, line ) =
+    Parser.run (docsWithSpacesParser lineNumber) line
+        |> Result.map
+            (\range ->
+                [ Rule.error
+                    { message = "Found indented @docs"
+                    , details = [ "@docs need to be at the beginning of a line, otherwise they can lead to broken documentation once published. on the first line will make for a broken documentation once published. Please remove the leading spaces" ]
+                    }
+                    range
+                ]
+            )
         |> Result.withDefault []
 
 
-docsOnFirstLineParser : Int -> Parser Range
-docsOnFirstLineParser row =
+docsWithSpacesParser : Int -> Parser Range
+docsWithSpacesParser row =
     Parser.succeed
         (\startColumn endColumn ->
             { start = { row = row, column = startColumn }, end = { row = row, column = endColumn } }
         )
-        |. Parser.keyword "{-|"
         |. Parser.spaces
         |= Parser.getCol
         |. Parser.keyword "@docs"
         |= Parser.getCol
 
 
-docsParser : Int -> Parser (List (Node String))
-docsParser startRow =
+collectDocStatements : ( Int, String ) -> List (Node String)
+collectDocStatements ( lineNumber, string ) =
+    Parser.run (docElementsParser lineNumber) string
+        |> Result.withDefault []
+
+
+docElementsParser : Int -> Parser (List (Node String))
+docElementsParser startRow =
     Parser.succeed identity
         |. Parser.keyword "@docs"
         |. Parser.spaces
