@@ -10,14 +10,13 @@ import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Exposing as Exposing exposing (Exposing)
 import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.Node as Node exposing (Node(..))
-import Elm.Syntax.Range as Range
+import Elm.Syntax.Range as Range exposing (Range)
 import Parser exposing ((|.), (|=), Parser)
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
 
 
 
--- TODO Report errors for @docs references on the first line
 -- TODO Report errors for @docs references that don't begin at the beginning of a line
 -- TODO Report errors for @docs references in declaration comments
 -- TODO Report errors for duplicate @docs references
@@ -92,28 +91,55 @@ moduleDefinitionVisitor node context =
 -- COMMENTS VISITOR
 
 
-commentsVisitor : List (Node String) -> Context -> ( List nothing, Context )
+commentsVisitor : List (Node String) -> Context -> ( List (Rule.Error {}), Context )
 commentsVisitor nodes context =
     case find (Node.value >> String.startsWith "{-|") nodes of
         Just (Node range comment) ->
-            ( []
-            , { context
-                | docsReferences =
-                    comment
-                        |> String.lines
-                        |> List.drop 1
-                        |> indexedConcatMap (\index -> collectDocStatements (index + range.start.row))
-              }
-            )
+            case String.lines comment of
+                firstLine :: restOfLines ->
+                    ( reportDocsOnFirstLine range.start.row firstLine
+                    , { context | docsReferences = indexedConcatMap (\index -> collectDocStatements (index + range.start.row)) restOfLines }
+                    )
+
+                [] ->
+                    ( [], context )
 
         Nothing ->
             ( [], context )
+
+
+reportDocsOnFirstLine : Int -> String -> List (Rule.Error {})
+reportDocsOnFirstLine lineNumber line =
+    Parser.run (docsOnFirstLineParser lineNumber) line
+        |> Result.map
+            (\range ->
+                [ Rule.error
+                    { message = "Found @docs on the first line"
+                    , details = [ "Using @docs on the first line will make for a broken documentation once published. Please move it to the beginning of the next line." ]
+                    }
+                    range
+                ]
+            )
+        |> Result.withDefault []
 
 
 collectDocStatements : Int -> String -> List (Node String)
 collectDocStatements lineNumber string =
     Parser.run (docsParser lineNumber) string
         |> Result.withDefault []
+
+
+docsOnFirstLineParser : Int -> Parser Range
+docsOnFirstLineParser row =
+    Parser.succeed
+        (\startColumn endColumn ->
+            { start = { row = row, column = startColumn }, end = { row = row, column = endColumn } }
+        )
+        |. Parser.keyword "{-|"
+        |. Parser.spaces
+        |= Parser.getCol
+        |. Parser.keyword "@docs"
+        |= Parser.getCol
 
 
 docsParser : Int -> Parser (List (Node String))

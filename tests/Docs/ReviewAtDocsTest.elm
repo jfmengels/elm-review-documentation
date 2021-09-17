@@ -98,4 +98,38 @@ b = 2
                             }
                             |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 20 } }
                         ]
+        , test "should report an error when encountering @docs on the first line of the module documentation (without space)" <|
+            \() ->
+                """module A exposing (a)
+
+{-|@docs a
+-}
+import B
+a = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found @docs on the first line"
+                            , details = [ "Using @docs on the first line will make for a broken documentation once published. Please move it to the beginning of the next line." ]
+                            , under = "@docs"
+                            }
+                        ]
+        , test "should report an error when encountering @docs on the first line of the module documentation (with space)" <|
+            \() ->
+                """module A exposing (a)
+
+{-| @docs a
+-}
+import B
+a = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found @docs on the first line"
+                            , details = [ "Using @docs on the first line will make for a broken documentation once published. Please move it to the beginning of the next line." ]
+                            , under = "@docs"
+                            }
+                        ]
         ]
