@@ -78,7 +78,7 @@ type Exposed = Exposed
 """
                     |> Review.Test.run rule
                     |> Review.Test.expectNoErrors
-        , test "should not report an error when an unknown element has a @docs reference, with exposing (..)" <|
+        , test "should report an error when an unknown element has a @docs reference, with exposing (..)" <|
             \() ->
                 """module A exposing (..)
 
