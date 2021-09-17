@@ -171,4 +171,15 @@ exposed = 3
                             }
                             |> Review.Test.atExactly { start = { row = 1, column = 26 }, end = { row = 1, column = 33 } }
                         ]
+        , test "should not report errors when there is no @docs at all" <|
+            \() ->
+                """module A exposing (a)
+
+{-| Bla bla
+-}
+import B
+a = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]

@@ -212,7 +212,7 @@ docsItemParser row =
 
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
-    if context.hasMisformedDocs then
+    if context.hasMisformedDocs || List.isEmpty context.docsReferences then
         []
 
     else
