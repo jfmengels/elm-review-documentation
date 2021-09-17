@@ -150,4 +150,25 @@ a = 1
                             , under = "@docs"
                             }
                         ]
+        , test "should report an error when an element is exposed but has no @docs reference" <|
+            \() ->
+                """module A exposing (a, b, exposed)
+
+{-| Bla bla
+@docs a, b
+-}
+import B
+a = 1
+b = 2
+exposed = 3
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Missing @docs reference for exposed `exposed`"
+                            , details = [ "REPLACEME" ]
+                            , under = "exposed"
+                            }
+                            |> Review.Test.atExactly { start = { row = 1, column = 26 }, end = { row = 1, column = 33 } }
+                        ]
         ]

@@ -66,6 +66,7 @@ rule =
 
 type alias Context =
     { exposed : Exposing
+    , hasMisformedDocs : Bool
     , docsReferences : List (Node String)
     }
 
@@ -73,6 +74,7 @@ type alias Context =
 initialContext : Context
 initialContext =
     { exposed = Exposing.All Range.emptyRange
+    , hasMisformedDocs = False
     , docsReferences = []
     }
 
@@ -101,11 +103,18 @@ commentsVisitor nodes context =
                             restOfLines
                                 |> List.indexedMap (\index line -> ( index + range.start.row + 1, line ))
                                 |> List.partition (Tuple.second >> String.startsWith "@docs ")
+
+                        misformedDocsErrors : List (Rule.Error {})
+                        misformedDocsErrors =
+                            List.append
+                                (reportDocsOnFirstLine range.start.row firstLine)
+                                (List.concatMap reportIndentedDocs linesThatDontStartWithAtDocs)
                     in
-                    ( List.append
-                        (reportDocsOnFirstLine range.start.row firstLine)
-                        (List.concatMap reportIndentedDocs linesThatDontStartWithAtDocs)
-                    , { context | docsReferences = List.concatMap collectDocStatements linesThatStartWithAtDocs }
+                    ( misformedDocsErrors
+                    , { context
+                        | docsReferences = List.concatMap collectDocStatements linesThatStartWithAtDocs
+                        , hasMisformedDocs = not (List.isEmpty misformedDocsErrors)
+                      }
                     )
 
                 [] ->
@@ -203,19 +212,36 @@ docsItemParser row =
 
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
-    let
-        exposed : Set String
-        exposed =
-            case context.exposed of
-                Exposing.All _ ->
-                    List.filterMap declarationName nodes
-                        |> Set.fromList
+    if context.hasMisformedDocs then
+        []
 
-                Exposing.Explicit explicit ->
-                    List.map topLevelExposeName explicit
-                        |> Set.fromList
-    in
-    context.docsReferences
+    else
+        let
+            exposedNodes : List (Node String)
+            exposedNodes =
+                case context.exposed of
+                    Exposing.All _ ->
+                        List.filterMap declarationName nodes
+
+                    Exposing.Explicit explicit ->
+                        List.map topLevelExposeName explicit
+
+            exposed : Set String
+            exposed =
+                Set.fromList (List.map Node.value exposedNodes)
+
+            referencedElements : Set String
+            referencedElements =
+                Set.fromList (List.map Node.value context.docsReferences)
+        in
+        List.append
+            (errorsForDocsForNonExposedElements exposed context.docsReferences)
+            (errorsForExposedElementsWithoutADocsReference referencedElements exposedNodes)
+
+
+errorsForDocsForNonExposedElements : Set String -> List (Node String) -> List (Rule.Error {})
+errorsForDocsForNonExposedElements exposed docsReferences =
+    docsReferences
         |> List.filter (\(Node _ name) -> not (Set.member name exposed))
         |> List.map
             (\(Node range name) ->
@@ -227,42 +253,55 @@ declarationListVisitor nodes context =
             )
 
 
-declarationName : Node Declaration -> Maybe String
+errorsForExposedElementsWithoutADocsReference allDocsReferences exposedNodes =
+    exposedNodes
+        |> List.filter (\(Node _ name) -> not (Set.member name allDocsReferences))
+        |> List.map
+            (\(Node range name) ->
+                Rule.error
+                    { message = "Missing @docs reference for exposed `exposed`"
+                    , details = [ "REPLACEME" ]
+                    }
+                    range
+            )
+
+
+declarationName : Node Declaration -> Maybe (Node String)
 declarationName node =
     case Node.value node of
         Declaration.FunctionDeclaration function ->
-            function.declaration |> Node.value |> .name |> Node.value |> Just
+            function.declaration |> Node.value |> .name |> Just
 
         Declaration.AliasDeclaration typeAlias ->
-            Just (Node.value typeAlias.name)
+            Just typeAlias.name
 
         Declaration.CustomTypeDeclaration type_ ->
-            Just (Node.value type_.name)
+            Just type_.name
 
         Declaration.PortDeclaration signature ->
-            signature.name |> Node.value |> Just
+            Just signature.name
 
         Declaration.InfixDeclaration { operator } ->
-            Just (Node.value operator)
+            Just operator
 
         Declaration.Destructuring _ _ ->
             Nothing
 
 
-topLevelExposeName : Node Exposing.TopLevelExpose -> String
-topLevelExposeName node =
-    case Node.value node of
+topLevelExposeName : Node Exposing.TopLevelExpose -> Node String
+topLevelExposeName (Node range topLevelExpose) =
+    case topLevelExpose of
         Exposing.InfixExpose name ->
-            name
+            Node range name
 
         Exposing.FunctionExpose name ->
-            name
+            Node range name
 
         Exposing.TypeOrAliasExpose name ->
-            name
+            Node range name
 
         Exposing.TypeExpose { name } ->
-            name
+            Node range name
 
 
 find : (a -> Bool) -> List a -> Maybe a
