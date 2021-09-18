@@ -6,6 +6,8 @@ module Docs.ReviewAtDocs exposing (rule)
 
 -}
 
+import Docs.Utils.ExposedFromProject as ExposedFromProject
+import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Exposing as Exposing exposing (Exposing)
 import Elm.Syntax.Module as Module exposing (Module)
@@ -58,6 +60,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.Re
 rule : Rule
 rule =
     Rule.newModuleRuleSchema "Docs.ReviewAtDocs" initialContext
+        |> Rule.withElmJsonModuleVisitor elmJsonVisitor
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withCommentsVisitor commentsVisitor
         |> Rule.withDeclarationListVisitor (\nodes context -> ( declarationListVisitor nodes context, context ))
@@ -65,18 +68,41 @@ rule =
 
 
 type alias Context =
-    { exposed : Exposing
-    , hasMisformedDocs : Bool
+    { exposedModulesFromProject : Set String
+    , moduleIsExposed : Bool
+    , exposedFromModule : Exposing
+    , hasMalformedDocs : Bool
     , docsReferences : List (Node String)
     }
 
 
 initialContext : Context
 initialContext =
-    { exposed = Exposing.All Range.emptyRange
-    , hasMisformedDocs = False
+    { exposedModulesFromProject = Set.empty
+    , moduleIsExposed = False
+    , exposedFromModule = Exposing.All Range.emptyRange
+    , hasMalformedDocs = False
     , docsReferences = []
     }
+
+
+
+-- ELM.JSON VISITOR
+
+
+elmJsonVisitor : Maybe Elm.Project.Project -> Context -> Context
+elmJsonVisitor maybeProject context =
+    let
+        exposedModules : Set String
+        exposedModules =
+            case maybeProject of
+                Just project ->
+                    ExposedFromProject.exposedModules project
+
+                _ ->
+                    Set.empty
+    in
+    { context | exposedModulesFromProject = exposedModules }
 
 
 
@@ -85,7 +111,12 @@ initialContext =
 
 moduleDefinitionVisitor : Node Module -> Context -> ( List nothing, Context )
 moduleDefinitionVisitor node context =
-    ( [], { context | exposed = Module.exposingList (Node.value node) } )
+    ( []
+    , { context
+        | exposedFromModule = Module.exposingList (Node.value node)
+        , moduleIsExposed = Set.member (Module.moduleName (Node.value node) |> String.join ".") context.exposedModulesFromProject
+      }
+    )
 
 
 
@@ -113,7 +144,7 @@ commentsVisitor nodes context =
                     ( misformedDocsErrors
                     , { context
                         | docsReferences = List.concatMap collectDocStatements linesThatStartWithAtDocs
-                        , hasMisformedDocs = not (List.isEmpty misformedDocsErrors)
+                        , hasMalformedDocs = not (List.isEmpty misformedDocsErrors)
                       }
                     )
 
@@ -212,14 +243,14 @@ docsItemParser row =
 
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
-    if context.hasMisformedDocs || List.isEmpty context.docsReferences then
+    if context.hasMalformedDocs || (List.isEmpty context.docsReferences && not context.moduleIsExposed) then
         []
 
     else
         let
             exposedNodes : List (Node String)
             exposedNodes =
-                case context.exposed of
+                case context.exposedFromModule of
                     Exposing.All _ ->
                         List.filterMap declarationName nodes
 

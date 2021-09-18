@@ -31,6 +31,7 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 
 -}
 
+import Docs.Utils.ExposedFromProject as ExposedFromProject
 import Elm.Module
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
@@ -190,18 +191,8 @@ elmJsonVisitor maybeProject context =
         exposedModules_ : Set String
         exposedModules_ =
             case maybeProject of
-                Just (Elm.Project.Package package) ->
-                    case package.exposed of
-                        Elm.Project.ExposedList list ->
-                            list
-                                |> List.map Elm.Module.toString
-                                |> Set.fromList
-
-                        Elm.Project.ExposedDict list ->
-                            list
-                                |> List.concatMap Tuple.second
-                                |> List.map Elm.Module.toString
-                                |> Set.fromList
+                Just project ->
+                    ExposedFromProject.exposedModules project
 
                 _ ->
                     Set.empty
