@@ -253,11 +253,12 @@ errorsForDocsForNonExposedElements exposed docsReferences =
             )
 
 
+errorsForExposedElementsWithoutADocsReference : Set String -> List (Node String) -> List (Rule.Error {})
 errorsForExposedElementsWithoutADocsReference allDocsReferences exposedNodes =
     exposedNodes
         |> List.filter (\(Node _ name) -> not (Set.member name allDocsReferences))
         |> List.map
-            (\(Node range name) ->
+            (\(Node range _) ->
                 Rule.error
                     { message = "Missing @docs reference for exposed `exposed`"
                     , details = [ "REPLACEME" ]
@@ -316,12 +317,3 @@ find predicate list =
 
             else
                 find predicate rest
-
-
-indexedConcatMap : (Int -> a -> List b) -> List a -> List b
-indexedConcatMap function list =
-    List.foldr
-        (\a ( index, acc ) -> ( index + 1, List.append (function index a) acc ))
-        ( 0, [] )
-        list
-        |> Tuple.second
