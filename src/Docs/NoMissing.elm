@@ -32,7 +32,6 @@ elm-review --template jfmengels/elm-review-documentation/example --rules Docs.No
 -}
 
 import Docs.Utils.ExposedFromProject as ExposedFromProject
-import Elm.Module
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
 import Elm.Syntax.Exposing as Exposing

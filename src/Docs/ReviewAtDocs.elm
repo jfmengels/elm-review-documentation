@@ -23,29 +23,48 @@ import Set exposing (Set)
 -- TODO Report errors for duplicate @docs references
 
 
-{-| Reports... REPLACEME
+{-| Reports problems with the usages of `@docs`.
 
     config =
         [ Docs.ReviewAtDocs.rule
         ]
 
+The rule will report issues with malformed `@docs` directives that will cause the documentation to not be displayed properly once published.
 
-## Fail
+  - `@docs` on the first line
 
-    a =
-        "REPLACEME example to replace"
+```elm
+{-|
 
+@docs a
 
-## Success
+-}
+```
 
-    a =
-        "REPLACEME example to replace"
+  - Indented `@docs`
+
+```elm
+{-|
+
+    @docs a
+
+-}
+```
+
+Once there are no more issues of malformed `@docs`, the rule will report about:
+
+  - Missing `@docs` for exposed elements
+
+  - `@docs` for non-exposed or missing elements
+
+If a module does not have _any_ usage of `@docs`, then the rule will not report anything, as the rule will assume the
+module is not meant to be documented at this moment in time. An exception is made
 
 
 ## When (not) to enable this rule
 
-This rule is useful when REPLACEME.
-This rule is not useful when REPLACEME.
+This rule will not be useful if your project is an application and no-one in the team has the habit of writing
+package-like documentation.
 
 
 ## Try it out
