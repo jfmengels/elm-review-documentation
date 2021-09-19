@@ -6,6 +6,7 @@ module Docs.ReviewAtDocs exposing (rule)
 
 -}
 
+import Dict
 import Docs.Utils.ExposedFromProject as ExposedFromProject
 import Elm.Project
 import Elm.Syntax.Declaration as Declaration exposing (Declaration)
@@ -20,7 +21,6 @@ import Set exposing (Set)
 
 
 -- TODO Report errors for @docs references in declaration comments
--- TODO Report errors for duplicate @docs references
 
 
 {-| Reports problems with the usages of `@docs`.
@@ -60,6 +60,8 @@ Once there are no more issues of malformed `@docs`, the rule will report about:
   - Missing `@docs` for exposed elements
 
   - `@docs` for non-exposed or missing elements
+
+  - Duplicate `@docs` references
 
 If a module does not have _any_ usage of `@docs`, then the rule will not report anything, as the rule will assume the
 module is not meant to be documented at this moment in time. An exception is made
@@ -284,13 +286,14 @@ declarationListVisitor nodes context =
             exposed =
                 Set.fromList (List.map Node.value exposedNodes)
 
-            referencedElements : Set String
-            referencedElements =
-                Set.fromList (List.map Node.value context.docsReferences)
+            ( duplicateDocErrors, referencedElements ) =
+                errorsForDuplicateDocs context.docsReferences
         in
-        List.append
-            (errorsForDocsForNonExposedElements exposed context.docsReferences)
-            (errorsForExposedElementsWithoutADocsReference referencedElements exposedNodes)
+        List.concat
+            [ errorsForDocsForNonExposedElements exposed context.docsReferences
+            , errorsForExposedElementsWithoutADocsReference referencedElements exposedNodes
+            , duplicateDocErrors
+            ]
 
 
 errorsForDocsForNonExposedElements : Set String -> List (Node String) -> List (Rule.Error {})
@@ -328,6 +331,29 @@ errorsForExposedElementsWithoutADocsReference allDocsReferences exposedNodes =
                     }
                     range
             )
+
+
+errorsForDuplicateDocs : List (Node String) -> ( List (Rule.Error {}), Set String )
+errorsForDuplicateDocs docsReferences =
+    List.foldl
+        (\(Node range name) ( errors, previouslyFoundNames ) ->
+            case Dict.get name previouslyFoundNames of
+                Just lineNumber ->
+                    ( Rule.error
+                        { message = "Found duplicate @docs reference for `element`"
+                        , details = [ "An element should only be referenced once, but I found a previous reference to it on line " ++ String.fromInt lineNumber ++ ". Please remove one of them." ]
+                        }
+                        range
+                        :: errors
+                    , previouslyFoundNames
+                    )
+
+                Nothing ->
+                    ( errors, Dict.insert name range.start.row previouslyFoundNames )
+        )
+        ( [], Dict.empty )
+        docsReferences
+        |> Tuple.mapSecond (Dict.keys >> Set.fromList)
 
 
 declarationName : Node Declaration -> Maybe (Node String)

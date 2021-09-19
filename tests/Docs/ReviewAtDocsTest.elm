@@ -224,6 +224,27 @@ element = 1
                             }
                             |> Review.Test.atExactly { start = { row = 1, column = 26 }, end = { row = 1, column = 33 } }
                         ]
+        , test "should report errors for duplicate docs" <|
+            \() ->
+                """module Exposed exposing (something, element)
+
+{-|
+@docs element
+@docs something, element
+-}
+import B
+element = 1
+something = 2
+"""
+                    |> Review.Test.runWithProjectData package rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found duplicate @docs reference for `element`"
+                            , details = [ "An element should only be referenced once, but I found a previous reference to it on line 4. Please remove one of them." ]
+                            , under = "element"
+                            }
+                            |> Review.Test.atExactly { start = { row = 5, column = 18 }, end = { row = 5, column = 25 } }
+                        ]
         ]
 
 
