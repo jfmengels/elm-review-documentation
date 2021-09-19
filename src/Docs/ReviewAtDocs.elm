@@ -29,6 +29,10 @@ import Set exposing (Set)
         [ Docs.ReviewAtDocs.rule
         ]
 
+The aim of this rule is to report problems for documentation in packages that the Elm compiler doesn't report but that
+break documentation, and to replicate the same checks for applications so that you can write documentation without
+worrying about them getting stale.
+
 The rule will report issues with malformed `@docs` directives that will cause the documentation to not be displayed properly once published.
 
   - `@docs` on the first line
