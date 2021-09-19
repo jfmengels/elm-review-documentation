@@ -245,6 +245,90 @@ something = 2
                             }
                             |> Review.Test.atExactly { start = { row = 5, column = 18 }, end = { row = 5, column = 25 } }
                         ]
+        , test "should report errors for usage of @docs in function documentation" <|
+            \() ->
+                """module A exposing (something, element)
+{-|
+@docs something, element
+-}
+import B
+{-|
+@docs something
+-}
+element = 1
+something = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found usage of @docs in a function documentation"
+                            , details = [ "@docs can only be used in the module's documentation. You should remove this @docs and move it there." ]
+                            , under = "@docs"
+                            }
+                            |> Review.Test.atExactly { start = { row = 7, column = 1 }, end = { row = 7, column = 6 } }
+                        ]
+        , test "should report errors for usage of @docs in function documentation even if there are no @docs in the module documentation" <|
+            \() ->
+                """module A exposing (something, element)
+import B
+{-|
+@docs something
+-}
+element = 1
+something = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found usage of @docs in a function documentation"
+                            , details = [ "@docs can only be used in the module's documentation. You should remove this @docs and move it there." ]
+                            , under = "@docs"
+                            }
+                        ]
+        , test "should report errors for usage of @docs in type alias documentation" <|
+            \() ->
+                """module A exposing (something, Element)
+{-|
+@docs something, Element
+-}
+import B
+{-|
+@docs something
+-}
+type alias Element = {}
+something = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found usage of @docs in a type documentation"
+                            , details = [ "@docs can only be used in the module's documentation. You should remove this @docs and move it there." ]
+                            , under = "@docs"
+                            }
+                            |> Review.Test.atExactly { start = { row = 7, column = 1 }, end = { row = 7, column = 6 } }
+                        ]
+        , test "should report errors for usage of @docs in custom type documentation" <|
+            \() ->
+                """module A exposing (something, Element)
+{-|
+@docs something, Element
+-}
+import B
+{-|
+@docs something
+-}
+type Element = Element
+something = 2
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Found usage of @docs in a type documentation"
+                            , details = [ "@docs can only be used in the module's documentation. You should remove this @docs and move it there." ]
+                            , under = "@docs"
+                            }
+                            |> Review.Test.atExactly { start = { row = 7, column = 1 }, end = { row = 7, column = 6 } }
+                        ]
         ]
 
 

@@ -19,10 +19,6 @@ import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
 
 
-
--- TODO Report errors for @docs references in declaration comments
-
-
 {-| Reports problems with the usages of `@docs`.
 
     config =
@@ -62,6 +58,8 @@ Once there are no more issues of malformed `@docs`, the rule will report about:
   - `@docs` for non-exposed or missing elements
 
   - Duplicate `@docs` references
+
+  - Usage of `@docs` outside of the module documentation
 
 If a module does not have _any_ usage of `@docs`, then the rule will not report anything, as the rule will assume the
 module is not meant to be documented at this moment in time. An exception is made
@@ -269,7 +267,7 @@ docsItemParser row =
 declarationListVisitor : List (Node Declaration) -> Context -> List (Rule.Error {})
 declarationListVisitor nodes context =
     if context.hasMalformedDocs || (List.isEmpty context.docsReferences && not context.moduleIsExposed) then
-        []
+        List.concatMap errorsForDocsInDeclarationDoc nodes
 
     else
         let
@@ -292,6 +290,7 @@ declarationListVisitor nodes context =
         List.concat
             [ errorsForDocsForNonExposedElements exposed context.docsReferences
             , errorsForExposedElementsWithoutADocsReference referencedElements exposedNodes
+            , List.concatMap errorsForDocsInDeclarationDoc nodes
             , duplicateDocErrors
             ]
 
@@ -331,6 +330,54 @@ errorsForExposedElementsWithoutADocsReference allDocsReferences exposedNodes =
                     }
                     range
             )
+
+
+errorsForDocsInDeclarationDoc : Node Declaration -> List (Rule.Error {})
+errorsForDocsInDeclarationDoc node =
+    case docForDeclaration node of
+        Just ( declarationType, Node docRange docContent ) ->
+            indexedConcatMap
+                (\lineNumber lineContent ->
+                    lineContent
+                        |> Parser.run (docsWithSpacesParser (lineNumber + docRange.start.row + 1))
+                        |> Result.map
+                            (\range ->
+                                [ Rule.error
+                                    { message = "Found usage of @docs in a " ++ declarationType ++ " documentation"
+                                    , details = [ "@docs can only be used in the module's documentation. You should remove this @docs and move it there." ]
+                                    }
+                                    range
+                                ]
+                            )
+                        |> Result.withDefault []
+                )
+                (String.lines docContent)
+
+        Nothing ->
+            []
+
+
+docForDeclaration : Node Declaration -> Maybe ( String, Node String )
+docForDeclaration node =
+    case Node.value node of
+        Declaration.FunctionDeclaration function ->
+            Maybe.map (Tuple.pair "function") function.documentation
+
+        Declaration.AliasDeclaration typeAlias ->
+            Maybe.map (Tuple.pair "type") typeAlias.documentation
+
+        Declaration.CustomTypeDeclaration customType ->
+            Maybe.map (Tuple.pair "type") customType.documentation
+
+        Declaration.PortDeclaration _ ->
+            -- TODO Support port declaration in elm-syntax v8
+            Nothing
+
+        Declaration.InfixDeclaration _ ->
+            Nothing
+
+        Declaration.Destructuring _ _ ->
+            Nothing
 
 
 errorsForDuplicateDocs : List (Node String) -> ( List (Rule.Error {}), Set String )
@@ -406,3 +453,12 @@ find predicate list =
 
             else
                 find predicate rest
+
+
+indexedConcatMap : (Int -> a -> List b) -> List a -> List b
+indexedConcatMap function list =
+    List.foldr
+        (\a ( index, acc ) -> ( index, List.append (function index a) acc ))
+        ( 0, [] )
+        list
+        |> Tuple.second
