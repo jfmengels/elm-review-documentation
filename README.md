@@ -1,6 +1,7 @@
 # elm-review-documentation
 
-Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/) rules to help with the quality and correctness of your Elm project's documentation.
+Provides [`elm-review`](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/) rules to help with the
+quality and correctness of your Elm project's documentation, both for packages and applications.
 
 
 ## Provided rules
