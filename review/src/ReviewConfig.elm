@@ -12,6 +12,8 @@ when inside the directory containing this file.
 -}
 
 import CognitiveComplexity
+import Docs.NoMissing exposing (exposedModules, onlyExposed)
+import Docs.ReviewAtDocs
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
 import NoDebug.Log
@@ -41,6 +43,9 @@ config =
     [ Docs.UpToDateReadmeLinks.rule
     , Docs.ReviewLinksAndSections.rule
         |> Rule.ignoreErrorsForFiles [ "src/Docs/ReviewLinksAndSections.elm" ]
+    , Docs.NoMissing.rule { document = onlyExposed, from = exposedModules }
+    , Docs.ReviewAtDocs.rule
+        |> Rule.ignoreErrorsForFiles [ "src/Docs/ReviewAtDocs.elm" ]
     , NoDebug.Log.rule
     , NoDebug.TodoOrToString.rule
         |> Rule.ignoreErrorsForDirectories [ "tests/" ]
