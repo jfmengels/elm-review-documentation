@@ -41,7 +41,10 @@ notExposed = 3
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "Found @docs reference for non-exposed `notExposed`"
-                            , details = [ "REPLACEME" ]
+                            , details =
+                                [ "I couldn't find this element among the module's exposed elements. Maybe you removed or renamed it recently."
+                                , "Please remove the @docs reference or update the reference to the new name."
+                                ]
                             , under = "notExposed"
                             }
                             |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 23 } }
@@ -62,7 +65,10 @@ type NotExposed = NotExposed
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "Found @docs reference for non-exposed `NotExposed`"
-                            , details = [ "REPLACEME" ]
+                            , details =
+                                [ "I couldn't find this element among the module's exposed elements. Maybe you removed or renamed it recently."
+                                , "Please remove the @docs reference or update the reference to the new name."
+                                ]
                             , under = "NotExposed"
                             }
                             |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 23 } }
@@ -96,7 +102,10 @@ b = 2
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "Found @docs reference for non-exposed `Exposed`"
-                            , details = [ "REPLACEME" ]
+                            , details =
+                                [ "I couldn't find this element among the module's exposed elements. Maybe you removed or renamed it recently."
+                                , "Please remove the @docs reference or update the reference to the new name."
+                                ]
                             , under = "Exposed"
                             }
                             |> Review.Test.atExactly { start = { row = 4, column = 13 }, end = { row = 4, column = 20 } }

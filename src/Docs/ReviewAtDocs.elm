@@ -297,7 +297,10 @@ errorsForDocsForNonExposedElements exposed docsReferences =
             (\(Node range name) ->
                 Rule.error
                     { message = "Found @docs reference for non-exposed `" ++ name ++ "`"
-                    , details = [ "REPLACEME" ]
+                    , details =
+                        [ "I couldn't find this element among the module's exposed elements. Maybe you removed or renamed it recently."
+                        , "Please remove the @docs reference or update the reference to the new name."
+                        ]
                     }
                     range
             )
