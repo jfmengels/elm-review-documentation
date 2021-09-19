@@ -339,7 +339,7 @@ errorsForDocsInDeclarationDoc node =
             indexedConcatMap
                 (\lineNumber lineContent ->
                     lineContent
-                        |> Parser.run (docsWithSpacesParser (lineNumber + docRange.start.row + 1))
+                        |> Parser.run (docsWithSpacesParser (lineNumber + docRange.start.row))
                         |> Result.map
                             (\range ->
                                 [ Rule.error
@@ -457,8 +457,8 @@ find predicate list =
 
 indexedConcatMap : (Int -> a -> List b) -> List a -> List b
 indexedConcatMap function list =
-    List.foldr
-        (\a ( index, acc ) -> ( index, List.append (function index a) acc ))
+    List.foldl
+        (\a ( index, acc ) -> ( index + 1, List.append (function index a) acc ))
         ( 0, [] )
         list
         |> Tuple.second

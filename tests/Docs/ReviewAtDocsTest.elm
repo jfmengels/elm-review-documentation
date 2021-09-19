@@ -315,6 +315,8 @@ something = 2
 -}
 import B
 {-|
+Bla bla bla
+
 @docs something
 -}
 type Element = Element
@@ -327,8 +329,22 @@ something = 2
                             , details = [ "@docs can only be used in the module's documentation. You should remove this @docs and move it there." ]
                             , under = "@docs"
                             }
-                            |> Review.Test.atExactly { start = { row = 7, column = 1 }, end = { row = 7, column = 6 } }
+                            |> Review.Test.atExactly { start = { row = 9, column = 1 }, end = { row = 9, column = 6 } }
                         ]
+        , test "should not report mention of @docs after words" <|
+            \() ->
+                """module A exposing (a)
+{-|
+@docs a
+-}
+import B
+
+{-| Reports problems with the usages of `@docs`.
+-}
+a = 1
+"""
+                    |> Review.Test.run rule
+                    |> Review.Test.expectNoErrors
         ]
 
 
