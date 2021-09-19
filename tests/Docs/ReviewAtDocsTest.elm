@@ -169,7 +169,13 @@ exposed = 3
                     |> Review.Test.expectErrors
                         [ Review.Test.error
                             { message = "Missing @docs reference for exposed `exposed`"
-                            , details = [ "REPLACEME" ]
+                            , details =
+                                [ "There is no @docs reference for this element. Maybe you exposed or renamed it recently."
+                                , "Please add a @docs reference to it the module documentation (the one at the top of the module) like this:"
+                                , """{-|
+@docs exposed
+-}"""
+                                ]
                             , under = "exposed"
                             }
                             |> Review.Test.atExactly { start = { row = 1, column = 26 }, end = { row = 1, column = 33 } }
@@ -187,19 +193,25 @@ a = 1
                     |> Review.Test.expectNoErrors
         , test "should report errors for exposed modules of a package even if there are no @docs at all" <|
             \() ->
-                """module Exposed exposing (exposed)
+                """module Exposed exposing (element)
 
 {-| Bla bla
 -}
 import B
-exposed = 1
+element = 1
 """
                     |> Review.Test.runWithProjectData package rule
                     |> Review.Test.expectErrors
                         [ Review.Test.error
-                            { message = "Missing @docs reference for exposed `exposed`"
-                            , details = [ "REPLACEME" ]
-                            , under = "exposed"
+                            { message = "Missing @docs reference for exposed `element`"
+                            , details =
+                                [ "There is no @docs reference for this element. Maybe you exposed or renamed it recently."
+                                , "Please add a @docs reference to it the module documentation (the one at the top of the module) like this:"
+                                , """{-|
+@docs element
+-}"""
+                                ]
+                            , under = "element"
                             }
                             |> Review.Test.atExactly { start = { row = 1, column = 26 }, end = { row = 1, column = 33 } }
                         ]

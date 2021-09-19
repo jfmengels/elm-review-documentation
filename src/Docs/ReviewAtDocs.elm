@@ -308,10 +308,16 @@ errorsForExposedElementsWithoutADocsReference allDocsReferences exposedNodes =
     exposedNodes
         |> List.filter (\(Node _ name) -> not (Set.member name allDocsReferences))
         |> List.map
-            (\(Node range _) ->
+            (\(Node range name) ->
                 Rule.error
-                    { message = "Missing @docs reference for exposed `exposed`"
-                    , details = [ "REPLACEME" ]
+                    { message = "Missing @docs reference for exposed `" ++ name ++ "`"
+                    , details =
+                        [ "There is no @docs reference for this element. Maybe you exposed or renamed it recently."
+                        , "Please add a @docs reference to it the module documentation (the one at the top of the module) like this:"
+                        , """{-|
+@docs """ ++ name ++ """
+-}"""
+                        ]
                     }
                     range
             )
