@@ -11,11 +11,20 @@ when inside the directory containing this file.
 
 -}
 
-import Documentation.ReadmeLinksPointToCurrentVersion
+import Docs.NoMissing exposing (exposedModules, onlyExposed)
+import Docs.ReviewAtDocs
+import Docs.ReviewLinksAndSections
+import Docs.UpToDateReadmeLinks
 import Review.Rule exposing (Rule)
 
 
 config : List Rule
 config =
-    [ Documentation.ReadmeLinksPointToCurrentVersion.rule
+    [ Docs.ReviewAtDocs.rule
+    , Docs.NoMissing.rule
+        { document = onlyExposed
+        , from = exposedModules
+        }
+    , Docs.UpToDateReadmeLinks.rule
+    , Docs.ReviewLinksAndSections.rule
     ]

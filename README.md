@@ -6,10 +6,10 @@ quality and correctness of your Elm project's documentation, both for packages a
 
 ## Provided rules
 
-- [`Docs.ReviewAtDocs`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewAtDocs) - Reports problems with the usages of `@docs`.
-- [`Docs.NoMissing`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-NoMissing) - Reports missing documentation for functions and types.
-- [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections) - Reports problems with links and sections in Elm projects.
-- [🔧 `Docs.UpToDateReadmeLinks`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-UpToDateReadmeLinks "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
+- [`Docs.ReviewAtDocs`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.0/Docs-ReviewAtDocs/) - Reports problems with the usages of `@docs`.
+- [`Docs.NoMissing`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.0/Docs-NoMissing/) - Reports missing documentation for functions and types.
+- [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.0/Docs-ReviewLinksAndSections/) - Reports problems with links and sections in Elm projects.
+- [🔧 `Docs.UpToDateReadmeLinks`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.0/Docs-UpToDateReadmeLinks/ "Provides automatic fixes") - Reports links in the `README.md` that do not point to the current version of the package.
 
 ## Configuration
 
@@ -56,4 +56,4 @@ elm-review --template jfmengels/elm-review-documentation/example
 
 ## Thanks
 
-Thanks to @lue-bird for helping out with [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/1.0.3/Docs-ReviewLinksAndSections).
+Thanks to @lue-bird for helping out with [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.0/Docs-ReviewLinksAndSections/).
