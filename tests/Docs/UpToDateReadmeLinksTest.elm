@@ -238,6 +238,24 @@ all =
                             , under = "./"
                             }
                         ]
+        , test "should report at the correct location when there are unicode characters in the line" <|
+            \() ->
+                Project.new
+                    |> Project.addElmJson (createElmJson <| packageElmJson "au-tho5r/pack-age1")
+                    |> Project.addReadme { path = "README.md", content = """
+[🔧 `Rule.Name`](https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/)
+""" }
+                    |> testRule
+                    |> Review.Test.expectErrorsForReadme
+                        [ Review.Test.error
+                            { message = "Link does not point to the current version of the package"
+                            , details = details
+                            , under = "https://package.elm-lang.org/packages/au-tho5r/pack-age1/latest/"
+                            }
+                            |> Review.Test.whenFixed """
+[🔧 `Rule.Name`](https://package.elm-lang.org/packages/au-tho5r/pack-age1/1.2.3/)
+"""
+                        ]
         ]
 
 
