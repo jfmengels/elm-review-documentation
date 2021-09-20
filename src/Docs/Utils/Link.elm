@@ -260,7 +260,10 @@ parseSubTarget match =
                 subTarget =
                     case rest of
                         Just nonemptyModuleName ->
-                            ModuleSubTarget (String.split "-" nonemptyModuleName)
+                            nonemptyModuleName
+                                |> String.replace "/" ""
+                                |> String.split "-"
+                                |> ModuleSubTarget
 
                         Nothing ->
                             ReadmeSubTarget

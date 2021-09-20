@@ -557,6 +557,24 @@ a = 2
                             , under = "https://package.elm-lang.org/packages/author/package/1.0.0/Unknown"
                             }
                         ]
+        , test "should not report links to known modules for the current version" <|
+            \() ->
+                [ """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/1.0.0/A)
+-}
+a = 2
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectNoErrors
+        , test "should not report links to known modules for the current version (with trailing slash)" <|
+            \() ->
+                [ """module A exposing (..)
+{-| [link](https://package.elm-lang.org/packages/author/package/1.0.0/A/)
+-}
+a = 2
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectNoErrors
         , test "should report links to unknown modules for latest" <|
             \() ->
                 """module A exposing (..)
