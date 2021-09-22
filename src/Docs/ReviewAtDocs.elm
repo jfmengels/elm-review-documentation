@@ -62,7 +62,7 @@ Once there are no more issues of malformed `@docs`, the rule will report about:
   - Usage of `@docs` outside of the module documentation
 
 If a module does not have _any_ usage of `@docs`, then the rule will not report anything, as the rule will assume the
-module is not meant to be documented at this moment in time. An exception is made
+module is not meant to be documented at this moment in time. An exception is made for exposed modules of a package.
 
 
 ## When (not) to enable this rule
