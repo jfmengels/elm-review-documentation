@@ -19,6 +19,15 @@ import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
 
 
+
+-- TODO Report @docs Thing(..) like in:
+--   https://github.com/Holmusk/swagger-decoder/blob/1.0.0/src/Swagger/Types.elm
+--   https://package.elm-lang.org/packages/Holmusk/swagger-decoder/latest/Swagger-Types#Scheme
+-- TODO Report https://github.com/elm/package.elm-lang.org/issues/311
+-- TODO Report https://github.com/elm/package.elm-lang.org/issues/216
+-- TODO Report @docs in README?
+
+
 {-| Reports problems with the usages of `@docs`.
 
     config =
