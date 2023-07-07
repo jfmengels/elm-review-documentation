@@ -177,6 +177,19 @@ import Thing
                             , under = "A"
                             }
                         ]
+        , test "should report an error when a port module does not have documentation" <|
+            \() ->
+                """port module A exposing (..)
+import Thing
+"""
+                    |> Review.Test.run (rule config)
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Missing documentation for module `A`"
+                            , details = missingModuleDetails
+                            , under = "A"
+                            }
+                        ]
         , test "should not report an error when a module does have documentation" <|
             \() ->
                 """module A exposing (..)
