@@ -557,6 +557,21 @@ a = 2
                             , under = "https://package.elm-lang.org/packages/author/package/1.0.0/Unknown"
                             }
                         ]
+        , test "should report links to unknown modules for the current version (using HTTP)" <|
+            \() ->
+                [ """module A exposing (..)
+{-| [link](http://package.elm-lang.org/packages/author/package/1.0.0/Unknown)
+-}
+a = 2
+""" ]
+                    |> Review.Test.runOnModulesWithProjectData packageProjectWithoutFiles rule
+                    |> Review.Test.expectErrors
+                        [ Review.Test.error
+                            { message = "Link points to non-existing module Unknown"
+                            , details = [ "This is a dead link." ]
+                            , under = "http://package.elm-lang.org/packages/author/package/1.0.0/Unknown"
+                            }
+                        ]
         , test "should not report links to known modules for the current version" <|
             \() ->
                 [ """module A exposing (..)
