@@ -276,7 +276,7 @@ parseSubTarget match =
 
 linkRegex : Regex
 linkRegex =
-    Regex.fromString "https://package\\.elm-lang\\.org/packages/([\\w-]+/[\\w-]+)/(latest|\\w+\\.\\w+\\.\\w+)(/(.*))?"
+    Regex.fromString "https?://package\\.elm-lang\\.org/packages/([\\w-]+/[\\w-]+)/(latest|\\w+\\.\\w+\\.\\w+)(/(.*))?"
         |> Maybe.withDefault Regex.never
 
 
