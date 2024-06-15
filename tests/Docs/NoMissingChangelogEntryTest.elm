@@ -37,6 +37,39 @@ Stuff happened
                 "module A exposing (..)\na = 1"
                     |> Review.Test.runWithProjectData project (rule defaults)
                     |> Review.Test.expectNoErrors
+        , test "should report an error when the version in the elm.json is not found in the changelog (no unreleased section)" <|
+            \() ->
+                let
+                    project : Project
+                    project =
+                        Project.addExtraFiles
+                            (Dict.fromList
+                                [ ( "CHANGELOG.md"
+                                  , """# Changelog
+## 1.13.0
+More stuff happened
+## 1.12.0
+Stuff happened
+"""
+                                  )
+                                ]
+                            )
+                            (package "2.13.0")
+                in
+                """module A exposing (..)
+a = 1
+"""
+                    |> Review.Test.runWithProjectData project (rule defaults)
+                    |> Review.Test.expectErrorsForModules
+                        [ ( "CHANGELOG.md"
+                          , [ Review.Test.error
+                                { message = "Missing entry in CHANGELOG.md for version 2.13.0"
+                                , details = [ "It seems you have or are ready to release a new version of your package, but forgot to include releases notes for it in your CHANGELOG.md file." ]
+                                , under = "# Changelog"
+                                }
+                            ]
+                          )
+                        ]
         , test "should report an error when the version in the elm.json is not found in the changelog" <|
             \() ->
                 let
@@ -80,39 +113,6 @@ More stuff happened
 ## 1.12.0
 Stuff happened
 """
-                            ]
-                          )
-                        ]
-        , test "should report an error when the version in the elm.json is not found in the changelog (no unreleased section)" <|
-            \() ->
-                let
-                    project : Project
-                    project =
-                        Project.addExtraFiles
-                            (Dict.fromList
-                                [ ( "CHANGELOG.md"
-                                  , """# Changelog
-## 1.13.0
-More stuff happened
-## 1.12.0
-Stuff happened
-"""
-                                  )
-                                ]
-                            )
-                            (package "2.13.0")
-                in
-                """module A exposing (..)
-a = 1
-"""
-                    |> Review.Test.runWithProjectData project (rule defaults)
-                    |> Review.Test.expectErrorsForModules
-                        [ ( "CHANGELOG.md"
-                          , [ Review.Test.error
-                                { message = "Missing entry in CHANGELOG.md for version 2.13.0"
-                                , details = [ "It seems you have or are ready to release a new version of your package, but forgot to include releases notes for it in your CHANGELOG.md file." ]
-                                , under = "# Changelog"
-                                }
                             ]
                           )
                         ]
