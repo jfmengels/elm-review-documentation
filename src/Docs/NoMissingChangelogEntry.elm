@@ -258,13 +258,17 @@ reportError fileKey elmJsonVersion content =
             Nothing ->
                 { start = { row = 1, column = 1 }, end = { row = 1, column = String.length (List.head lines |> Maybe.withDefault "") + 1 } }
         )
-        (case unreleased of
-            Just ( lineNumber, _ ) ->
-                [ Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonVersion ++ "]\n\n") ]
+        (errorFix unreleased elmJsonVersion)
 
-            Nothing ->
-                []
-        )
+
+errorFix : Maybe ( Int, a ) -> String -> List Fix.Fix
+errorFix unreleased elmJsonVersion =
+    case unreleased of
+        Just ( lineNumber, _ ) ->
+            [ Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonVersion ++ "]\n\n") ]
+
+        Nothing ->
+            []
 
 
 findLineWithUnreleased : Int -> List String -> Maybe ( Int, String )
