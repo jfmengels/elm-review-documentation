@@ -6,6 +6,7 @@ quality and correctness of your Elm project's documentation, both for packages a
 
 ## Provided rules
 
+- [`Docs.NoMissingChangelogEntry`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.4/Docs-NoMissingChangelogEntry) - Reports when `CHANGELOG.md` is missing an entry for the current version of the Elm package.
 - [`Docs.ReviewAtDocs`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.4/Docs-ReviewAtDocs/) - Reports problems with the usages of `@docs`.
 - [`Docs.NoMissing`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.4/Docs-NoMissing/) - Reports missing documentation for functions and types.
 - [`Docs.ReviewLinksAndSections`](https://package.elm-lang.org/packages/jfmengels/elm-review-documentation/2.0.4/Docs-ReviewLinksAndSections/) - Reports problems with links and sections in Elm projects.
@@ -17,6 +18,7 @@ quality and correctness of your Elm project's documentation, both for packages a
 module ReviewConfig exposing (config)
 
 import Docs.NoMissing exposing (exposedModules, onlyExposed)
+import Docs.NoMissingChangelogEntry
 import Docs.ReviewAtDocs
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
@@ -30,6 +32,7 @@ config =
         , from = exposedModules
         }
     , Docs.ReviewLinksAndSections.rule
+    , Docs.NoMissingChangelogEntry.rule Docs.NoMissingChangelogEntry.defaults
     , Docs.ReviewAtDocs.rule
     , Docs.UpToDateReadmeLinks.rule
     ]

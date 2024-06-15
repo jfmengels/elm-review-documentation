@@ -12,6 +12,7 @@ when inside the directory containing this file.
 -}
 
 import Docs.NoMissing exposing (exposedModules, onlyExposed)
+import Docs.NoMissingChangelogEntry
 import Docs.ReviewAtDocs
 import Docs.ReviewLinksAndSections
 import Docs.UpToDateReadmeLinks
@@ -21,6 +22,7 @@ import Review.Rule exposing (Rule)
 config : List Rule
 config =
     [ Docs.ReviewAtDocs.rule
+    , Docs.NoMissingChangelogEntry.rule Docs.NoMissingChangelogEntry.defaults
     , Docs.NoMissing.rule
         { document = onlyExposed
         , from = exposedModules
