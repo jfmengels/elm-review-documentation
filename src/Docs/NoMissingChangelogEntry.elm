@@ -79,6 +79,7 @@ elm-review --template jfmengels/elm-review/example --rules Docs.NoMissingChangel
 -}
 
 import Dict exposing (Dict)
+import Elm.Package
 import Elm.Project exposing (Project)
 import Elm.Version
 import Review.FilePattern as FilePattern
@@ -131,13 +132,19 @@ getChangelogPath changelogPath =
 
 
 type alias ProjectContext =
-    { elmJsonVersion : Maybe String
+    { elmJsonData : Maybe ElmJsonData
+    }
+
+
+type alias ElmJsonData =
+    { packageName : String
+    , version : String
     }
 
 
 initialProjectContext : ProjectContext
 initialProjectContext =
-    { elmJsonVersion = Nothing
+    { elmJsonData = Nothing
     }
 
 
@@ -146,8 +153,16 @@ elmJsonVisitor maybeElmJsonData context =
     case maybeElmJsonData of
         Just { project } ->
             case project of
-                Elm.Project.Package { version } ->
-                    ( [], { context | elmJsonVersion = Just (Elm.Version.toString version) } )
+                Elm.Project.Package { name, version } ->
+                    ( []
+                    , { context
+                        | elmJsonData =
+                            Just
+                                { packageName = Elm.Package.toString name
+                                , version = Elm.Version.toString version
+                                }
+                      }
+                    )
 
                 Elm.Project.Application _ ->
                     ( [ Rule.globalError
@@ -171,26 +186,23 @@ extraFilesVisitor maybeChangelogPath files context =
     in
     case Dict.get changelogPath files of
         Just { fileKey, content } ->
-            case context.elmJsonVersion of
+            case context.elmJsonData of
                 Nothing ->
                     ( [], context )
 
-                Just "1.0.0" ->
-                    ( [], context )
-
-                Just elmJsonVersion ->
-                    if String.contains elmJsonVersion content then
+                Just elmJsonData ->
+                    if elmJsonData.version == "1.0.0" || String.contains elmJsonData.version content then
                         ( [], context )
 
                     else
-                        ( [ reportError fileKey elmJsonVersion content ]
+                        ( [ reportError fileKey elmJsonData content ]
                         , context
                         )
 
         Nothing ->
             ( reportErrorWhenChangelogIsNotFound
                 { changelogPath = maybeChangelogPath
-                , elmJsonVersion = context.elmJsonVersion
+                , elmJsonVersion = Maybe.map .version context.elmJsonData
                 }
             , context
             )
@@ -235,8 +247,8 @@ reportErrorWhenChangelogIsNotFound { changelogPath, elmJsonVersion } =
                     ]
 
 
-reportError : Rule.ExtraFileKey -> String -> String -> Rule.Error scope
-reportError fileKey elmJsonVersion content =
+reportError : Rule.ExtraFileKey -> ElmJsonData -> String -> Rule.Error scope
+reportError fileKey elmJsonData content =
     let
         lines : List String
         lines =
@@ -252,7 +264,7 @@ reportError fileKey elmJsonVersion content =
     in
     Rule.errorForExtraFileWithFix
         fileKey
-        { message = "Missing entry in CHANGELOG.md for version " ++ elmJsonVersion
+        { message = "Missing entry in CHANGELOG.md for version " ++ elmJsonData.version
         , details = [ "It seems you have or are ready to release a new version of your package, but forgot to include releases notes for it in your CHANGELOG.md file." ]
         }
         (case unreleased of
@@ -262,30 +274,30 @@ reportError fileKey elmJsonVersion content =
             Nothing ->
                 { start = { row = 1, column = 1 }, end = { row = 1, column = String.length (List.head lines |> Maybe.withDefault "") + 1 } }
         )
-        (errorFix unreleased unreleasedLinkLine elmJsonVersion)
+        (errorFix unreleased unreleasedLinkLine elmJsonData)
 
 
-errorFix : Maybe ( Int, a ) -> Maybe Int -> String -> List Fix.Fix
-errorFix unreleased unreleasedLinkLine elmJsonVersion =
+errorFix : Maybe ( Int, a ) -> Maybe Int -> ElmJsonData -> List Fix.Fix
+errorFix unreleased unreleasedLinkLine elmJsonData =
     case unreleased of
         Just ( lineNumber, _ ) ->
-            Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonVersion ++ "]\n\n")
-                :: fixForUnreleasedLinkLine unreleasedLinkLine "author/package" elmJsonVersion
+            Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonData.version ++ "]\n\n")
+                :: fixForUnreleasedLinkLine unreleasedLinkLine elmJsonData
 
         Nothing ->
             []
 
 
-fixForUnreleasedLinkLine : Maybe Int -> String -> String -> List Fix.Fix
-fixForUnreleasedLinkLine unreleasedLinkLine packageName elmJsonVersion =
+fixForUnreleasedLinkLine : Maybe Int -> ElmJsonData -> List Fix.Fix
+fixForUnreleasedLinkLine unreleasedLinkLine { packageName, version } =
     case unreleasedLinkLine of
         Just lineNumber ->
             [ Fix.replaceRangeBy
                 { start = { row = lineNumber, column = 1 }
                 , end = { row = lineNumber + 1, column = 1 }
                 }
-                (("[Unreleased]: https://github.com/" ++ packageName ++ "/compare/v" ++ elmJsonVersion ++ "...HEAD\n")
-                    ++ ("[" ++ elmJsonVersion ++ "]: https://github.com/" ++ packageName ++ "/releases/tag/" ++ elmJsonVersion ++ "\n")
+                (("[Unreleased]: https://github.com/" ++ packageName ++ "/compare/v" ++ version ++ "...HEAD\n")
+                    ++ ("[" ++ version ++ "]: https://github.com/" ++ packageName ++ "/releases/tag/" ++ version ++ "\n")
                 )
             ]
 
