@@ -245,6 +245,10 @@ reportError fileKey elmJsonVersion content =
         unreleased : Maybe ( Int, String )
         unreleased =
             findLineWithUnreleased 0 lines
+
+        unreleasedLinkLine : Maybe Int
+        unreleasedLinkLine =
+            findLineWithUnreleasedLink 0 lines
     in
     Rule.errorForExtraFileWithFix
         fileKey
@@ -258,11 +262,11 @@ reportError fileKey elmJsonVersion content =
             Nothing ->
                 { start = { row = 1, column = 1 }, end = { row = 1, column = String.length (List.head lines |> Maybe.withDefault "") + 1 } }
         )
-        (errorFix unreleased elmJsonVersion)
+        (errorFix unreleased unreleasedLinkLine elmJsonVersion)
 
 
-errorFix : Maybe ( Int, a ) -> String -> List Fix.Fix
-errorFix unreleased elmJsonVersion =
+errorFix : Maybe ( Int, a ) -> Maybe Int -> String -> List Fix.Fix
+errorFix unreleased unreleasedLinkLine elmJsonVersion =
     case unreleased of
         Just ( lineNumber, _ ) ->
             [ Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonVersion ++ "]\n\n") ]
@@ -283,3 +287,17 @@ findLineWithUnreleased index lines =
 
             else
                 findLineWithUnreleased (index + 1) rest
+
+
+findLineWithUnreleasedLink : Int -> List String -> Maybe Int
+findLineWithUnreleasedLink index lines =
+    case lines of
+        [] ->
+            Nothing
+
+        line :: rest ->
+            if String.startsWith "[Unreleased]: " line then
+                Just (index + 1)
+
+            else
+                findLineWithUnreleasedLink (index + 1) rest
