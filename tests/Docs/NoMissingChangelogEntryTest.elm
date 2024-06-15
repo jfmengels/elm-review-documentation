@@ -116,6 +116,61 @@ Stuff happened
                             ]
                           )
                         ]
+        , test "should report an error when the version in the elm.json is not found in the changelog (with links)" <|
+            \() ->
+                let
+                    project : Project
+                    project =
+                        Project.addExtraFiles
+                            (Dict.fromList
+                                [ ( "CHANGELOG.md"
+                                  , """# Changelog
+## [Unreleased]
+Stuff
+## 1.13.0
+More stuff happened
+## 1.12.0
+Stuff happened
+
+[Unreleased]: https://github.com/jfmengels/elm-review-documentation/compare/v1.13.0...HEAD
+[1.13.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.13.0
+[1.12.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.12.0
+"""
+                                  )
+                                ]
+                            )
+                            (package "2.13.0")
+                in
+                """module A exposing (..)
+a = 1
+"""
+                    |> Review.Test.runWithProjectData project (rule defaults)
+                    |> Review.Test.expectErrorsForModules
+                        [ ( "CHANGELOG.md"
+                          , [ Review.Test.error
+                                { message = "Missing entry in CHANGELOG.md for version 2.13.0"
+                                , details = [ "It seems you have or are ready to release a new version of your package, but forgot to include releases notes for it in your CHANGELOG.md file." ]
+                                , under = "## [Unreleased]"
+                                }
+                                |> Review.Test.whenFixed """# Changelog
+## [Unreleased]
+
+## [2.13.0]
+
+Stuff
+## 1.13.0
+More stuff happened
+## 1.12.0
+Stuff happened
+
+[Unreleased]: https://github.com/jfmengels/elm-review-documentation/compare/v2.13.0...HEAD
+[2.13.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/2.13.0
+[1.13.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.13.0
+[1.12.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.12.0
+"""
+                            ]
+                          )
+                        ]
         , test "should report an error when the changelog could not be found (default path)" <|
             \() ->
                 """module A exposing (..)
