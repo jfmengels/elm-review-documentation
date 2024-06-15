@@ -269,7 +269,25 @@ errorFix : Maybe ( Int, a ) -> Maybe Int -> String -> List Fix.Fix
 errorFix unreleased unreleasedLinkLine elmJsonVersion =
     case unreleased of
         Just ( lineNumber, _ ) ->
-            [ Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonVersion ++ "]\n\n") ]
+            Fix.insertAt { row = lineNumber + 1, column = 1 } ("\n## [" ++ elmJsonVersion ++ "]\n\n")
+                :: fixForUnreleasedLinkLine unreleasedLinkLine "author/package" elmJsonVersion
+
+        Nothing ->
+            []
+
+
+fixForUnreleasedLinkLine : Maybe Int -> String -> String -> List Fix.Fix
+fixForUnreleasedLinkLine unreleasedLinkLine packageName elmJsonVersion =
+    case unreleasedLinkLine of
+        Just lineNumber ->
+            [ Fix.replaceRangeBy
+                { start = { row = lineNumber, column = 1 }
+                , end = { row = lineNumber + 1, column = 1 }
+                }
+                (("[Unreleased]: https://github.com/" ++ packageName ++ "/compare/v" ++ elmJsonVersion ++ "...HEAD\n")
+                    ++ ("[" ++ elmJsonVersion ++ "]: https://github.com/" ++ packageName ++ "/releases/tag/" ++ elmJsonVersion ++ "\n")
+                )
+            ]
 
         Nothing ->
             []

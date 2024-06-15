@@ -132,9 +132,9 @@ More stuff happened
 ## 1.12.0
 Stuff happened
 
-[Unreleased]: https://github.com/jfmengels/elm-review-documentation/compare/v1.13.0...HEAD
-[1.13.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.13.0
-[1.12.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.12.0
+[Unreleased]: https://github.com/author/package/compare/v1.13.0...HEAD
+[1.13.0]: https://github.com/author/package/releases/tag/1.13.0
+[1.12.0]: https://github.com/author/package/releases/tag/1.12.0
 """
                                   )
                                 ]
@@ -163,10 +163,10 @@ More stuff happened
 ## 1.12.0
 Stuff happened
 
-[Unreleased]: https://github.com/jfmengels/elm-review-documentation/compare/v2.13.0...HEAD
-[2.13.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/2.13.0
-[1.13.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.13.0
-[1.12.0]: https://github.com/jfmengels/elm-review-documentation/releases/tag/1.12.0
+[Unreleased]: https://github.com/author/package/compare/v2.13.0...HEAD
+[2.13.0]: https://github.com/author/package/releases/tag/2.13.0
+[1.13.0]: https://github.com/author/package/releases/tag/1.13.0
+[1.12.0]: https://github.com/author/package/releases/tag/1.12.0
 """
                             ]
                           )
