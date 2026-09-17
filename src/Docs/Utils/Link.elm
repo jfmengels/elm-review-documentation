@@ -291,12 +291,10 @@ findParser =
     Parser.loop []
         (\parsed ->
             Parser.oneOf
-                [ Parser.succeed (\p -> p :: parsed)
-                    |= linkParser
-                    |> Parser.map Parser.Loop
-                , Parser.succeed parsed
+                [ linkParser
+                    |> Parser.map (\p -> Parser.Loop (p :: parsed))
+                , Parser.succeed (Parser.Loop parsed)
                     |. Parser.chompIf (\_ -> True)
-                    |> Parser.map Parser.Loop
                 , Parser.end
                     |> Parser.map (\() -> Parser.Done (List.reverse parsed))
                 ]
