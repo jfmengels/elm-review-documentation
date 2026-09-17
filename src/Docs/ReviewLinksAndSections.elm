@@ -198,7 +198,7 @@ fromProjectToModule =
                 exposedElements =
                     case Module.exposingList (Node.value ast.moduleDefinition) of
                         Exposing.All _ ->
-                            Set.fromList (List.filterMap nameOfDeclaration ast.declarations)
+                            Set.fromList (List.filterMap (Node.value >> nameOfDeclaration) ast.declarations)
 
                         Exposing.Explicit explicitlyExposed ->
                             Set.fromList (List.map exposedName explicitlyExposed)
@@ -472,9 +472,9 @@ specialsToHash =
         |> Maybe.withDefault Regex.never
 
 
-nameOfDeclaration : Node Declaration -> Maybe String
+nameOfDeclaration : Declaration -> Maybe String
 nameOfDeclaration node =
-    case Node.value node of
+    case node of
         Declaration.FunctionDeclaration { declaration } ->
             declaration
                 |> Node.value
@@ -521,8 +521,8 @@ docOfDeclaration declaration =
 
 
 findSectionsAndLinksForDeclaration : ModuleName -> Set String -> Node Declaration -> { titleSections : List SectionWithRange, links : List MaybeExposedLink }
-findSectionsAndLinksForDeclaration currentModuleName exposedElements declaration =
-    case docOfDeclaration (Node.value declaration) of
+findSectionsAndLinksForDeclaration currentModuleName exposedElements (Node _ declaration) =
+    case docOfDeclaration declaration of
         Just doc ->
             let
                 name : String
