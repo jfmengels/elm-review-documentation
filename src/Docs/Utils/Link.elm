@@ -67,7 +67,7 @@ findLinks row moduleName string =
         |> List.indexedMap
             (\lineNumber lineContent ->
                 lineContent
-                    |> Parser.run (findParser linkParser)
+                    |> Parser.run findParser
                     |> Result.withDefault []
                     |> List.filterMap identity
                     |> List.indexedMap
@@ -278,13 +278,13 @@ bracketsParser =
         |. Parser.symbol "]"
 
 
-findParser : Parser a -> Parser (List a)
-findParser parser =
+findParser : Parser (List (Maybe (Node Link)))
+findParser =
     Parser.loop []
         (\parsed ->
             Parser.oneOf
                 [ Parser.succeed (\p -> p :: parsed)
-                    |= parser
+                    |= linkParser
                     |> Parser.map Parser.Loop
                 , Parser.succeed parsed
                     |. Parser.chompIf (\_ -> True)
