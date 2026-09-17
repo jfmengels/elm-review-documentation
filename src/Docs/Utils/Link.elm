@@ -284,7 +284,6 @@ bracketsParser =
         |. Parser.symbol "["
         |. Parser.spaces
         |= Parser.chompUntil "]"
-        |. Parser.spaces
         |. Parser.symbol "]"
 
 
