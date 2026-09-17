@@ -82,7 +82,17 @@ findLinks row moduleName string =
         |> List.indexedMap
             (\lineNumber lineContent ->
                 lineContent
-                    |> Parser.run (findParser (linkParser (lineNumber + row) moduleName))
+                    |> Parser.run
+                        (findParser
+                            (linkParser
+                                |> Parser.map
+                                    (Maybe.map
+                                        (\(Node range link) ->
+                                            Node (addOffset (lineNumber + row) range) (normalizeModuleName moduleName link)
+                                        )
+                                    )
+                            )
+                        )
                     |> Result.withDefault []
                     |> List.filterMap identity
                     |> List.indexedMap
@@ -97,8 +107,8 @@ findLinks row moduleName string =
         |> List.concat
 
 
-linkParser : Int -> ModuleName -> Parser (Maybe (Node Link))
-linkParser row moduleName =
+linkParser : Parser (Maybe (Node Link))
+linkParser =
     Parser.getCol
         |. bracketsParser
         |> Parser.andThen
@@ -117,12 +127,6 @@ linkParser row moduleName =
                         [ Parser.map Just inlineLinkParser
                         , Parser.succeed Nothing
                         ]
-            )
-        |> Parser.map
-            (Maybe.map
-                (\(Node range link) ->
-                    Node (addOffset row range) (normalizeModuleName moduleName link)
-                )
             )
 
 
