@@ -7,23 +7,8 @@ module Docs.Utils.Link exposing
 
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node exposing (Node(..))
-import Elm.Syntax.Range exposing (Location, Range)
 import Parser exposing ((|.), (|=), Parser)
 import Regex exposing (Regex)
-
-
-addOffset : Int -> Range -> Range
-addOffset lineNumber { start, end } =
-    { start = addLineNumber lineNumber start
-    , end = addLineNumber lineNumber end
-    }
-
-
-addLineNumber : Int -> Location -> Location
-addLineNumber lineNumber { row, column } =
-    { row = lineNumber + row
-    , column = column + 1
-    }
 
 
 type alias Link =
@@ -82,26 +67,16 @@ findLinks row moduleName string =
         |> List.indexedMap
             (\lineNumber lineContent ->
                 lineContent
-                    |> Parser.run
-                        (findParser
-                            (linkParser
-                                |> Parser.map
-                                    (Maybe.map
-                                        (\(Node range link) ->
-                                            Node (addOffset (lineNumber + row) range) (normalizeModuleName moduleName link)
-                                        )
-                                    )
-                            )
-                        )
+                    |> Parser.run (findParser linkParser)
                     |> Result.withDefault []
                     |> List.filterMap identity
                     |> List.indexedMap
                         (\index (Node { start, end } link) ->
                             Node
-                                { start = { row = start.row, column = start.column - (index * 2) }
-                                , end = { row = end.row, column = end.column - (index * 2) }
+                                { start = { row = start.row + lineNumber + row, column = start.column - (index * 2) + 1 }
+                                , end = { row = end.row + lineNumber + row, column = end.column - (index * 2) + 1 }
                                 }
-                                link
+                                (normalizeModuleName moduleName link)
                         )
             )
         |> List.concat
