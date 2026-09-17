@@ -89,20 +89,30 @@ linkParser =
         |> Parser.andThen
             (\col ->
                 if col == 1 then
-                    Parser.oneOf
-                        [ inlineLinkParser
-                            |> Parser.map Just
-                        , referenceLinkParser
-                            |> Parser.map Just
-                        , Parser.succeed Nothing
-                        ]
+                    firstColLinkParser
 
                 else
-                    Parser.oneOf
-                        [ Parser.map Just inlineLinkParser
-                        , Parser.succeed Nothing
-                        ]
+                    notFirstColLinkParser
             )
+
+
+firstColLinkParser : Parser (Maybe (Node Link))
+firstColLinkParser =
+    Parser.oneOf
+        [ inlineLinkParser
+            |> Parser.map Just
+        , referenceLinkParser
+            |> Parser.map Just
+        , Parser.succeed Nothing
+        ]
+
+
+notFirstColLinkParser : Parser (Maybe (Node Link))
+notFirstColLinkParser =
+    Parser.oneOf
+        [ Parser.map Just inlineLinkParser
+        , Parser.succeed Nothing
+        ]
 
 
 normalizeModuleName : ModuleName -> Link -> Link
