@@ -99,8 +99,7 @@ findLinks row moduleName string =
 
 linkParser : Int -> ModuleName -> Parser (Maybe (Node Link))
 linkParser row moduleName =
-    Parser.succeed identity
-        |= Parser.getCol
+    Parser.getCol
         |. bracketsParser
         |> Parser.andThen
             (\col ->
